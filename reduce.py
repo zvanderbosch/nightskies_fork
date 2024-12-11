@@ -31,7 +31,7 @@
 
 from astropy.io import fits
 from glob import glob, iglob
-from scipy.misc import imsave 
+#from scipy.misc import imsave 
 from win32com.client import Dispatch
 
 import pdb
