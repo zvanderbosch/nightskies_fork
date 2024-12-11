@@ -134,7 +134,7 @@ def reducev(dnight, sets, flatname, curve):
             shutil.copy2(f,calsetp+'tiff/')
 
     #close MaxIm_DL application
-    os.system('taskkill /f /im MaxIm_DL.exe')
+    #os.system('taskkill /f /im MaxIm_DL.exe')
                     
 
 def reduceb(dnight, sets, flatname, curve):
@@ -186,5 +186,5 @@ def reduceb(dnight, sets, flatname, curve):
             shutil.copy2(f,calsetp+'tiff/')
             
     #close MaxIm_DL application
-    os.system('taskkill /f /im MaxIm_DL.exe')
+    #os.system('taskkill /f /im MaxIm_DL.exe')
                         
