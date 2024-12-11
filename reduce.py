@@ -55,7 +55,7 @@ def reducev(dnight, sets, flatname, curve):
     #read in the flat
     flat = fits.open(filepath.flats+flatname,unit=False)[0].data
     
-    T = Dispatch('Maxim.Document')
+    #T = Dispatch('Maxim.Document')
     
     #looping through all the sets in that night
     for s in sets:
@@ -126,9 +126,9 @@ def reducev(dnight, sets, flatname, curve):
             f.data /= flat                        # divide by flat
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
-            T.OpenFile(calsetp+file[i][len(rawsetp):])
-            T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',5,False,1,0)
-            T.Close            #imsave(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif', f.data)
+            #T.OpenFile(calsetp+file[i][len(rawsetp):])
+            #T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',5,False,1,0)
+            #T.Close            #imsave(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif', f.data)
         
         for f in iglob(filepath.tiff+'*.tfw'):
             shutil.copy2(f,calsetp+'tiff/')
@@ -148,7 +148,7 @@ def reduceb(dnight, sets, flatname, curve):
     #read in the flat
     flat = fits.open(filepath.flats+flatname,unit=False)[0].data
     
-    T = Dispatch('Maxim.Document')
+    #T = Dispatch('Maxim.Document')
 
     #looping through all the sets in that night
     for s in sets:
@@ -177,13 +177,13 @@ def reduceb(dnight, sets, flatname, curve):
             f.data /= flat                        # divide by flat
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):-5]+'.fit', overwrite=True)
-            T.OpenFile(calsetp+file[i][len(rawsetp):-5]+'.fit')
-            T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif',5,False,1,0)
-            T.Close
+            #T.OpenFile(calsetp+file[i][len(rawsetp):-5]+'.fit')
+            #T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif',5,False,1,0)
+            #T.Close
             #imsave(calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif', f.data)
         
         for f in iglob(filepath.tiff+'*.tfw'):
-            shutil.copy2(f,calsetp+'tiff/') 
+            shutil.copy2(f,calsetp+'tiff/')
             
     #close MaxIm_DL application
     os.system('taskkill /f /im MaxIm_DL.exe')
