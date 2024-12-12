@@ -137,7 +137,7 @@ def reducev(dnight, sets, flatname, curve):
                 259: 1,                    # Compression (1 = None)
                 282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
                 283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
-                296: 2,                    # 2 = dpi
+                296: 2,                    # Resolution unit (2 = dpi)
                 271: f.header['INSTRUME']  # Camera Maker
             }
             tiff_output = Image.fromarray(tiff_data, mode="I;16")
@@ -199,7 +199,7 @@ def reduceb(dnight, sets, flatname, curve):
                 259: 1,                    # Compression (1 = None)
                 282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
                 283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
-                296: 2,                    # 2 = dpi
+                296: 2,                    # Resolution unit (2 = dpi)
                 271: f.header['INSTRUME']  # Camera Maker
             }
             tiff_output = Image.fromarray(tiff_data, mode="I;16")
