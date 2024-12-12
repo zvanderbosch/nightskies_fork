@@ -31,8 +31,9 @@
 
 from astropy.io import fits
 from glob import glob, iglob
+from PIL import Image
 #from scipy.misc import imsave 
-from win32com.client import Dispatch
+#from win32com.client import Dispatch
 
 import pdb
 import matplotlib.pyplot as plt
@@ -50,7 +51,7 @@ def reducev(dnight, sets, flatname, curve):
     This module is for calibrating the V-band data.
     '''
     #read in the linearity curve (ADU, multiplying factor)
-    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True)
+    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
     
     #read in the flat
     flat = fits.open(filepath.flats+flatname,unit=False)[0].data
@@ -126,6 +127,14 @@ def reducev(dnight, sets, flatname, curve):
             f.data /= flat                        # divide by flat
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
+
+            # Save as TIFF file
+            tiff_data = f.data.astype(n.uint16)
+            tiff_output = Image.fromarray(tiff_data, mode="I;16")
+            tiff_output.save(
+                calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',
+                compression=None
+            )
             #T.OpenFile(calsetp+file[i][len(rawsetp):])
             #T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',5,False,1,0)
             #T.Close            #imsave(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif', f.data)
@@ -177,6 +186,13 @@ def reduceb(dnight, sets, flatname, curve):
             f.data /= flat                        # divide by flat
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):-5]+'.fit', overwrite=True)
+
+            tiff_data = f.data.astype(n.uint16)
+            tiff_output = Image.fromarray(tiff_data, mode="I;16")
+            tiff_output.save(
+                calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',
+                compression=None
+            )
             #T.OpenFile(calsetp+file[i][len(rawsetp):-5]+'.fit')
             #T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif',5,False,1,0)
             #T.Close
