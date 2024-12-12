@@ -187,6 +187,7 @@ def reduceb(dnight, sets, flatname, curve):
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):-5]+'.fit', overwrite=True)
 
+            # Save as TIFF file
             tiff_data = f.data.astype(n.uint16)
             tiff_output = Image.fromarray(tiff_data, mode="I;16")
             tiff_output.save(
