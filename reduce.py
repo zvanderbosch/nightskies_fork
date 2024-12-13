@@ -33,7 +33,6 @@ from astropy.io import fits
 from glob import glob, iglob
 from PIL import Image
 
-import pdb
 import PIL
 import matplotlib.pyplot as plt
 import numpy as n
