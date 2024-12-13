@@ -56,11 +56,11 @@ class Client(object):
         '''
         if self.session is not None:
             args.update({ 'session' : self.session })
-        print('Python:', args)
+        #print('Python:', args)
         json = python2json(args)
-        print('Sending json:', json)
+        #print('Sending json:', json)
         url = self.get_url(service)
-        print('Sending to URL:', url)
+        #print('Sending to URL:', url)
 
         # If we're sending a file, format a multipart/form-data
         if file_args is not None:
@@ -88,10 +88,10 @@ class Client(object):
         else:
             # Else send x-www-form-encoded
             data = {'request-json': json}
-            print('Sending form data:', data)
+            #print('Sending form data:', data)
             data = urlencode(data)
             data = data.encode('utf-8')
-            print('Sending data:', data)
+            #print('Sending data:', data)
             headers = {}
 
         request = Request(url=url, headers=headers, data=data)
@@ -99,11 +99,11 @@ class Client(object):
         try:
             f = urlopen(request)
             txt = f.read()
-            print('Got json:', txt)
+            #print('Got json:', txt)
             result = json2python(txt)
-            print('Got result:', result)
+            #print('Got result:', result)
             stat = result.get('status')
-            print('Got status:', stat)
+            #print('Got status:', stat)
             if stat == 'error':
                 errstr = result.get('errormessage', '(none)')
                 raise RequestError('server error message: ' + errstr)
@@ -118,7 +118,7 @@ class Client(object):
         args = { 'apikey' : apikey }
         result = self.send_request('login', args)
         sess = result.get('session')
-        print('Got session:', sess)
+        #print('Got session:', sess)
         if not sess:
             raise RequestError('no session in result')
         self.session = sess
@@ -155,7 +155,7 @@ class Client(object):
                 args.update({key: val})
             elif default is not None:
                 args.update({key: default})
-        print('Upload args:', args)
+        #print('Upload args:', args)
         return args
 
     def url_upload(self, url, **kwargs):
@@ -237,7 +237,7 @@ class Client(object):
         return result
 
 if __name__ == '__main__':
-    print("Running with args %s"%sys.argv)
+    #print("Running with args %s"%sys.argv)
     import optparse
     parser = optparse.OptionParser()
     parser.add_option('--server', dest='server', default=Client.default_url,
@@ -321,6 +321,10 @@ if __name__ == '__main__':
     c = Client(**args)
     c.login(opt.apikey)
 
+    # Print out starting message
+    img_name = opt.upload.split("\\")[-1]
+    print(f'  Solving image {img_name}...')
+    
     if opt.upload or opt.upload_url:
         if opt.wcs or opt.kmz or opt.newfits or opt.corr or opt.annotate or opt.calibrate:
             opt.wait = True
@@ -374,26 +378,26 @@ if __name__ == '__main__':
 
             while True:
                 stat = c.sub_status(opt.sub_id, justdict=True)
-                print('Got status:', stat)
+                #print('Got status:', stat)
                 jobs = stat.get('jobs', [])
                 if len(jobs):
                     for j in jobs:
                         if j is not None:
                             break
                     if j is not None:
-                        print('Selecting job id', j)
+                        #print('Selecting job id', j)
                         opt.solved_id = j
                         break
                 time.sleep(5)
 
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
-            print('Got job status:', stat)
+            #print('Got job status:', stat)
             if stat.get('status','') in ['success']:
                 success = (stat['status'] == 'success')
                 break
             elif stat.get('status','') in ['failure']:
-                print("Image solving failed")
+                print(f"  Image solving FAILED for {img_name}")
                 sys.exit(-1)
             time.sleep(5)
 
@@ -415,13 +419,13 @@ if __name__ == '__main__':
             retrieveurls.append((url, opt.corr))
 
         for url,fn in retrieveurls:
-            print('Retrieving file from', url, 'to', fn)
+            #print('Retrieving file from', url, 'to', fn)
             f = urlopen(url)
             txt = f.read()
             w = open(fn, 'wb')
             w.write(txt)
             w.close()
-            print('Wrote to', fn)
+            #print('Wrote to', fn)
 
         if opt.annotate:
             result = c.annotate_data(opt.solved_id)
@@ -459,3 +463,5 @@ if __name__ == '__main__':
     if opt.myjobs:
         jobs = c.myjobs()
         print(jobs)
+
+    print(f'  {img_name} Finished.')
