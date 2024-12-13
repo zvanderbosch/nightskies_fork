@@ -31,10 +31,9 @@
 
 from astropy.io import fits
 from glob import glob, iglob
-from scipy.misc import imsave 
-from win32com.client import Dispatch
+from PIL import Image
 
-import pdb
+import PIL
 import matplotlib.pyplot as plt
 import numpy as n
 import os
@@ -50,20 +49,18 @@ def reducev(dnight, sets, flatname, curve):
     This module is for calibrating the V-band data.
     '''
     #read in the linearity curve (ADU, multiplying factor)
-    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True)
+    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
     
     #read in the flat
     flat = fits.open(filepath.flats+flatname,unit=False)[0].data
-    
-    T = Dispatch('Maxim.Document')
     
     #looping through all the sets in that night
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        print dnight + '/' + s + '...'
+        print(dnight + '/' + s + '...')
         if os.path.isdir(calsetp):
-            print 'Replacing old calibrated files...'
+            print('Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
@@ -119,22 +116,37 @@ def reducev(dnight, sets, flatname, curve):
                          rawsetp+'zenith2.fit'))
             
         for i in range(len(file)):
-            f = fits.open(file[i],uint=False)[0]  # science image 
-            f.data -= combias+biasdrift[i]        # subtract drift-corrected bias
-            f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
-            f.data -= corthermal                  # subtract dark
-            f.data /= flat                        # divide by flat
-            f.header['IMAGETYP'] = 'CALIB_M'
-            f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
-            T.OpenFile(calsetp+file[i][len(rawsetp):])
-            T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',5,False,1,0)
-            T.Close            #imsave(calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif', f.data)
+
+            with fits.open(file[i],uint=False) as hdu:
+                f = hdu[0]                            # science image 
+                f.data -= combias+biasdrift[i]        # subtract drift-corrected bias
+                f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
+                f.data -= corthermal                  # subtract dark
+                f.data /= flat                        # divide by flat
+                f.header['IMAGETYP'] = 'CALIB_M'      # Update header
+                f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
+
+            # Save as TIFF file. TIFF Tag IDs found here:
+            # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
+            tiff_data = f.data.astype(n.uint16)
+            software_info = f'pillow (PIL) version {PIL.__version__}'
+            tiff_info = {
+                270: f.header['OBJECT'],   # Description
+                305: software_info,        # Software
+                259: 1,                    # Compression (1 = None)
+                282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
+                283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
+                296: 2,                    # Resolution unit (2 = dpi)
+                271: f.header['INSTRUME']  # Camera Maker
+            }
+            tiff_output = Image.fromarray(tiff_data, mode="I;16")
+            tiff_output.save(
+                calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',
+                tiffinfo = tiff_info
+            )
         
         for f in iglob(filepath.tiff+'*.tfw'):
             shutil.copy2(f,calsetp+'tiff/')
-
-    #close MaxIm_DL application
-    os.system('taskkill /f /im MaxIm_DL.exe')
                     
 
 def reduceb(dnight, sets, flatname, curve):
@@ -147,16 +159,14 @@ def reduceb(dnight, sets, flatname, curve):
     
     #read in the flat
     flat = fits.open(filepath.flats+flatname,unit=False)[0].data
-    
-    T = Dispatch('Maxim.Document')
 
     #looping through all the sets in that night
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/B/'
-        print dnight + '/' + s + '...'
+        print(dnight + '/' + s + '...')
         if os.path.isdir(calsetp):
-            print 'Replacing old calibrated files...'
+            print('Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
@@ -177,14 +187,26 @@ def reduceb(dnight, sets, flatname, curve):
             f.data /= flat                        # divide by flat
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):-5]+'.fit', overwrite=True)
-            T.OpenFile(calsetp+file[i][len(rawsetp):-5]+'.fit')
-            T.SaveFile(calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif',5,False,1,0)
-            T.Close
-            #imsave(calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif', f.data)
+
+            # Save as TIFF file. TIFF Tag IDs found here:
+            # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
+            tiff_data = f.data.astype(n.uint16)
+            software_info = f'pillow (PIL) version {PIL.__version__}'
+            tiff_info = {
+                270: f.header['OBJECT'],   # Description
+                305: software_info,        # Software
+                259: 1,                    # Compression (1 = None)
+                282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
+                283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
+                296: 2,                    # Resolution unit (2 = dpi)
+                271: f.header['INSTRUME']  # Camera Maker
+            }
+            tiff_output = Image.fromarray(tiff_data, mode="I;16")
+            tiff_output.save(
+                calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',
+                tiffinfo = tiff_info
+            )
         
         for f in iglob(filepath.tiff+'*.tfw'):
-            shutil.copy2(f,calsetp+'tiff/') 
-            
-    #close MaxIm_DL application
-    os.system('taskkill /f /im MaxIm_DL.exe')
+            shutil.copy2(f,calsetp+'tiff/')
                         

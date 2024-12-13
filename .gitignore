@@ -1,2 +1,4 @@
 *.pyc
 filepath.py
+tests/
+run_reduce.py

@@ -46,10 +46,10 @@ def logm(m,string):
     if type(string) is list:
         for s in string:
             m.append(s+'\n')
-            print s
+            print(s)
     else:
         m.append(string+'\n')
-        print string    
+        print(string)    
 
 
 def loghistory(message):
@@ -59,9 +59,9 @@ def loghistory(message):
 
 def log_inputs(p):
     '''starting the history file and log the input files used'''
-    print 'Recording the reduction process in: '
-    print filepath.calibdata+dnight+'/processlog.txt'
-    print ' '
+    print('Recording the reduction process in: ')
+    print(filepath.calibdata+dnight+'/processlog.txt')
+    print(' ')
     m = []
     logm(m,'%s processed on %s by %s' %(p[0],str(Dtime.now())[:19],p[6]))
     logm(m,'')
@@ -98,7 +98,7 @@ def reduce_images(*args):
     '''Basic image reduction'''
     update_progressbar(0,i)
     t1 = time.time()
-    print 'Reducing images... '
+    print('Reducing images... ')
     import reduce as R
     if 'V' in args[2]:
         R.reducev(args[0],args[1],args[2]['V'],args[3])
@@ -160,7 +160,7 @@ def apply_filter(*args):
     t1 = time.time()
     import medianfilter
     for filter in args[2]:
-        print 'Applying median filter to %s-band images' %filter
+        print('Applying median filter to %s-band images' %filter)
         medianfilter.filter(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -179,7 +179,7 @@ def mosaic_galactic(*args):
     '''Creates the mosaic of the galactic model'''
     t1 = time.time()
     import galactic
-    print 'Creating the mosaic of the galactic model'
+    print('Creating the mosaic of the galactic model')
     galactic.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -189,7 +189,7 @@ def mosaic_zodiacal(*args):
     '''Creates the mosaic of the zodiacal model'''
     t1 = time.time()
     import zodiacal
-    print 'Creating the mosaic of the zodiacal model' 
+    print('Creating the mosaic of the zodiacal model')
     zodiacal.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -200,7 +200,7 @@ def mosaic_full(*args):
     t1 = time.time()
     import fullmosaic
     for filter in args[2]:
-        print 'Creating the mosaic from full-resolution %s-band images' %filter
+        print('Creating the mosaic from full-resolution %s-band images' %filter)
         fullmosaic.mosaic(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -211,7 +211,7 @@ def mosaic_median(*args):
     t1 = time.time()
     import medianmosaic
     for filter in args[2]:
-        print 'Creating the mosaic from median-filtered %s-band images' %filter
+        print('Creating the mosaic from median-filtered %s-band images' %filter)
         medianmosaic.mosaic(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -223,13 +223,13 @@ import numpy as n
 if __name__ == '__main__':
     t1 = time.time()
     #-----------------------------------------------------------------------------#    
-    print ' '
-    print '--------------------------------------------------------------'
-    print ' '
-    print '        NPS NIGHT SKIES PROGRAM RAW IMAGE PROCESSING'
-    print ' '
-    print '--------------------------------------------------------------'
-    print ' '
+    print(' ')
+    print('--------------------------------------------------------------')
+    print(' ')
+    print('        NPS NIGHT SKIES PROGRAM RAW IMAGE PROCESSING')
+    print(' ')
+    print('--------------------------------------------------------------')
+    print(' ')
     
     #-----------------------------------------------------------------------------#
     #Standard libraries
@@ -282,7 +282,7 @@ if __name__ == '__main__':
     if all(Processor == 'L_Hung2'):
         barfig.canvas.manager.window.move(2755,0)  
     else:
-        print 'You have 5 seconds to adjust the position of the progress bar window'
+        print('You have 5 seconds to adjust the position of the progress bar window')
         plt.pause(5) #users have 5 seconds to adjust the figure position
     
     #Progress bar array (to be filled with processing time)
@@ -352,7 +352,7 @@ if __name__ == '__main__':
         barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime.png')
         
     t2 = time.time()
-    print 'Total processing time: %.1f min' %((t2-t1)/60)
+    print('Total processing time: %.1f min' %((t2-t1)/60))
     loghistory(['Total processing time: %.1f min' %((t2-t1)/60),])
     history.close()
     
