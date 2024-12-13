@@ -34,6 +34,7 @@
 from astropy.io import fits
 from glob import glob, iglob
 from multiprocessing import Pool
+from multiprocessing.context import TimeoutError
 
 import os
 import time
@@ -133,7 +134,8 @@ def solve(fn):
         '--scale-est', '96.0',
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
-        '--wcs', f'{astsetp}{fn_base}_wcs.fit'
+        '--wcs', f'{astsetp}{fn_base}_wcs.fit',
+        '--private', '--no_commercial'
     ]
     
     try: 
@@ -159,7 +161,8 @@ def solve(fn):
             '--scale-est', '96.0',
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
-            '--wcs', f'{astsetp}{fn_base}_wcs.fit'
+            '--wcs', f'{astsetp}{fn_base}_wcs.fit',
+            '--private', '--no_commercial'
         ]
         
         try:
@@ -177,11 +180,13 @@ def solve(fn):
 
 def matchstars(dnight, sets, filter):
     
+    # Lists to store cropped and failed images
     cropped_fn = []
     failed_fn = []
-    l_dir = len(filepath.calibdata+dnight)+1
     
-    pool = Pool(processes=5)
+    # Set number of parallel processes that can be
+    # sent in to Astrometry.net
+    threads = 5
 
     #looping through all the sets in that night
     t0 = time.time()
@@ -198,24 +203,22 @@ def matchstars(dnight, sets, filter):
         
         #both V and B bands
         if filter == 'V':
-            files = glob(calsetp+'ib???.fit')
+            files = glob(calsetp+'ib???.fit')[0:10]
         elif filter == 'B':
             files = glob(calsetp+'B/ib???.fit')
+        
+        with Pool(processes=threads) as pool:
+            result = pool.imap_unordered(solve,files)
+            for res in result:
+                if res[0] == 'cropped':
+                    cropped_fn.append(res[1])
+                elif res[0] == 'failed':
+                    failed_fn.append(res[1])
 
-        # Serial execution
-        # for file in files:
-        #     result = solve(file)
-        #     if result[0] == 'cropped':
-        #         cropped_fn.append(result[1])
-        #     elif result[0] == 'failed':
-        #         failed_fn.append(result[1])
+        # Sort file lists
+        cropped_fn = sorted(cropped_fn)
+        failed_fn = sorted(failed_fn)
         
-        result = n.array(pool.map(solve,files))
-        cropped_fn.extend(result[:,1][n.where(result[:,0]=='cropped')])
-        failed_fn.extend(result[:,1][n.where(result[:,0]=='failed')])
-        
-    pool.close()
-    pool.join()
     t1 = time.time()
     print('  Solving time = {:.2f} minutes'.format((t1-t0)/60))
 
