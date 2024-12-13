@@ -26,6 +26,7 @@
 #History:
 #	Dan Duriscoe -- Created in 2011 in visual basic as "calibrate images.vbs"
 #	Li-Wei Hung -- Cleaned and translated to python
+#   Zach Vanderbosch -- Updated Py2 -> Py3 and removed MaximDL dependencies
 #
 #-----------------------------------------------------------------------------#
 
