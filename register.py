@@ -122,12 +122,12 @@ def solve(fn):
     # p.DetachFITS()
     
     #save the updated fits header to the first row horizon images
-    if (m<16) & (p.solved==True): 
-        f = fits.open(fn_orig,uint=False)
-        data = f[0].data.copy()
-        f.close()
-        header = fits.open(fn)[0].header
-        fits.writeto(fn_orig, data, header=header, overwrite=True)
+    # if (m<16) & (p.solved==True): 
+    #     f = fits.open(fn_orig,uint=False)
+    #     data = f[0].data.copy()
+    #     f.close()
+    #     header = fits.open(fn)[0].header
+    #     fits.writeto(fn_orig, data, header=header, overwrite=True)
         
     return message
 
