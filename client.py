@@ -14,7 +14,7 @@ import base64
 # py3
 from urllib.parse import urlencode, quote
 from urllib.request import urlopen, Request
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 
 #from exceptions import Exception
@@ -56,11 +56,8 @@ class Client(object):
         '''
         if self.session is not None:
             args.update({ 'session' : self.session })
-        #print('Python:', args)
         json = python2json(args)
-        #print('Sending json:', json)
         url = self.get_url(service)
-        #print('Sending to URL:', url)
 
         # If we're sending a file, format a multipart/form-data
         if file_args is not None:
@@ -88,37 +85,39 @@ class Client(object):
         else:
             # Else send x-www-form-encoded
             data = {'request-json': json}
-            #print('Sending form data:', data)
             data = urlencode(data)
             data = data.encode('utf-8')
-            #print('Sending data:', data)
             headers = {}
 
+        # Generate the request
         request = Request(url=url, headers=headers, data=data)
+        
+        # Try sending the request
+        delay = 5.0      # Seconds between retry attempts
+        max_retries = 5  # Max number of retries
+        for attempts in range(max_retries):
+            try:
+                f = urlopen(request)
+                txt = f.read()
+                result = json2python(txt)
+                stat = result.get('status')
+                if stat == 'error':
+                    errstr = result.get('errormessage', '(none)')
+                    raise RequestError('server error message: ' + errstr)
+                return result
+            except:
+                if attempts < max_retries-1:
+                    time.sleep(delay)
+                    delay *= 2 # Lengthen delay for subsequent failures
+                else:
+                    print('  Exceeded max retries')
+                    sys.exit(-1)
 
-        try:
-            f = urlopen(request)
-            txt = f.read()
-            #print('Got json:', txt)
-            result = json2python(txt)
-            #print('Got result:', result)
-            stat = result.get('status')
-            #print('Got status:', stat)
-            if stat == 'error':
-                errstr = result.get('errormessage', '(none)')
-                raise RequestError('server error message: ' + errstr)
-            return result
-        except HTTPError as e:
-            print('HTTPError', e)
-            txt = e.read()
-            open('err.html', 'wb').write(txt)
-            print('Wrote error text to err.html')
 
     def login(self, apikey):
         args = { 'apikey' : apikey }
         result = self.send_request('login', args)
         sess = result.get('session')
-        #print('Got session:', sess)
         if not sess:
             raise RequestError('no session in result')
         self.session = sess
