@@ -45,14 +45,14 @@ import filepath
 
 #-----------------------------------------------------------------------------#
 def solve(fn):
-    p = Dispatch('PinPoint.Plate')
-    p.Catalog = 4  # Tycho2 catalog
-    p.CatalogPath = filepath.catalog
+    #p = Dispatch('PinPoint.Plate')
+    #p.Catalog = 4  # Tycho2 catalog
+    #p.CatalogPath = filepath.catalog
     
-    if 'B' in fn:
-        p.colorband = 1 # B band
-    else: 
-        p.colorband = 2 # V band
+    # if 'B' in fn:
+    #     p.colorband = 1 # B band
+    # else: 
+    #     p.colorband = 2 # V band
     
     fn_orig = fn
     m = int(fn_orig[-7:-4])
@@ -67,25 +67,25 @@ def solve(fn):
         fn = fn[:-4]+'c.fit'
         f.writeto(fn, overwrite=True)
     
-    p.attachFits(fn)
-    p.ArcsecPerPixelHoriz = 96
-    p.ArcsecPerPixelVert = 96
-    p.SigmaAboveMean = 3
-    p.Minimumbrightness = 2500
-    p.FindImageStars()
+    # p.attachFits(fn)
+    # p.ArcsecPerPixelHoriz = 96
+    # p.ArcsecPerPixelVert = 96
+    # p.SigmaAboveMean = 3
+    # p.Minimumbrightness = 2500
+    # p.FindImageStars()
     
-    p.RightAscension = p.TargetRightAscension
-    p.Declination = p.TargetDeclination
+    # p.RightAscension = p.TargetRightAscension
+    # p.Declination = p.TargetDeclination
     
-    p.CatalogMaximumMagnitude = 7.
-    p.CatalogMinimumMagnitude = 2.
-    p.CatalogExpansion = 0.1
-    p.Maxsolvetime = 60
-    p.FindCatalogStars()
+    # p.CatalogMaximumMagnitude = 7.
+    # p.CatalogMinimumMagnitude = 2.
+    # p.CatalogExpansion = 0.1
+    # p.Maxsolvetime = 60
+    # p.FindCatalogStars()
     
     try: 
-        p.Solve()
-        p.UpdateFITS()
+        # p.Solve()
+        # p.UpdateFITS()
         message = ['normal', fn_orig] # files that have been solved normally
     except:
         # trying to just solve the cropped (200x200 pix) image
@@ -95,31 +95,31 @@ def solve(fn):
         fn = fn[:-4]+'s.fit'
         f.writeto(fn, overwrite=True)
         
-        p.DetachFITS()
-        p.attachFits(fn)
-        p.ArcsecPerPixelHoriz = 96
-        p.ArcsecPerPixelVert = 96
-        p.SigmaAboveMean = 2
-        p.Minimumbrightness = 2000
-        p.FindImageStars()
+        # p.DetachFITS()
+        # p.attachFits(fn)
+        # p.ArcsecPerPixelHoriz = 96
+        # p.ArcsecPerPixelVert = 96
+        # p.SigmaAboveMean = 2
+        # p.Minimumbrightness = 2000
+        # p.FindImageStars()
         
-        p.RightAscension = p.TargetRightAscension
-        p.Declination = p.TargetDeclination
+        # p.RightAscension = p.TargetRightAscension
+        # p.Declination = p.TargetDeclination
     
-        p.CatalogMaximumMagnitude = 9.
-        p.CatalogMinimumMagnitude = 2.
-        p.CatalogExpansion = 0.3
-        p.Maxsolvetime = 40
-        p.FindCatalogStars()
+        # p.CatalogMaximumMagnitude = 9.
+        # p.CatalogMinimumMagnitude = 2.
+        # p.CatalogExpansion = 0.3
+        # p.Maxsolvetime = 40
+        # p.FindCatalogStars()
         
         try:
-            p.Solve()
-            p.UpdateFITS()
+            # p.Solve()
+            # p.UpdateFITS()
             message = ['cropped',fn_orig] #files that have been cropped & solved
         except:
             message = ['failed', fn_orig] #files that haven been failed to solve
         
-    p.DetachFITS()
+    # p.DetachFITS()
     
     #save the updated fits header to the first row horizon images
     if (m<16) & (p.solved==True): 
@@ -133,9 +133,9 @@ def solve(fn):
 
 
 def matchstars(dnight, sets, filter):
-    p = Dispatch('PinPoint.Plate')
-    p.Catalog = 4  # Tycho2 catalog
-    p.CatalogPath = filepath.catalog
+    #p = Dispatch('PinPoint.Plate')
+    #p.Catalog = 4  # Tycho2 catalog
+    #p.CatalogPath = filepath.catalog
     
     cropped_fn = []
     failed_fn = []
