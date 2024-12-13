@@ -58,7 +58,7 @@ def solve(fn):
     m = int(fn_orig[-7:-4])
     
     if m in range(0,50,5): 
-        print 'Solving images %i/45'%m
+        print('Solving images %i/45'%m)
 
     # Masking the area near the horizon in image 0-15
     if m < 16: 
@@ -146,7 +146,7 @@ def matchstars(dnight, sets, filter):
     #looping through all the sets in that night
     for s in sets:
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        print 'Registering images in', dnight + '/S_0' + s[0] + '...'
+        print('Registering images in', dnight + '/S_0' + s[0] + '...')
         
         #both V and B bands
         if filter == 'V':
