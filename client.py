@@ -376,7 +376,6 @@ if __name__ == '__main__':
 
             while True:
                 stat = c.sub_status(opt.sub_id, justdict=True)
-                #print('Got status:', stat)
                 jobs = stat.get('jobs', [])
                 if len(jobs):
                     for j in jobs:
