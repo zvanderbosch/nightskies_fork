@@ -32,134 +32,194 @@
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
-from datetime import datetime as Dtime
 from glob import glob, iglob
 from multiprocessing import Pool
-from win32com.client import Dispatch
+from multiprocessing.context import TimeoutError
 
-import pdb
+import os
+import time
+import subprocess
 import numpy as n
 
 # Local Source
 import filepath     
 
 #-----------------------------------------------------------------------------#
+
+def update_fits(fn, message):
+    """
+    Update original FITS file headers with 
+    Astrometry.net WCS solution.
+
+    Parameters
+    ----------
+    fn: str
+        FITS file sent to astrometry.net
+    message: list
+        [solve_status (str), fn_orig (str)]
+        2-element list containing the solve status
+        and the name of the original FITS file that
+        will be updated. The solve status can be
+        'normal', 'cropped', or 'failed'.
+
+    Returns
+    -------
+    None
+    """
+
+    # First parse the message
+    solve_status = message[0]
+    fn_orig = message[1]
+    if solve_status == 'failed':
+        return
+
+    # Get path to the WCS file
+    fn_base = fn.split("\\")[-1][:-4]
+    astsetp = "{:s}/astrometry/".format(fn.split("\\")[0])
+    fn_wcs = f"{astsetp}{fn_base}_wcs.fit"
+
+    # Load the WCS and original FITS headers
+    with fits.open(fn_wcs) as hdu:
+        wcs_hdr = hdu[0].header
+    with fits.open(fn_orig) as hdu:
+        orig_hdr = hdu[0].header
+
+    # Update header value if a cropped image was used
+    if solve_status == 'cropped':
+        wcs_hdr['CRPIX1'] = wcs_hdr['CRPIX1'] + int(orig_hdr['NAXIS1']/2) - 100
+        wcs_hdr['CRPIX2'] = wcs_hdr['CRPIX2'] + int(orig_hdr['NAXIS2']/2) - 100
+        
+    # Header keys to save
+    wcs_keys = [
+        'WCSAXES', 'CTYPE1', 'CTYPE2','EQUINOX','LONPOLE','LATPOLE',
+        'CRVAL1','CRVAL2','CRPIX1','CRPIX2','CUNIT1','CUNIT2',
+        'CD1_1','CD1_2','CD2_1','CD2_2',
+        'A_ORDER','A_0_0','A_0_1','A_0_2','A_1_0','A_1_1','A_2_0',
+        'B_ORDER','B_0_0','B_0_1','B_0_2','B_1_0','B_1_1','B_2_0',
+        'AP_ORDER','AP_0_0','AP_0_1','AP_0_2','AP_1_0','AP_1_1','AP_2_0',
+        'BP_ORDER','BP_0_0','BP_0_1','BP_0_2','BP_1_0','BP_1_1','BP_2_0'
+    ]
+
+    # Update original FITS file's header
+    with fits.open(fn_orig, uint=False, mode='update') as hdul:
+        for key in wcs_keys:
+            if key not in list(wcs_hdr.keys()):
+                continue
+            hdul[0].header[key] = wcs_hdr[key]
+            hdul[0].header.comments[key] = wcs_hdr.comments[key]
+        hdul.flush()
+
+
 def solve(fn):
-    p = Dispatch('PinPoint.Plate')
-    p.Catalog = 4  # Tycho2 catalog
-    p.CatalogPath = filepath.catalog
-    
-    if 'B' in fn:
-        p.colorband = 1 # B band
-    else: 
-        p.colorband = 2 # V band
     
     fn_orig = fn
+    astsetp = "%s/astrometry/"%(fn.split("\\")[0])
     m = int(fn_orig[-7:-4])
-    
-    if m in range(0,50,5): 
-        print 'Solving images %i/45'%m
 
     # Masking the area near the horizon in image 0-15
     if m < 16: 
-        f = fits.open(fn,uint=False)[0]
-        f.data[630:] = 0.
-        fn = fn[:-4]+'c.fit'
-        f.writeto(fn, overwrite=True)
-    
-    p.attachFits(fn)
-    p.ArcsecPerPixelHoriz = 96
-    p.ArcsecPerPixelVert = 96
-    p.SigmaAboveMean = 3
-    p.Minimumbrightness = 2500
-    p.FindImageStars()
-    
-    p.RightAscension = p.TargetRightAscension
-    p.Declination = p.TargetDeclination
-    
-    p.CatalogMaximumMagnitude = 7.
-    p.CatalogMinimumMagnitude = 2.
-    p.CatalogExpansion = 0.1
-    p.Maxsolvetime = 60
-    p.FindCatalogStars()
-    
+        with fits.open(fn,uint=False) as hdul:
+            f = hdul[0]
+            f.data[630:] = 0.
+            fn = fn[:-4]+'c.fit'
+            f.writeto(fn, overwrite=True)
+
+    #solve for astrometry; see "python client.py -help"
+    fn_base = fn.split("\\")[-1][:-4]
+    cmd = [
+        'python', 'client.py', 
+        '--apikey', f'{filepath.apikey}',
+        '--upload', f'{fn}',
+        '--parity', '1',
+        '--scale-est', '96.0',
+        '--corr', f'{astsetp}{fn_base}_corr.fit',
+        '--calibrate', f'{astsetp}{fn_base}_calib.txt',
+        '--wcs', f'{astsetp}{fn_base}_wcs.fit',
+        '--private', '--no_commercial'
+    ]
     try: 
-        p.Solve()
-        p.UpdateFITS()
+        response = subprocess.run(cmd, timeout=60)
+        response.check_returncode()
         message = ['normal', fn_orig] # files that have been solved normally
-    except:
+    except Exception as e:
         # trying to just solve the cropped (200x200 pix) image
-        f = fits.open(fn,uint=False)[0]
-        l = len(f.data)/2
-        f.data = f.data[l-100:l+100,l-100:l+100]
-        fn = fn[:-4]+'s.fit'
-        f.writeto(fn, overwrite=True)
-        
-        p.DetachFITS()
-        p.attachFits(fn)
-        p.ArcsecPerPixelHoriz = 96
-        p.ArcsecPerPixelVert = 96
-        p.SigmaAboveMean = 2
-        p.Minimumbrightness = 2000
-        p.FindImageStars()
-        
-        p.RightAscension = p.TargetRightAscension
-        p.Declination = p.TargetDeclination
-    
-        p.CatalogMaximumMagnitude = 9.
-        p.CatalogMinimumMagnitude = 2.
-        p.CatalogExpansion = 0.3
-        p.Maxsolvetime = 40
-        p.FindCatalogStars()
-        
+        with fits.open(fn,uint=False) as hdul:
+            f = hdul[0]
+            l = int(len(f.data)/2)
+            f.data = f.data[l-100:l+100,l-100:l+100]
+            fn = fn[:-4]+'s.fit'
+            f.writeto(fn, overwrite=True)
+
+        #solve for astrometry; see "python client.py -help"
+        fn_base = fn.split("\\")[-1][:-4]
+        cmd = [
+            'python', 'client.py', 
+            '--apikey', f'{filepath.apikey}',
+            '--upload', f'{fn}',
+            '--parity', '1',
+            '--scale-est', '96.0',
+            '--corr', f'{astsetp}{fn_base}_corr.fit',
+            '--calibrate', f'{astsetp}{fn_base}_calib.txt',
+            '--wcs', f'{astsetp}{fn_base}_wcs.fit',
+            '--private', '--no_commercial'
+        ]
         try:
-            p.Solve()
-            p.UpdateFITS()
+            response = subprocess.run(cmd, timeout=60)
+            response.check_returncode()
             message = ['cropped',fn_orig] #files that have been cropped & solved
-        except:
+        except Exception as e:
             message = ['failed', fn_orig] #files that haven been failed to solve
-        
-    p.DetachFITS()
-    
-    #save the updated fits header to the first row horizon images
-    if (m<16) & (p.solved==True): 
-        f = fits.open(fn_orig,uint=False)
-        data = f[0].data.copy()
-        f.close()
-        header = fits.open(fn)[0].header
-        fits.writeto(fn_orig, data, header=header, overwrite=True)
+
+    # Update the original FITS headers
+    update_fits(fn, message)
         
     return message
 
 
 def matchstars(dnight, sets, filter):
-    p = Dispatch('PinPoint.Plate')
-    p.Catalog = 4  # Tycho2 catalog
-    p.CatalogPath = filepath.catalog
     
+    # Lists to store cropped and failed images
     cropped_fn = []
     failed_fn = []
-    l_dir = len(filepath.calibdata+dnight)+1
     
-    pool = Pool()
+    # Set number of parallel processes that can be
+    # sent in to Astrometry.net
+    threads = 5
 
     #looping through all the sets in that night
+    t0 = time.time()
     for s in sets:
+
+        # Get paths to FITS images and astrometry directory
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        print 'Registering images in', dnight + '/S_0' + s[0] + '...'
+        astsetp = f'{calsetp}astrometry/'
+        print('Registering images in', dnight + '/S_0' + s[0] + '...')
+
+        # Create astrometry directory if needed
+        if not os.path.exists(astsetp):
+            os.mkdir(astsetp)
         
         #both V and B bands
         if filter == 'V':
-            file = glob(calsetp+'ib???.fit')
+            files = glob(calsetp+'ib???.fit')
         elif filter == 'B':
-            file = glob(calsetp+'B/ib???.fit')
+            files = glob(calsetp+'B/ib???.fit')
         
-        result = n.array(pool.map(solve,file))
-        cropped_fn.extend(result[:,1][n.where(result[:,0]=='cropped')])
-        failed_fn.extend(result[:,1][n.where(result[:,0]=='failed')])
+        with Pool(processes=threads) as pool:
+            result = pool.imap_unordered(solve,files)
+            for res in result:
+                if res[0] == 'cropped':
+                    cropped_fn.append(res[1])
+                elif res[0] == 'failed':
+                    failed_fn.append(res[1])
+
+        # Sort file lists
+        cropped_fn = sorted(cropped_fn)
+        failed_fn = sorted(failed_fn)
         
-    pool.close()
-    pool.join()
+    t1 = time.time()
+    print('  Solving time = {:.2f} minutes'.format((t1-t0)/60))
+
     return(cropped_fn, failed_fn)
     
     

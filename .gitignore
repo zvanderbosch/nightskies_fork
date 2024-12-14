@@ -2,3 +2,4 @@
 filepath.py
 tests/
 run_reduce.py
+run_register.py
