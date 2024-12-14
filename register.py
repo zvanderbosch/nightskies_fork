@@ -137,7 +137,6 @@ def solve(fn):
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
         '--private', '--no_commercial'
     ]
-    
     try: 
         response = subprocess.run(cmd, timeout=60)
         response.check_returncode()
@@ -164,7 +163,6 @@ def solve(fn):
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
             '--private', '--no_commercial'
         ]
-        
         try:
             response = subprocess.run(cmd, timeout=60)
             response.check_returncode()
@@ -203,7 +201,7 @@ def matchstars(dnight, sets, filter):
         
         #both V and B bands
         if filter == 'V':
-            files = glob(calsetp+'ib???.fit')[0:10]
+            files = glob(calsetp+'ib???.fit')
         elif filter == 'B':
             files = glob(calsetp+'B/ib???.fit')
         
