@@ -94,7 +94,7 @@ class Client(object):
         
         # Try sending the request
         delay = 5.0      # Seconds between retry attempts
-        max_retries = 5  # Max number of retries
+        max_retries = 10 # Max number of retries
         for attempts in range(max_retries):
             try:
                 f = urlopen(request)
@@ -108,9 +108,8 @@ class Client(object):
             except:
                 if attempts < max_retries-1:
                     time.sleep(delay)
-                    delay *= 2 # Lengthen delay for subsequent failures
                 else:
-                    print('  Exceeded max retries')
+                    print('  Exceeded max retries while sending request')
                     sys.exit(-1)
 
 
@@ -391,12 +390,11 @@ if __name__ == '__main__':
 
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
-            #print('Got job status:', stat)
             if stat.get('status','') in ['success']:
                 success = (stat['status'] == 'success')
                 break
             elif stat.get('status','') in ['failure']:
-                print(f"  Image solving FAILED for {img_name}")
+                print(f"  Image solving FAILED for {img_name}", flush=True)
                 sys.exit(-1)
             time.sleep(5)
 
@@ -418,13 +416,23 @@ if __name__ == '__main__':
             retrieveurls.append((url, opt.corr))
 
         for url,fn in retrieveurls:
-            #print('Retrieving file from', url, 'to', fn)
-            f = urlopen(url)
-            txt = f.read()
-            w = open(fn, 'wb')
-            w.write(txt)
-            w.close()
-            #print('Wrote to', fn)
+            
+            # Try retrieveing URL
+            delay = 5.0       # Seconds between retry attempts
+            max_retries = 10  # Max number of retries
+            for attempts in range(max_retries):
+                try:
+                    f = urlopen(url)
+                    txt = f.read()
+                    w = open(fn, 'wb')
+                    w.write(txt)
+                    w.close()
+                except:
+                    if attempts < max_retries-1:
+                        time.sleep(delay)
+                    else:
+                        print(f'  Exceeded max retries while retrieving results for {img_name}')
+            
 
         if opt.annotate:
             result = c.annotate_data(opt.solved_id)
