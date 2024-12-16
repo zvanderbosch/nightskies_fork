@@ -114,24 +114,24 @@ def interp_coord(filenames, solved_outputs):
             
         for fn in filenames[wf]:
             #insert the interpolated Obs_AZ and Obs_ALT 
-            f = fits.open(fn, mode='update')
-            H = f[0].header
-            j = int(fn[-7:-4])
-            entry = [j,H['AZ'],H['ALT'],float(A(j)),float(E(j))]
-            solved_outputs = n.insert(solved_outputs,j-1,entry,axis=1)
-    
-            #update the RA and DEC in the header with the interpolated values
-            LAST = get_last(H['JD'],H['LONGITUD']) #local apparent sidereal time 
+
+            with fits.open(fn, mode='update') as hdul:
+                H = hdul[0].header
+                j = int(fn[-7:-4])
+                entry = [j,H['AZ'],H['ALT'],float(A(j)),float(E(j))]
+                solved_outputs = n.insert(solved_outputs,j-1,entry,axis=1)
         
-            # ct = util.Newct(H['LATITUDE'],LAST)
-            # ct.Azimuth = float(A(j))
-            # ct.Elevation = float(E(j))
-            # c = SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
-        
-            f[0].header['RA'] = c.ra.to_string(unit='hour',sep=' ',precision=2)
-            f[0].header['DEC'] = c.dec.to_string(unit='deg',sep=' ',precision=1)
-            f.flush()
-            f.close()
+                #update the RA and DEC in the header with the interpolated values
+                LAST = get_last(H['JD'],H['LONGITUD']) #local apparent sidereal time 
+            
+                # ct = util.Newct(H['LATITUDE'],LAST)
+                # ct.Azimuth = float(A(j))
+                # ct.Elevation = float(E(j))
+                # c = SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
+            
+                # H['RA'] = c.ra.to_string(unit='hour',sep=' ',precision=2)
+                # H['DEC'] = c.dec.to_string(unit='deg',sep=' ',precision=1)
+                hdul.flush()
             
     return solved_outputs.T
 
