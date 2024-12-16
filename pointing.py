@@ -28,6 +28,8 @@
 #	Dan Duriscoe -- Created in visual basic as "calc_pointing_error_v4.vbs"
 #	Li-Wei Hung -- Cleaned, improved, and translated to Python
 #   Davyd Betchkal -- Plotted the pointing error by image number
+#   Zach Vanderbosch -- (Dec 2024) Py2 --> Py3 updates and replaced all 
+#                       ACP/ASCOM commands with Astropy Time/Coords.
 #
 #-----------------------------------------------------------------------------#
 
@@ -37,7 +39,6 @@ from glob import glob, iglob
 from scipy.interpolate import UnivariateSpline
 from win32com.client import Dispatch
 
-import pdb
 import numpy as n
 import astropy.units as u
 import astropy.coordinates as coord
@@ -141,11 +142,6 @@ def pointing_err(dnight, sets):
     '''
     This module is calculating the pointing error of each image.
     '''
-
-    # star = Dispatch('NOVAS.Star')
-    # site = Dispatch('NOVAS.Site')
-    # util = Dispatch('ACP.Util')
-    # p = Dispatch('PinPoint.Plate')
     
     #looping through all the sets in that night
     for s in sets:
@@ -153,9 +149,6 @@ def pointing_err(dnight, sets):
         
         #read in the header to set the site object's parameter
         H = fits.open(calsetp+'ib001.fit',unit=False)[0].header
-        # site.longitude = H['LONGITUD']
-        # site.latitude = H['LATITUDE']
-        # site.height = 0
         site = coord.EarthLocation.from_geodetic(
             lon = H['LONGITUD']*u.deg,
             lat = H['LATITUDE']*u.deg,
@@ -190,52 +183,33 @@ def pointing_err(dnight, sets):
             solved.append(int(fn[-7:-4]))
 
             # Get the observation time
-            JD = H['JD'] # Julian Date (UTC)
-            t = Time(JD, format='jd', scale='utc')
-            # TJD = util.Julian_TJD(JD)   #Terrestrial Julian Date
-            TJD = t.tt.jd # Terrestrial Julian Date
+            obstime = Time(H['JD'], format='jd', scale='utc')
 
-            # p.attachFits(fnsolved)
-            # star.RightAscension = p.RightAscension
-            # star.Declination = p.Declination
-            star = coord.SkyCoord(
+            # Set the RA-Dec coordinates of image center
+            imgCoord = coord.SkyCoord(
                 ra = H['CRVAL1']*u.deg,
                 dec = H['CRVAL2']*u.deg,
                 frame='icrs'
             )
             
-            #updated star's coordinates at the observed date/time and site
-            # StarTopo = star.GetTopocentricPosition(TJD, site, False)
-            StarTopo = star.transform_to(
+            # Transform to ITRS topocentric reference frame
+            imgTopoCoord = imgCoord.transform_to(
                 coord.ITRS(
-                    obstime = t,
+                    obstime = obstime,
                     location = site
                 )
             )
             
-            #local apparent sidereal time [hr]
-            # LAST = get_last(JD, H['LONGITUD']) 
-            LAST = t.sidereal_time('mean',longitude=site.lon.deg).hour
-            
-            #new CoordinateTransform object
-            # ct = util.Newct(H['LATITUDE'],LAST)
-            # ct.RightAscension = StarTopo.RightAscension
-            # ct.Declination = StarTopo.Declination
-            
+            # Save input and true Alt/Az image coordinates
             Input_AZ.append(H['AZ'])
             Input_ALT.append(H['ALT'])
-            # True_AZ.append(ct.Azimuth)
-            True_AZ.append(StarTopo.altaz.az.deg)
+            True_AZ.append(imgTopoCoord.altaz.az.deg)
 
-            #correct for atmospheric refraction on images 1-15
+            #correct altitude for atmospheric refraction on images 1-15
             if int(fn[-7:-4]) < 16: 
-                # True_ALT.append(ct.Elevation + refraction)
-                True_ALT.append(StarTopo.altaz.az.deg + refraction)
+                True_ALT.append(imgTopoCoord.altaz.alt.deg + refraction)
             else:
-                # True_ALT.append(ct.Elevation)
-                True_ALT.append(StarTopo.altaz.az.deg)
-            
-            # p.DetachFITS()
+                True_ALT.append(imgTopoCoord.altaz.alt.deg)
                           
         
         #interpolate the True_AZ for True_ALT for images that are not solved
