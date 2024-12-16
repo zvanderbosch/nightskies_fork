@@ -31,8 +31,7 @@
 #
 #-----------------------------------------------------------------------------#
 
-from astropy.coordinates import SkyCoord
-from astropy.coordinates import EarthLocation
+from astropy.time import Time
 from astropy.io import fits
 from glob import glob, iglob
 from scipy.interpolate import UnivariateSpline
@@ -40,6 +39,8 @@ from win32com.client import Dispatch
 
 import pdb
 import numpy as n
+import astropy.units as u
+import astropy.coordinates as coord
 import matplotlib.pyplot as plt
 import os
 
@@ -113,8 +114,8 @@ def interp_coord(filenames, solved_outputs):
             E = UnivariateSpline(solved[wi], True_ALT[wi], k=k)
             
         for fn in filenames[wf]:
-            #insert the interpolated Obs_AZ and Obs_ALT 
 
+            #insert the interpolated Obs_AZ and Obs_ALT 
             with fits.open(fn, mode='update') as hdul:
                 H = hdul[0].header
                 j = int(fn[-7:-4])
@@ -127,7 +128,7 @@ def interp_coord(filenames, solved_outputs):
                 # ct = util.Newct(H['LATITUDE'],LAST)
                 # ct.Azimuth = float(A(j))
                 # ct.Elevation = float(E(j))
-                # c = SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
+                # c = coord.SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
             
                 # H['RA'] = c.ra.to_string(unit='hour',sep=' ',precision=2)
                 # H['DEC'] = c.dec.to_string(unit='deg',sep=' ',precision=1)
@@ -155,10 +156,10 @@ def pointing_err(dnight, sets):
         # site.longitude = H['LONGITUD']
         # site.latitude = H['LATITUDE']
         # site.height = 0
-        site = EarthLocation.from_geodetic(
-            lon = H['LONGITUD'],
-            lat = H['LATITUDE'],
-            height = 0.0
+        site = coord.EarthLocation.from_geodetic(
+            lon = H['LONGITUD']*u.deg,
+            lat = H['LATITUDE']*u.deg,
+            height = 0.0*u.m
         )
         
         #calculate the temperture-pressure correction for refraction
@@ -167,38 +168,54 @@ def pointing_err(dnight, sets):
         tpco = pres*(283/temp)                              #correction
         
         #refraction at 7.5 altitude
-        refraction = tpco*(1/n.tan(n.deg2rad(7.5+7.31/11.9)))/60 
+        refraction = tpco*(1/n.tan(n.deg2rad(7.5+7.31/11.9)))/60
         
         #just for V band
-        solved=[]; notsolved=[]
-        True_AZ=[]; True_ALT=[]; Input_AZ=[]; Input_ALT=[]        
+        solved, notsolved = [],[]
+        True_AZ, True_ALT = [],[] 
+        Input_AZ, Input_ALT = [],[]
         for fn in iglob(calsetp+'ib???.fit'):
             fns = fn[:-4]+'s'+fn[-4:]
             if os.path.exists(fns):
-                H = fits.open(fns)[0].header
+                H = fits.getheader(fns,ext=0)
                 fnsolved = fns
             else:
-                H = fits.open(fn)[0].header
+                H = fits.getheader(fn,ext=0)
                 fnsolved = fn
             
             #calculating the pointing error only if the plate is solved
             if 'PLTSOLVD' not in H or H['PLTSOLVD']==False: 
                 notsolved.append(fn)
                 continue
-            
             solved.append(int(fn[-7:-4]))
+
+            # Get the observation time
+            JD = H['JD'] # Julian Date (UTC)
+            t = Time(JD, format='jd', scale='utc')
+            # TJD = util.Julian_TJD(JD)   #Terrestrial Julian Date
+            TJD = t.tt.jd # Terrestrial Julian Date
+
             # p.attachFits(fnsolved)
             # star.RightAscension = p.RightAscension
             # star.Declination = p.Declination
-            
-            JD = H['JD']                #Julian Date
-            # TJD = util.Julian_TJD(JD)   #Terrestrial Julian Date
+            star = coord.SkyCoord(
+                ra = H['CRVAL1']*u.deg,
+                dec = H['CRVAL2']*u.deg,
+                frame='icrs'
+            )
             
             #updated star's coordinates at the observed date/time and site
             # StarTopo = star.GetTopocentricPosition(TJD, site, False)
+            StarTopo = star.transform_to(
+                coord.ITRS(
+                    obstime = t,
+                    location = site
+                )
+            )
             
             #local apparent sidereal time [hr]
-            LAST = get_last(JD, H['LONGITUD']) 
+            # LAST = get_last(JD, H['LONGITUD']) 
+            LAST = t.sidereal_time('mean',longitude=site.lon.deg).hour
             
             #new CoordinateTransform object
             # ct = util.Newct(H['LATITUDE'],LAST)
@@ -208,12 +225,15 @@ def pointing_err(dnight, sets):
             Input_AZ.append(H['AZ'])
             Input_ALT.append(H['ALT'])
             # True_AZ.append(ct.Azimuth)
+            True_AZ.append(StarTopo.altaz.az.deg)
 
             #correct for atmospheric refraction on images 1-15
-            # if int(fn[-7:-4]) < 16: 
-            #     True_ALT.append(ct.Elevation + refraction)
-            # else:
-            #     True_ALT.append(ct.Elevation)
+            if int(fn[-7:-4]) < 16: 
+                # True_ALT.append(ct.Elevation + refraction)
+                True_ALT.append(StarTopo.altaz.az.deg + refraction)
+            else:
+                # True_ALT.append(ct.Elevation)
+                True_ALT.append(StarTopo.altaz.az.deg)
             
             # p.DetachFITS()
                           
