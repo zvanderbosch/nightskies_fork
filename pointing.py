@@ -152,7 +152,7 @@ def pointing_err(dnight, sets):
         site = coord.EarthLocation.from_geodetic(
             lon = H['LONGITUD']*u.deg,
             lat = H['LATITUDE']*u.deg,
-            height = 0.0*u.m
+            height = H['ELEVATIO']*u.m
         )
         
         #calculate the temperture-pressure correction for refraction
@@ -171,12 +171,10 @@ def pointing_err(dnight, sets):
             fns = fn[:-4]+'s'+fn[-4:]
             if os.path.exists(fns):
                 H = fits.getheader(fns,ext=0)
-                fnsolved = fns
             else:
                 H = fits.getheader(fn,ext=0)
-                fnsolved = fn
             
-            #calculating the pointing error only if the plate is solved
+            #calculate the pointing error only if the plate is solved
             if 'PLTSOLVD' not in H or H['PLTSOLVD']==False: 
                 notsolved.append(fn)
                 continue
@@ -194,10 +192,7 @@ def pointing_err(dnight, sets):
             
             # Transform to ITRS topocentric reference frame
             imgTopoCoord = imgCoord.transform_to(
-                coord.ITRS(
-                    obstime = obstime,
-                    location = site
-                )
+                coord.ITRS(obstime=obstime, location=site)
             )
             
             # Save input and true Alt/Az image coordinates
@@ -205,7 +200,7 @@ def pointing_err(dnight, sets):
             Input_ALT.append(H['ALT'])
             True_AZ.append(imgTopoCoord.altaz.az.deg)
 
-            #correct altitude for atmospheric refraction on images 1-15
+            # Correct altitude for atmospheric refraction on images 1-15
             if int(fn[-7:-4]) < 16: 
                 True_ALT.append(imgTopoCoord.altaz.alt.deg + refraction)
             else:
@@ -235,7 +230,7 @@ def pointing_err(dnight, sets):
         ax.plot(pErr[0], totErr, linestyle="-", linewidth=2, marker="o", 
             markersize=6, color = "black", alpha=1, label="Total Error")
         ax.axhline(0, color="black", linestyle="-", alpha=0.5, zorder=-10)
-        ax.set_ylim(-3, 3)
+        ax.set_ylim(-4, 4)
         ax.set_ylabel("Error in Degrees", fontsize=20, labelpad = 10)
         ax.set_xlabel("Image Number", fontsize=20, labelpad = 15)
         ax.set_xticks(n.arange(0, 50, 5))
