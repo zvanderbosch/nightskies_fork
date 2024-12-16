@@ -90,7 +90,7 @@ def interp_coord(filenames, solved_outputs):
     Interpolate the True_AZ and True_ALT for images that are not solved and 
     update the RA and DEC with the interpolated values in the header.
     '''
-    util = Dispatch('ACP.Util')
+    # util = Dispatch('ACP.Util')
     solved, Input_AZ, Input_ALT, True_AZ, True_ALT = solved_outputs
     fi = n.array([int(filenames[i][-7:-4]) for i in range(len(filenames))])
     
@@ -123,10 +123,10 @@ def interp_coord(filenames, solved_outputs):
             #update the RA and DEC in the header with the interpolated values
             LAST = get_last(H['JD'],H['LONGITUD']) #local apparent sidereal time 
         
-            ct = util.Newct(H['LATITUDE'],LAST)
-            ct.Azimuth = float(A(j))
-            ct.Elevation = float(E(j))
-            c = SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
+            # ct = util.Newct(H['LATITUDE'],LAST)
+            # ct.Azimuth = float(A(j))
+            # ct.Elevation = float(E(j))
+            # c = SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
         
             f[0].header['RA'] = c.ra.to_string(unit='hour',sep=' ',precision=2)
             f[0].header['DEC'] = c.dec.to_string(unit='deg',sep=' ',precision=1)
