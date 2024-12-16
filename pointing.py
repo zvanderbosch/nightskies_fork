@@ -51,14 +51,17 @@ def get_last(JD, longitude):
     '''
     This function calculates the local apparent sidereal time given 
     the Julian Date (JD) and the longitude [deg] of the observing site. 
-    This calculation is based on the information from http://aa.usno.navy.mil/faq/docs/GAST.php
-    The maximum error resulting from the use of these formulas 
-    for sidereal time over the period 2000-2100 is 0.432 seconds.
+    This calculation is based on the information from:
+    http://aa.usno.navy.mil/faq/docs/GAST.php 
+    The maximum error resulting from the use of these formulas for 
+    sidereal time over the period 2000-2100 is 0.432 seconds.
 
     Parameters
     ----------
-    JD: float, the julian day of observation.
-    longitude: float, longitude of the observing site (~~which coordinate system??~~)
+    JD: float
+        The julian day of observation.
+    longitude: float
+        Longitude of the observing site (~~which coordinate system??~~)
 
 	Returns
 	-------
