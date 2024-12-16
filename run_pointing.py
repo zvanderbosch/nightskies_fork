@@ -6,11 +6,11 @@ def main():
     Dataset = ["ROMO241004"]
     sets = ['1st']
 
-    # Package the inputs
-    inputs = (Dataset[0],sets) # for pointing.py
+    # Package the inputs for pointing.py
+    inputs = (Dataset[0],sets)
     
     # Run the pointing script
-    pointing.matchstars(*inputs)
+    pointing.pointing_err(*inputs)
 
 if __name__ == "__main__":
     main()
