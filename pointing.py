@@ -91,7 +91,7 @@ def interp_coord(filenames, solved_outputs):
     update the RA and DEC with the interpolated values in the header.
     '''
     # util = Dispatch('ACP.Util')
-    solved, Input_AZ, Input_ALT, True_AZ, True_ALT = solved_outputs
+    solved, _, _, True_AZ, True_ALT = solved_outputs
     fi = n.array([int(filenames[i][-7:-4]) for i in range(len(filenames))])
     
     w = [0,15,30,40,45] # the number of last image in every elevation row
