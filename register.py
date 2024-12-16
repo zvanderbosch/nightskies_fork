@@ -135,7 +135,7 @@ def solve(fn):
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
-        '--private', '--no_commercial'
+        '--crpix-center'
     ]
     try: 
         response = subprocess.run(cmd, timeout=60)
@@ -161,7 +161,7 @@ def solve(fn):
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
-            '--private', '--no_commercial'
+            '--crpix-center'
         ]
         try:
             response = subprocess.run(cmd, timeout=60)
