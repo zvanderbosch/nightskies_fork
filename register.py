@@ -71,6 +71,9 @@ def update_fits(fn, message):
     solve_status = message[0]
     fn_orig = message[1]
     if solve_status == 'failed':
+        with fits.open(fn_orig, mode='update') as hdul:
+            hdul[0].header['PLTSOLVD'] = False
+            hdul.flush()
         return
 
     # Get path to the WCS file
@@ -79,10 +82,10 @@ def update_fits(fn, message):
     fn_wcs = f"{astsetp}{fn_base}_wcs.fit"
 
     # Load the WCS and original FITS headers
-    with fits.open(fn_wcs) as hdu:
-        wcs_hdr = hdu[0].header
-    with fits.open(fn_orig) as hdu:
-        orig_hdr = hdu[0].header
+    with fits.open(fn_wcs) as hdul:
+        wcs_hdr = hdul[0].header
+    with fits.open(fn_orig) as hdul:
+        orig_hdr = hdul[0].header
 
     # Update header value if a cropped image was used
     if solve_status == 'cropped':
@@ -102,6 +105,7 @@ def update_fits(fn, message):
 
     # Update original FITS file's header
     with fits.open(fn_orig, uint=False, mode='update') as hdul:
+        hdul[0].header['PLTSOLVD'] = True
         for key in wcs_keys:
             if key not in list(wcs_hdr.keys()):
                 continue
@@ -218,7 +222,7 @@ def matchstars(dnight, sets, filter):
         failed_fn = sorted(failed_fn)
         
     t1 = time.time()
-    print('  Solving time = {:.2f} minutes'.format((t1-t0)/60))
+    print('  Total Solving Time = {:.2f} minutes'.format((t1-t0)/60))
 
     return(cropped_fn, failed_fn)
     
