@@ -106,6 +106,7 @@ def update_fits(fn, message):
     # Update original FITS file's header
     with fits.open(fn_orig, uint=False, mode='update') as hdul:
         hdul[0].header['PLTSOLVD'] = True
+        hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
         for key in wcs_keys:
             if key not in list(wcs_hdr.keys()):
                 continue
