@@ -32,6 +32,7 @@
 #-----------------------------------------------------------------------------#
 
 from astropy.coordinates import SkyCoord
+from astropy.coordinates import EarthLocation
 from astropy.io import fits
 from glob import glob, iglob
 from scipy.interpolate import UnivariateSpline
@@ -79,7 +80,7 @@ def get_last(JD, longitude):
     eqeq = Del_Phi*n.cos(eps)                            #equation of the equinoxes
     
     GAST = GMST + eqeq                                   #Greenwich apparent sidereal time [hr]
-    LAST = (GAST+longitude/360*24)%24                     #local apparent sidereal time [hr]
+    LAST = (GAST+longitude/360*24)%24                    #local apparent sidereal time [hr]
     
     return LAST
 
@@ -140,10 +141,10 @@ def pointing_err(dnight, sets):
     This module is calculating the pointing error of each image.
     '''
 
-    star = Dispatch('NOVAS.Star')
-    site = Dispatch('NOVAS.Site')
-    util = Dispatch('ACP.Util')
-    p = Dispatch('PinPoint.Plate')
+    # star = Dispatch('NOVAS.Star')
+    # site = Dispatch('NOVAS.Site')
+    # util = Dispatch('ACP.Util')
+    # p = Dispatch('PinPoint.Plate')
     
     #looping through all the sets in that night
     for s in sets:
@@ -151,9 +152,14 @@ def pointing_err(dnight, sets):
         
         #read in the header to set the site object's parameter
         H = fits.open(calsetp+'ib001.fit',unit=False)[0].header
-        site.longitude = H['LONGITUD']
-        site.latitude = H['LATITUDE']
-        site.height = 0
+        # site.longitude = H['LONGITUD']
+        # site.latitude = H['LATITUDE']
+        # site.height = 0
+        site = EarthLocation.from_geodetic(
+            lon = H['LONGITUD'],
+            lat = H['LATITUDE'],
+            height = 0.0
+        )
         
         #calculate the temperture-pressure correction for refraction
         temp = (H['AMTEMP_F']-32)/1.8 + 273                 #temperature [K]
@@ -181,35 +187,35 @@ def pointing_err(dnight, sets):
                 continue
             
             solved.append(int(fn[-7:-4]))
-            p.attachFits(fnsolved)
-            star.RightAscension = p.RightAscension
-            star.Declination = p.Declination
+            # p.attachFits(fnsolved)
+            # star.RightAscension = p.RightAscension
+            # star.Declination = p.Declination
             
             JD = H['JD']                #Julian Date
-            TJD = util.Julian_TJD(JD)   #Terrestrial Julian Date
+            # TJD = util.Julian_TJD(JD)   #Terrestrial Julian Date
             
             #updated star's coordinates at the observed date/time and site
-            StarTopo = star.GetTopocentricPosition(TJD, site, False)
+            # StarTopo = star.GetTopocentricPosition(TJD, site, False)
             
             #local apparent sidereal time [hr]
             LAST = get_last(JD, H['LONGITUD']) 
             
             #new CoordinateTransform object
-            ct = util.Newct(H['LATITUDE'],LAST)
-            ct.RightAscension = StarTopo.RightAscension
-            ct.Declination = StarTopo.Declination
+            # ct = util.Newct(H['LATITUDE'],LAST)
+            # ct.RightAscension = StarTopo.RightAscension
+            # ct.Declination = StarTopo.Declination
             
             Input_AZ.append(H['AZ'])
             Input_ALT.append(H['ALT'])
-            True_AZ.append(ct.Azimuth)
+            # True_AZ.append(ct.Azimuth)
 
             #correct for atmospheric refraction on images 1-15
-            if int(fn[-7:-4]) < 16: 
-                True_ALT.append(ct.Elevation + refraction)
-            else:
-                True_ALT.append(ct.Elevation)
+            # if int(fn[-7:-4]) < 16: 
+            #     True_ALT.append(ct.Elevation + refraction)
+            # else:
+            #     True_ALT.append(ct.Elevation)
             
-            p.DetachFITS()
+            # p.DetachFITS()
                           
         
         #interpolate the True_AZ for True_ALT for images that are not solved
