@@ -221,24 +221,24 @@ def pointing_err(dnight, sets):
         totErr = n.sqrt(n.power(azmErr,2) + n.power(altErr,2))
 
         #create a pointing error plot
-        errorPlot = plt.figure(figsize=(20,10))
+        errorPlot = plt.figure('errplot',figsize=(20,10))
         ax = errorPlot.add_subplot(111)
         plt.suptitle("Pointing Error by Image Number", fontsize=25, verticalalignment='top')
-        plt.title("Data Set " + s[0], fontsize=20)
-        plt.plot(pErr[0], azmErr, linestyle="-.", marker="o", markerfacecolor='None', 
+        ax.set_title("Data Set " + s[0], fontsize=20)
+        ax.plot(pErr[0], azmErr, linestyle="-.", marker="o", markerfacecolor='None', 
             markersize=4, color = "darkorange", alpha=0.7, label="Azimuth Error")
-        plt.plot(pErr[0], altErr, linestyle="--", marker="o", 
+        ax.plot(pErr[0], altErr, linestyle="--", marker="o", 
             markersize=4, color = "darkgreen", alpha=0.7, label="Altitude Error")
-        plt.plot(pErr[0], totErr, linestyle="-", linewidth=2, marker="o", 
+        ax.plot(pErr[0], totErr, linestyle="-", linewidth=2, marker="o", 
             markersize=6, color = "black", alpha=1, label="Total Error")
-        plt.axhline(0, color="black", linestyle="-", alpha=0.5, zorder=-10)
-        plt.ylim(-3, 3)
-        plt.ylabel("Error in Degrees", fontsize=20, labelpad = 10)
-        plt.xlabel("Image Number", fontsize=20, labelpad = 15)
-        plt.xticks(n.arange(0, 50, 5))
-        plt.legend(loc='upper left', markerscale=1.8, fontsize=18, framealpha=0.3)
+        ax.axhline(0, color="black", linestyle="-", alpha=0.5, zorder=-10)
+        ax.set_ylim(-3, 3)
+        ax.set_ylabel("Error in Degrees", fontsize=20, labelpad = 10)
+        ax.set_xlabel("Image Number", fontsize=20, labelpad = 15)
+        ax.set_xticks(n.arange(0, 50, 5))
+        ax.legend(loc='upper left', markerscale=1.8, fontsize=18, framealpha=0.3)
         ax.tick_params(axis='both', which='major', labelsize=15)
-        plt.text(0.5, -2.8, "Average Total Error:   " + '{:.3f}'.format(totErr.mean()) + u'\N{DEGREE SIGN}', fontsize=18)
+        ax.text(0.5, -2.8, "Average Total Error:   " + '{:.3f}'.format(totErr.mean()) + u'\N{DEGREE SIGN}', fontsize=18)
         errorPlot.savefig(filepath.calibdata+dnight+'/pointerr_%s.png' %s[0])
 
         #saving the output file        
