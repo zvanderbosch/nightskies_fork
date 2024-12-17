@@ -92,17 +92,23 @@ def interp_coord(filenames, solved_outputs):
     Interpolate the True_AZ and True_ALT for images that are not solved and 
     update the RA and DEC with the interpolated values in the header.
     '''
-    # util = Dispatch('ACP.Util')
+
+    # Parse the inputs
     solved, _, _, True_AZ, True_ALT = solved_outputs
     fi = n.array([int(filenames[i][-7:-4]) for i in range(len(filenames))])
     
-    w = [0,15,30,40,45] # the number of last image in every elevation row
+    # The number of last image in every elevation row
+    w = [0,15,30,40,45]
     
+    # Iterate over elevation rows
     for i in range(len(w)-1):
+
+        # Get indices of unsolved images within this elevation row
         wf = (fi>w[i]) & (fi<=w[i+1])
-        
-        if not any(filenames[wf]): continue
-        if i==0: #using the second row of image in elevation for interpolation
+        if not any(filenames[wf]): 
+            continue
+
+        if i==0: # use the second row of images in elevation for interpolation
             wi = (solved>w[i+1]) & (solved<=w[i+2])
             k = min(3, sum(wi)-1)
             A = UnivariateSpline(solved[wi]-15, True_AZ[wi], k=1)
@@ -122,17 +128,30 @@ def interp_coord(filenames, solved_outputs):
                 j = int(fn[-7:-4])
                 entry = [j,H['AZ'],H['ALT'],float(A(j)),float(E(j))]
                 solved_outputs = n.insert(solved_outputs,j-1,entry,axis=1)
+
+                # Set time and site of observations
+                obstime = Time(H['JD'], format='jd', scale='utc')
+                site = coord.EarthLocation.from_geodetic(
+                    lon = H['LONGITUD']*u.deg,
+                    lat = H['LATITUDE']*u.deg,
+                    height = H['ELEVATIO']*u.m
+                )
+
+                # Generate topocentric coord object
+                imgTopoCoord = coord.SkyCoord(
+                    az = float(A(j))*u.deg,
+                    alt = float(E(j))*u.deg,
+                    obstime = obstime,
+                    location = site,
+                    frame='altaz'
+                )
+
+                # Transform to ICRS reference frame
+                imgCoord = imgTopoCoord.transform_to(coord.ICRS())
         
-                #update the RA and DEC in the header with the interpolated values
-                LAST = get_last(H['JD'],H['LONGITUD']) #local apparent sidereal time 
-            
-                # ct = util.Newct(H['LATITUDE'],LAST)
-                # ct.Azimuth = float(A(j))
-                # ct.Elevation = float(E(j))
-                # c = coord.SkyCoord(ct.RightAscension, ct.Declination, unit=('hour','deg'))
-            
-                # H['RA'] = c.ra.to_string(unit='hour',sep=' ',precision=2)
-                # H['DEC'] = c.dec.to_string(unit='deg',sep=' ',precision=1)
+                # Update the RA and DEC in the header with the interpolated values
+                H['RA'] = imgCoord.ra.to_string(unit='hour',sep=' ',precision=2)
+                H['DEC'] = imgCoord.dec.to_string(unit='deg',sep=' ',precision=1)
                 hdul.flush()
             
     return solved_outputs.T
