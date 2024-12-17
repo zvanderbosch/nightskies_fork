@@ -209,21 +209,21 @@ def pointing_err(dnight, sets):
                 frame='icrs'
             )
             
-            # Transform to ITRS topocentric reference frame
+            # Transform to AltAz topocentric reference frame
             imgTopoCoord = imgCoord.transform_to(
-                coord.ITRS(obstime=obstime, location=site)
+                coord.AltAz(obstime=obstime, location=site)
             )
             
             # Save input and true Alt/Az image coordinates
             Input_AZ.append(H['AZ'])
             Input_ALT.append(H['ALT'])
-            True_AZ.append(imgTopoCoord.altaz.az.deg)
+            True_AZ.append(imgTopoCoord.az.deg)
 
             # Correct altitude for atmospheric refraction on images 1-15
             if int(fn[-7:-4]) < 16: 
-                True_ALT.append(imgTopoCoord.altaz.alt.deg + refraction)
+                True_ALT.append(imgTopoCoord.alt.deg + refraction)
             else:
-                True_ALT.append(imgTopoCoord.altaz.alt.deg)
+                True_ALT.append(imgTopoCoord.alt.deg)
                           
         
         #interpolate the True_AZ for True_ALT for images that are not solved
