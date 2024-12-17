@@ -48,8 +48,10 @@ import filepath
 
 def update_fits(fn, message):
     """
-    Update original FITS file headers with 
-    Astrometry.net WCS solution.
+    Update FITS file headers with WCS solution from
+    Astrometry.net for both the original image and
+    the image used for solving if different from the
+    original image (e.g. the masked or cropped image).
 
     Parameters
     ----------
@@ -67,29 +69,7 @@ def update_fits(fn, message):
     None
     """
 
-    # First parse the message
-    solve_status = message[0]
-    fn_orig = message[1]
-    if solve_status == 'failed':
-        return
-
-    # Get path to the WCS file
-    fn_base = fn.split("\\")[-1][:-4]
-    astsetp = "{:s}/astrometry/".format(fn.split("\\")[0])
-    fn_wcs = f"{astsetp}{fn_base}_wcs.fit"
-
-    # Load the WCS and original FITS headers
-    with fits.open(fn_wcs) as hdu:
-        wcs_hdr = hdu[0].header
-    with fits.open(fn_orig) as hdu:
-        orig_hdr = hdu[0].header
-
-    # Update header value if a cropped image was used
-    if solve_status == 'cropped':
-        wcs_hdr['CRPIX1'] = wcs_hdr['CRPIX1'] + int(orig_hdr['NAXIS1']/2) - 100
-        wcs_hdr['CRPIX2'] = wcs_hdr['CRPIX2'] + int(orig_hdr['NAXIS2']/2) - 100
-        
-    # Header keys to save
+    # WCS Solution FITS header keys to save into image headers
     wcs_keys = [
         'WCSAXES', 'CTYPE1', 'CTYPE2','EQUINOX','LONPOLE','LATPOLE',
         'CRVAL1','CRVAL2','CRPIX1','CRPIX2','CUNIT1','CUNIT2',
@@ -100,8 +80,49 @@ def update_fits(fn, message):
         'BP_ORDER','BP_0_0','BP_0_1','BP_0_2','BP_1_0','BP_1_1','BP_2_0'
     ]
 
+    # First parse the message
+    solve_status = message[0]
+    fn_orig = message[1]
+    if solve_status == 'failed':
+        with fits.open(fn_orig, mode='update') as hdul:
+            hdul[0].header['PLTSOLVD'] = False
+            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+            hdul.flush()
+        return
+
+    # Get path to the WCS file
+    fn_base = fn.split("\\")[-1][:-4]
+    astsetp = "{:s}/astrometry/".format(fn.split("\\")[0])
+    fn_wcs = f"{astsetp}{fn_base}_wcs.fit"
+
+    # Load the WCS and original FITS headers
+    with fits.open(fn_wcs) as hdul:
+        wcs_hdr = hdul[0].header
+    with fits.open(fn_orig) as hdul:
+        orig_hdr = hdul[0].header
+
+    # If the solved image is different from the original 
+    # image, save the WCS solution there first
+    if fn != fn_orig:
+        with fits.open(fn, uint=False, mode='update') as hdul:
+            hdul[0].header['PLTSOLVD'] = True
+            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+            for key in wcs_keys:
+                if key not in list(wcs_hdr.keys()):
+                    continue
+                hdul[0].header[key] = wcs_hdr[key]
+                hdul[0].header.comments[key] = wcs_hdr.comments[key]
+            hdul.flush()
+
+    # Now update the WCS header values if a cropped image was used for solving
+    if solve_status == 'cropped':
+        wcs_hdr['CRPIX1'] = wcs_hdr['CRPIX1'] + orig_hdr['NAXIS1']/2 - 100
+        wcs_hdr['CRPIX2'] = wcs_hdr['CRPIX2'] + orig_hdr['NAXIS2']/2 - 100
+
     # Update original FITS file's header
     with fits.open(fn_orig, uint=False, mode='update') as hdul:
+        hdul[0].header['PLTSOLVD'] = True
+        hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
         for key in wcs_keys:
             if key not in list(wcs_hdr.keys()):
                 continue
@@ -135,7 +156,7 @@ def solve(fn):
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
-        '--private', '--no_commercial'
+        '--crpix-center'
     ]
     try: 
         response = subprocess.run(cmd, timeout=60)
@@ -161,7 +182,7 @@ def solve(fn):
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
-            '--private', '--no_commercial'
+            '--crpix-center'
         ]
         try:
             response = subprocess.run(cmd, timeout=60)
@@ -218,7 +239,7 @@ def matchstars(dnight, sets, filter):
         failed_fn = sorted(failed_fn)
         
     t1 = time.time()
-    print('  Solving time = {:.2f} minutes'.format((t1-t0)/60))
+    print('  Total Solving Time = {:.2f} minutes'.format((t1-t0)/60))
 
     return(cropped_fn, failed_fn)
     
