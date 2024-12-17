@@ -73,6 +73,7 @@ def update_fits(fn, message):
     if solve_status == 'failed':
         with fits.open(fn_orig, mode='update') as hdul:
             hdul[0].header['PLTSOLVD'] = False
+            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
             hdul.flush()
         return
 
