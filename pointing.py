@@ -254,7 +254,9 @@ def pointing_err(dnight, sets):
         ax.set_xlabel("Image Number", fontsize=20, labelpad = 15)
         ax.set_xticks(n.arange(0, 50, 5))
         ax.legend(loc='upper left', markerscale=1.8, fontsize=18, framealpha=0.3)
-        ax.tick_params(axis='both', which='major', labelsize=15)
+        ax.minorticks_on()
+        ax.tick_params(which='both', top=True, right=True, labelsize=15)
+        ax.grid(ls=':', lw=0.5, c='silver')
         ax.text(0.5, -2.8, "Average Total Error:   " + '{:.3f}'.format(totErr.mean()) + u'\N{DEGREE SIGN}', fontsize=18)
         errorPlot.savefig(filepath.calibdata+dnight+'/pointerr_%s.png' %s[0])
 
