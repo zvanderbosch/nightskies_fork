@@ -48,8 +48,10 @@ import filepath
 
 def update_fits(fn, message):
     """
-    Update original FITS file headers with 
-    Astrometry.net WCS solution.
+    Update FITS file headers with WCS solution from
+    Astrometry.net for both the original image and
+    the image used for solving if different from the
+    original image (e.g. the masked or cropped image).
 
     Parameters
     ----------
@@ -66,6 +68,17 @@ def update_fits(fn, message):
     -------
     None
     """
+
+    # WCS Solution FITS header keys to save into image headers
+    wcs_keys = [
+        'WCSAXES', 'CTYPE1', 'CTYPE2','EQUINOX','LONPOLE','LATPOLE',
+        'CRVAL1','CRVAL2','CRPIX1','CRPIX2','CUNIT1','CUNIT2',
+        'CD1_1','CD1_2','CD2_1','CD2_2',
+        'A_ORDER','A_0_0','A_0_1','A_0_2','A_1_0','A_1_1','A_2_0',
+        'B_ORDER','B_0_0','B_0_1','B_0_2','B_1_0','B_1_1','B_2_0',
+        'AP_ORDER','AP_0_0','AP_0_1','AP_0_2','AP_1_0','AP_1_1','AP_2_0',
+        'BP_ORDER','BP_0_0','BP_0_1','BP_0_2','BP_1_0','BP_1_1','BP_2_0'
+    ]
 
     # First parse the message
     solve_status = message[0]
@@ -88,21 +101,23 @@ def update_fits(fn, message):
     with fits.open(fn_orig) as hdul:
         orig_hdr = hdul[0].header
 
-    # Update header value if a cropped image was used
+    # If the solved image is different from the original 
+    # image, save the WCS solution there first
+    if fn != fn_orig:
+        with fits.open(fn, uint=False, mode='update') as hdul:
+            hdul[0].header['PLTSOLVD'] = True
+            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+            for key in wcs_keys:
+                if key not in list(wcs_hdr.keys()):
+                    continue
+                hdul[0].header[key] = wcs_hdr[key]
+                hdul[0].header.comments[key] = wcs_hdr.comments[key]
+            hdul.flush()
+
+    # Now update the WCS header values if a cropped image was used for solving
     if solve_status == 'cropped':
-        wcs_hdr['CRPIX1'] = wcs_hdr['CRPIX1'] + int(orig_hdr['NAXIS1']/2) - 100
-        wcs_hdr['CRPIX2'] = wcs_hdr['CRPIX2'] + int(orig_hdr['NAXIS2']/2) - 100
-        
-    # Header keys to save
-    wcs_keys = [
-        'WCSAXES', 'CTYPE1', 'CTYPE2','EQUINOX','LONPOLE','LATPOLE',
-        'CRVAL1','CRVAL2','CRPIX1','CRPIX2','CUNIT1','CUNIT2',
-        'CD1_1','CD1_2','CD2_1','CD2_2',
-        'A_ORDER','A_0_0','A_0_1','A_0_2','A_1_0','A_1_1','A_2_0',
-        'B_ORDER','B_0_0','B_0_1','B_0_2','B_1_0','B_1_1','B_2_0',
-        'AP_ORDER','AP_0_0','AP_0_1','AP_0_2','AP_1_0','AP_1_1','AP_2_0',
-        'BP_ORDER','BP_0_0','BP_0_1','BP_0_2','BP_1_0','BP_1_1','BP_2_0'
-    ]
+        wcs_hdr['CRPIX1'] = wcs_hdr['CRPIX1'] + orig_hdr['NAXIS1']/2 - 100
+        wcs_hdr['CRPIX2'] = wcs_hdr['CRPIX2'] + orig_hdr['NAXIS2']/2 - 100
 
     # Update original FITS file's header
     with fits.open(fn_orig, uint=False, mode='update') as hdul:
