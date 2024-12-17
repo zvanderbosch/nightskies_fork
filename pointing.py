@@ -272,33 +272,3 @@ if __name__ == "__main__":
     print("Hi, running from the console.")
     pointing_err('FCNA160803', ['1st',])
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
