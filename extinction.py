@@ -34,14 +34,12 @@
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
-from glob import glob, iglob
+from glob import iglob
 from scipy.optimize import curve_fit
 from win32com.client import Dispatch
 
-import pdb
 import matplotlib.pyplot as plt
 import numpy as n
-
 
 # Local Source
 from gaussian import Gaussian_2d
