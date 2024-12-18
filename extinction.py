@@ -95,8 +95,8 @@ def extinction(dnight, sets, filter, plot_img=0):
     #read in the standard star catalog
     # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
     hips = n.loadtxt(filepath.standards+'hipparcos_standards.csv',dtype=object,delimiter=",")
-    starn = hips[:,0]                                           #star names
-    ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float).T  #star properties
+    starn = hips[:,0]                                             #star names
+    ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
     Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
     
     #define image xy coordinates
@@ -105,13 +105,13 @@ def extinction(dnight, sets, filter, plot_img=0):
     x, y = n.meshgrid(x, y)
     
     #parameters specific to datasets with different filters
-    F = n.array([('/',),('/B/',)],dtype=[('path','S3'),])
-    F = F.view(n.recarray)
-    k = {'V':0, 'B':1}
+    # F = n.array([('/',),('/B/',)],dtype=[('path','S3'),])
+    # F = F.view(n.recarray)
+    k = {'V':'/', 'B':'/B/'}
     
     #loop through all the sets in that night
     for s in sets:
-        calsetp = filepath.calibdata+dnight+'/S_0%s%s' %(s[0],F.path[k[filter]])
+        calsetp = filepath.calibdata+dnight+'/S_0%s%s' %(s[0],k[filter])
         bestfit = []
         xscale = []
         yscale = []
@@ -157,13 +157,15 @@ def extinction(dnight, sets, filter, plot_img=0):
                 continue
             
             # Get the XY pixel coordinates of the given RA/Dec locations
-            def SkyToXY(ra, dec, w):
-                radec = [[r,d] for r,d in zip(ra,dec)]
-                xypix = w.all_world2pix(radec, 1)
+            # def SkyToXY(ra, dec):
             #     p.SkyToXy(ra, dec)
-                return xypix[:,0], xypix[:,1]
-            px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1], W)).T
-            # p.DetachFITS()            
+            #     return p.ScratchX, p.ScratchY
+            # px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1])).T
+            # p.DetachFITS()   
+            radec = [[r,d] for r,d in zip(ras[w1],decs[w1])]
+            xypix = W.all_world2pix(radec, 1)
+            px1 = xypix[:,0]
+            py1 = xypix[:,1]         
             
             # Find the standard stars within 490 pixels of the image center
             w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
