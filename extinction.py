@@ -34,10 +34,14 @@
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
+from astropy.time import Time
 from glob import iglob
 from scipy.optimize import curve_fit
 from win32com.client import Dispatch
 
+import astropy.units as u
+import astropy.wcs as wcs
+import astropy.coordinates as coord
 import matplotlib.pyplot as plt
 import numpy as n
 
@@ -112,7 +116,12 @@ def extinction(dnight, sets, filter, plot_img=0):
         yscale = []
 
         #read in the header to set the site object's parameter
-        H = fits.open(calsetp+'ib001.fit')[0].header
+        H = fits.getheader(calsetp+'ib001.fit',ext=0)
+        site = coord.EarthLocation.from_geodetic(
+            lon = H['LONGITUD']*u.deg,
+            lat = H['LATITUDE']*u.deg,
+            height = H['ELEVATIO']*u.m
+        )
         # site.longitude = H['LONGITUD']
         # site.latitude = H['LATITUDE']
         # site.height = 0
@@ -120,7 +129,13 @@ def extinction(dnight, sets, filter, plot_img=0):
                 
         # loop through each file in the set
         for fn in iglob(calsetp+'ib???.fit'):
+
+            # Open header and create WCS object
             H = fits.open(fn)[0].header
+            W = wcs.WCS(H)
+
+            # Get image observation time
+            obstime = Time(H['JD'], format='jd', scale='utc')
             
             #proceed only if the plate (what plate?) is solved
             try:
@@ -129,25 +144,27 @@ def extinction(dnight, sets, filter, plot_img=0):
             except KeyError:
                 continue
 
-            #find the standard stars within the 24 X 24 deg image
+            # Find the standard stars within the 24 X 24 deg image
             # p.attachFits(fn)
-            # img_dec = abs(decs-p.Declination) < 12
-            # img_ra = abs(ras-p.RightAscension)<(12/(15*n.cos(n.deg2rad(decs))))
-            # w1 = n.where(img_dec & img_ra)   # stars 
+            img_dec = abs(decs-H['CRVAL2']) < 12
+            img_ra = abs(ras-H['CRVAL1'])<(12/(15*n.cos(n.deg2rad(decs))))
+            w1 = n.where(img_dec & img_ra)   # stars 
             
-            #skip the image w/o standard stars
+            # Skip the image w/o standard stars
             if len(w1[0])==0:  
                 # p.DetachFITS()
                 continue
             
-            #Get the XY pixel coordinates of the given RA/Dec locations
-            # def SkyToXY(ra, dec):
+            # Get the XY pixel coordinates of the given RA/Dec locations
+            def SkyToXY(ra, dec, w):
+                radec = [[r,d] for r,d in zip(ra,dec)]
+                xypix = w.all_world2pix(radec, 1)
             #     p.SkyToXy(ra, dec)
-            #     return p.ScratchX, p.ScratchY
-            px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1])).T
+                return xypix[:,0], xypix[:,1]
+            px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1], W)).T
             # p.DetachFITS()            
             
-            #find the standard stars within 490 pixels of the image center
+            # Find the standard stars within 490 pixels of the image center
             w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
             w3 = w1[0][w2]
             px, py = px1[w2], py1[w2]
@@ -157,7 +174,7 @@ def extinction(dnight, sets, filter, plot_img=0):
             popt_plot_list = []
             
             #info needed for calculating the altitude of the stars later
-            JD = H['JD']                               #Julian Date
+            # JD = H['JD']                               #Julian Date
             # TJD = util.Julian_TJD(JD)                  #Terrestrial Julian Date
             # LAST = pointing.get_last(JD,H['LONGITUD']) #sidereal time [hr]
             # ct = util.Newct(H['LATITUDE'],LAST)
@@ -187,6 +204,15 @@ def extinction(dnight, sets, filter, plot_img=0):
                 # ct.RightAscension = StarTopo.RightAscension
                 # ct.Declination = StarTopo.Declination
                 # elev = ct.Elevation       #elevation[deg]
+
+                # Calculate elevation of the star
+                star = coord.SkyCoord(
+                    ra=ra[i]*u.deg, dec=dec[i]*u.deg, frame='icrs'
+                )
+                StarTopo = star.transform_to(
+                    coord.AltAz(obstime=obstime, location=site)
+                )
+                elev = StarTopo.alt.deg
                 
                 #set the acceptance threshold and record the measurement
                 delta_position = n.sum(((popt-guess)**2)[0:2])   #position diff
