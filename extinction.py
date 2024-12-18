@@ -82,10 +82,10 @@ def extinction(dnight, sets, filter, plot_img=0):
     the file containing the best-fit extinction coefficient, zeropoint, and
     their uncertainties. 
     '''
-    star = Dispatch('NOVAS.Star')
-    site = Dispatch('NOVAS.Site')
-    util = Dispatch('ACP.Util')
-    p = Dispatch('PinPoint.Plate')
+    # star = Dispatch('NOVAS.Star')
+    # site = Dispatch('NOVAS.Site')
+    # util = Dispatch('ACP.Util')
+    # p = Dispatch('PinPoint.Plate')
     zeropoint_dnight = []
     
     #read in the standard star catalog
@@ -113,9 +113,9 @@ def extinction(dnight, sets, filter, plot_img=0):
 
         #read in the header to set the site object's parameter
         H = fits.open(calsetp+'ib001.fit')[0].header
-        site.longitude = H['LONGITUD']
-        site.latitude = H['LATITUDE']
-        site.height = 0
+        # site.longitude = H['LONGITUD']
+        # site.latitude = H['LATITUDE']
+        # site.height = 0
         exp = H['exptime'] #[s]
                 
         # loop through each file in the set
@@ -130,22 +130,22 @@ def extinction(dnight, sets, filter, plot_img=0):
                 continue
 
             #find the standard stars within the 24 X 24 deg image
-            p.attachFits(fn)
-            img_dec = abs(decs-p.Declination) < 12
-            img_ra = abs(ras-p.RightAscension)<(12/(15*n.cos(n.deg2rad(decs))))
-            w1 = n.where(img_dec & img_ra)   # stars 
+            # p.attachFits(fn)
+            # img_dec = abs(decs-p.Declination) < 12
+            # img_ra = abs(ras-p.RightAscension)<(12/(15*n.cos(n.deg2rad(decs))))
+            # w1 = n.where(img_dec & img_ra)   # stars 
             
             #skip the image w/o standard stars
             if len(w1[0])==0:  
-                p.DetachFITS()
+                # p.DetachFITS()
                 continue
             
             #Get the XY pixel coordinates of the given RA/Dec locations
-            def SkyToXY(ra, dec):
-                p.SkyToXy(ra, dec)
-                return p.ScratchX, p.ScratchY
+            # def SkyToXY(ra, dec):
+            #     p.SkyToXy(ra, dec)
+            #     return p.ScratchX, p.ScratchY
             px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1])).T
-            p.DetachFITS()            
+            # p.DetachFITS()            
             
             #find the standard stars within 490 pixels of the image center
             w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
@@ -153,14 +153,14 @@ def extinction(dnight, sets, filter, plot_img=0):
             px, py = px1[w2], py1[w2]
             hip, ra, dec, M = starn[w3], ras[w3], decs[w3], Mag[filter][w3] 
 
-            data = fits.open(fn)[0].data
+            data = fits.getdata(fn,ext=0)
             popt_plot_list = []
             
             #info needed for calculating the altitude of the stars later
             JD = H['JD']                               #Julian Date
-            TJD = util.Julian_TJD(JD)                  #Terrestrial Julian Date
-            LAST = pointing.get_last(JD,H['LONGITUD']) #sidereal time [hr]
-            ct = util.Newct(H['LATITUDE'],LAST)
+            # TJD = util.Julian_TJD(JD)                  #Terrestrial Julian Date
+            # LAST = pointing.get_last(JD,H['LONGITUD']) #sidereal time [hr]
+            # ct = util.Newct(H['LATITUDE'],LAST)
             
             #fit 2D Gaussians to standard stars in the image
             for i in range(len(px)):
@@ -181,12 +181,12 @@ def extinction(dnight, sets, filter, plot_img=0):
                     continue
                 
                 #calculate the elevation of the star
-                star.RightAscension = ra[i]
-                star.Declination = dec[i]
-                StarTopo = star.GetTopocentricPosition(TJD, site, False)
-                ct.RightAscension = StarTopo.RightAscension
-                ct.Declination = StarTopo.Declination
-                elev = ct.Elevation       #elevation[deg]
+                # star.RightAscension = ra[i]
+                # star.Declination = dec[i]
+                # StarTopo = star.GetTopocentricPosition(TJD, site, False)
+                # ct.RightAscension = StarTopo.RightAscension
+                # ct.Declination = StarTopo.Declination
+                # elev = ct.Elevation       #elevation[deg]
                 
                 #set the acceptance threshold and record the measurement
                 delta_position = n.sum(((popt-guess)**2)[0:2])   #position diff
