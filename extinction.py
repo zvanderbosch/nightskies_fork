@@ -37,7 +37,6 @@ from astropy.io import fits
 from astropy.time import Time
 from glob import iglob
 from scipy.optimize import curve_fit
-from win32com.client import Dispatch
 
 import astropy.units as u
 import astropy.wcs as wcs
@@ -48,7 +47,6 @@ import numpy as n
 # Local Source
 from gaussian import Gaussian_2d
 import filepath
-import pointing
 
 #-----------------------------------------------------------------------------#
 
@@ -86,15 +84,12 @@ def extinction(dnight, sets, filter, plot_img=0):
     the file containing the best-fit extinction coefficient, zeropoint, and
     their uncertainties. 
     '''
-    # star = Dispatch('NOVAS.Star')
-    # site = Dispatch('NOVAS.Site')
-    # util = Dispatch('ACP.Util')
-    # p = Dispatch('PinPoint.Plate')
+
     zeropoint_dnight = []
     
     #read in the standard star catalog
     # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
-    hips = n.loadtxt(filepath.standards+'hipparcos_standards.csv',dtype=object,delimiter=",")
+    hips = n.loadtxt(filepath.standards+'hipparcos_standards_bright.csv',dtype=object,delimiter=",")
     starn = hips[:,0]                                             #star names
     ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
     Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
@@ -105,8 +100,6 @@ def extinction(dnight, sets, filter, plot_img=0):
     x, y = n.meshgrid(x, y)
     
     #parameters specific to datasets with different filters
-    # F = n.array([('/',),('/B/',)],dtype=[('path','S3'),])
-    # F = F.view(n.recarray)
     k = {'V':'/', 'B':'/B/'}
     
     #loop through all the sets in that night
@@ -123,9 +116,6 @@ def extinction(dnight, sets, filter, plot_img=0):
             lat = H['LATITUDE']*u.deg,
             height = H['ELEVATIO']*u.m
         )
-        # site.longitude = H['LONGITUD']
-        # site.latitude = H['LATITUDE']
-        # site.height = 0
         exp = H['exptime'] #[s]
                 
         # loop through each file in the set
@@ -146,22 +136,15 @@ def extinction(dnight, sets, filter, plot_img=0):
                 continue
 
             # Find the standard stars within the 24 X 24 deg image
-            # p.attachFits(fn)
             img_dec = abs(decs-H['CRVAL2']) < 12
             img_ra = abs(ras-H['CRVAL1'])<(12/(15*n.cos(n.deg2rad(decs))))
             w1 = n.where(img_dec & img_ra)   # stars 
             
             # Skip the image w/o standard stars
             if len(w1[0])==0:  
-                # p.DetachFITS()
                 continue
             
-            # Get the XY pixel coordinates of the given RA/Dec locations
-            # def SkyToXY(ra, dec):
-            #     p.SkyToXy(ra, dec)
-            #     return p.ScratchX, p.ScratchY
-            # px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1])).T
-            # p.DetachFITS()   
+            # Get the XY pixel coordinates of the given RA/Dec locations 
             radec = [[r,d] for r,d in zip(ras[w1],decs[w1])]
             xypix = W.all_world2pix(radec, 1)
             px1 = xypix[:,0]
@@ -175,12 +158,6 @@ def extinction(dnight, sets, filter, plot_img=0):
 
             data = fits.getdata(fn,ext=0)
             popt_plot_list = []
-            
-            #info needed for calculating the altitude of the stars later
-            # JD = H['JD']                               #Julian Date
-            # TJD = util.Julian_TJD(JD)                  #Terrestrial Julian Date
-            # LAST = pointing.get_last(JD,H['LONGITUD']) #sidereal time [hr]
-            # ct = util.Newct(H['LATITUDE'],LAST)
             
             #fit 2D Gaussians to standard stars in the image
             for i in range(len(px)):
@@ -199,14 +176,6 @@ def extinction(dnight, sets, filter, plot_img=0):
                     popt = curve_fit(Gaussian_2d, (x[w],y[w]), f, p0=guess)[0]
                 except RuntimeError:
                     continue
-                
-                #calculate the elevation of the star
-                # star.RightAscension = ra[i]
-                # star.Declination = dec[i]
-                # StarTopo = star.GetTopocentricPosition(TJD, site, False)
-                # ct.RightAscension = StarTopo.RightAscension
-                # ct.Declination = StarTopo.Declination
-                # elev = ct.Elevation       #elevation[deg]
 
                 # Calculate elevation of the star
                 star = coord.SkyCoord(
