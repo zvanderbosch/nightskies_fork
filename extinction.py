@@ -93,7 +93,8 @@ def extinction(dnight, sets, filter, plot_img=0):
     zeropoint_dnight = []
     
     #read in the standard star catalog
-    hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
+    # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
+    hips = n.loadtxt(filepath.standards+'hipparcos_standards.csv',dtype=object,delimiter=",")
     starn = hips[:,0]                                           #star names
     ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float).T  #star properties
     Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
