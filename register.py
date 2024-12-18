@@ -28,16 +28,17 @@
 #History:
 #	Dan Duriscoe -- Created in visual basic as "solve_images_v4b.vbs"
 #	Li-Wei Hung -- Cleaned and translated to python
+#   Zach Vanderbosch -- Updated Py2 --> Py3, removed ACP/ASCOM dependencies
 #
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
-from glob import glob, iglob
+from glob import glob
 from multiprocessing import Pool
-from multiprocessing.context import TimeoutError
 
 import os
 import time
+import math
 import subprocess
 import numpy as n
 
@@ -45,6 +46,70 @@ import numpy as n
 import filepath     
 
 #-----------------------------------------------------------------------------#
+
+def wcs_calc(hdr):
+    """
+    Function that calculates the CDELT and CROTA WCS parameters.
+    These are more or less deprecated, with modern FITS standards
+    using the CD-matrix parameters instead for WCS solutions, but
+    would like to keep them in our solutions in case other parts of
+    the pipeline need them. Astrometry.net does not include CDELT
+    or CROTA in their solutions, so calculating them here following 
+    equations 190 - 193 in Calabretta, M. R., and Greisen, E. W, 
+    Astronomy & Astrophysics, 395, 1077-1122, 2002.
+
+    Parameters
+    ----------
+    hdr: FITS header
+        An Astropy FITS header containing WCS solution.
+        Must have the CD matrix values CD1_1, CD1_2, 
+        CD2_1, and CD2_2.
+
+    Returns
+    -------
+    cdelt1: float
+        The X-axis plate scale
+    cdelt2: float
+        The Y-axis plate scale
+    crota1: float
+        The roll angle w.r.t. X-axis
+    crota2: float
+        The roll angle w.r.t. Y-axis
+    """
+
+    # Get CD-matrix values
+    cd1_1 = hdr['CD1_1']
+    cd1_2 = hdr['CD1_2']
+    cd2_1 = hdr['CD2_1']
+    cd2_2 = hdr['CD2_2']
+
+    # Calculate rho-a (in radians)
+    if cd2_1 > 0:
+        rho_a = math.atan2( cd1_1, cd2_1)
+    elif cd2_1 < 0:
+        rho_a = math.atan2(-cd1_1,-cd2_1)
+    else:
+        rho_a = 0.0
+
+    # Calculate rho-b (in radians)
+    if cd1_2 > 0:
+        rho_b = math.atan2(-cd2_2, cd1_2)
+    elif cd1_2 < 0:
+        rho_b = math.atan2( cd2_2,-cd1_2)
+    else:
+        rho_b = 0.0
+
+    # Calculate rho
+    rho = (rho_a + rho_b) / 2
+
+    # Calculate CDELT & CROTA values
+    cdelt1 = cd1_1 / n.cos(rho)
+    cdelt2 = cd2_2 / n.cos(rho)
+    crota1 = rho
+    crota2 = rho
+
+    return cdelt1,cdelt2,crota1,crota2
+
 
 def update_fits(fn, message):
     """
@@ -63,10 +128,6 @@ def update_fits(fn, message):
         and the name of the original FITS file that
         will be updated. The solve status can be
         'normal', 'cropped', or 'failed'.
-
-    Returns
-    -------
-    None
     """
 
     # WCS Solution FITS header keys to save into image headers
@@ -101,17 +162,33 @@ def update_fits(fn, message):
     with fits.open(fn_orig) as hdul:
         orig_hdr = hdul[0].header
 
+    # Calculate the CDELT/CROTA values
+    cdcr = wcs_calc(wcs_hdr)
+
     # If the solved image is different from the original 
     # image, save the WCS solution there first
     if fn != fn_orig:
         with fits.open(fn, uint=False, mode='update') as hdul:
-            hdul[0].header['PLTSOLVD'] = True
-            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+            H = hdul[0].header
+            H['PLTSOLVD'] = (True, 'Astrometric solution solved')
             for key in wcs_keys:
                 if key not in list(wcs_hdr.keys()):
                     continue
-                hdul[0].header[key] = wcs_hdr[key]
-                hdul[0].header.comments[key] = wcs_hdr.comments[key]
+                H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
+            
+            # Add cdelt/crota params
+            H.set('CDELT1', cdcr[0], '[deg/pixel] X-axis plate scale', before='CD1_1')
+            H.set('CDELT2', cdcr[1], '[deg/pixel] Y-axis plate scale', before='CD1_1')
+            H.set('CROTA1', cdcr[2], '[deg] Roll angle w.r.t. X-axis', before='CD1_1')
+            H.set('CROTA2', cdcr[3], '[deg] Roll angle w.r.t. Y-axis', before='CD1_1')
+
+            # Add history
+            if 'HISTORY' not in H:
+                H['HISTORY'] = 'WCS created using the Astrometry.net suite'
+                H['HISTORY'] = wcs_hdr['HISTORY'][1]
+                H['HISTORY'] = wcs_hdr['HISTORY'][2]
+
+            # Flush changes to file
             hdul.flush()
 
     # Now update the WCS header values if a cropped image was used for solving
@@ -121,13 +198,26 @@ def update_fits(fn, message):
 
     # Update original FITS file's header
     with fits.open(fn_orig, uint=False, mode='update') as hdul:
-        hdul[0].header['PLTSOLVD'] = True
-        hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+        H = hdul[0].header
+        H['PLTSOLVD'] = (True, 'Astrometric solution solved')
         for key in wcs_keys:
             if key not in list(wcs_hdr.keys()):
                 continue
-            hdul[0].header[key] = wcs_hdr[key]
-            hdul[0].header.comments[key] = wcs_hdr.comments[key]
+            H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
+        
+        # Add cdelt/crota params
+        H.set('CDELT1', cdcr[0], '[deg/pixel] X-axis plate scale', before='CD1_1')
+        H.set('CDELT2', cdcr[1], '[deg/pixel] Y-axis plate scale', before='CD1_1')
+        H.set('CROTA1', cdcr[2], '[deg] Roll angle w.r.t. X-axis', before='CD1_1')
+        H.set('CROTA2', cdcr[3], '[deg] Roll angle w.r.t. Y-axis', before='CD1_1')
+
+        # Add history
+        if 'HISTORY' not in H:
+            H['HISTORY'] = 'WCS created using the Astrometry.net suite'
+            H['HISTORY'] = wcs_hdr['HISTORY'][1]
+            H['HISTORY'] = wcs_hdr['HISTORY'][2]
+
+        # Flush changes to file
         hdul.flush()
 
 
@@ -243,9 +333,8 @@ def matchstars(dnight, sets, filter):
 
     return(cropped_fn, failed_fn)
     
-    
-    
-    
+
+
 if __name__ == "__main__":
     #import time
     #t1 = time.time()
