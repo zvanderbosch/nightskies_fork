@@ -116,8 +116,8 @@ def update_fits(fn, message):
                 H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
             
             # Add cdelt params using pixel scale value
-            H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CD1_1')
-            H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CD1_1')
+            H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
+            H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CUNIT1')
 
             # Add history
             if 'HISTORY' not in H:
@@ -143,8 +143,8 @@ def update_fits(fn, message):
             H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
         
         # Add cdelt/crota params
-        H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CD1_1')
-        H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CD1_1')
+        H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
+        H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CUNIT1')
 
         # Add history
         if 'HISTORY' not in H:
