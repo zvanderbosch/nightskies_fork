@@ -47,70 +47,6 @@ import filepath
 
 #-----------------------------------------------------------------------------#
 
-def wcs_calc(hdr):
-    """
-    Function that calculates the CDELT and CROTA WCS parameters.
-    These are more or less deprecated, with modern FITS standards
-    using the CD-matrix parameters instead for WCS solutions, but
-    would like to keep them in our solutions in case other parts of
-    the pipeline need them. Astrometry.net does not include CDELT
-    or CROTA in their solutions, so calculating them here following 
-    equations 190 - 193 in Calabretta, M. R., and Greisen, E. W, 
-    Astronomy & Astrophysics, 395, 1077-1122, 2002.
-
-    Parameters
-    ----------
-    hdr: FITS header
-        An Astropy FITS header containing WCS solution.
-        Must have the CD matrix values CD1_1, CD1_2, 
-        CD2_1, and CD2_2.
-
-    Returns
-    -------
-    cdelt1: float
-        The X-axis plate scale
-    cdelt2: float
-        The Y-axis plate scale
-    crota1: float
-        The roll angle w.r.t. X-axis
-    crota2: float
-        The roll angle w.r.t. Y-axis
-    """
-
-    # Get CD-matrix values
-    cd1_1 = hdr['CD1_1']
-    cd1_2 = hdr['CD1_2']
-    cd2_1 = hdr['CD2_1']
-    cd2_2 = hdr['CD2_2']
-
-    # Calculate rho-a (in radians)
-    if cd2_1 > 0:
-        rho_a = math.atan2( cd1_1, cd2_1)
-    elif cd2_1 < 0:
-        rho_a = math.atan2(-cd1_1,-cd2_1)
-    else:
-        rho_a = 0.0
-
-    # Calculate rho-b (in radians)
-    if cd1_2 > 0:
-        rho_b = math.atan2(-cd2_2, cd1_2)
-    elif cd1_2 < 0:
-        rho_b = math.atan2( cd2_2,-cd1_2)
-    else:
-        rho_b = 0.0
-
-    # Calculate rho
-    rho = (rho_a + rho_b) / 2
-
-    # Calculate CDELT & CROTA values
-    cdelt1 = cd1_1 / n.cos(rho)
-    cdelt2 = cd2_2 / n.cos(rho)
-    crota1 = rho
-    crota2 = rho
-
-    return cdelt1,cdelt2,crota1,crota2
-
-
 def update_fits(fn, message):
     """
     Update FITS file headers with WCS solution from
@@ -151,10 +87,11 @@ def update_fits(fn, message):
             hdul.flush()
         return
 
-    # Get path to the WCS file
+    # Get path to the WCS & calib files
     fn_base = fn.split("\\")[-1][:-4]
     astsetp = "{:s}/astrometry/".format(fn.split("\\")[0])
     fn_wcs = f"{astsetp}{fn_base}_wcs.fit"
+    fn_calib = f"{astsetp}{fn_base}_calib.txt"
 
     # Load the WCS and original FITS headers
     with fits.open(fn_wcs) as hdul:
@@ -162,8 +99,10 @@ def update_fits(fn, message):
     with fits.open(fn_orig) as hdul:
         orig_hdr = hdul[0].header
 
-    # Calculate the CDELT/CROTA values
-    cdcr = wcs_calc(wcs_hdr)
+    # Get pixel scale from the calibration file
+    with open(fn_calib) as js:
+        calib = json.load(js)
+    pixscale = calib['pixscale']
 
     # If the solved image is different from the original 
     # image, save the WCS solution there first
@@ -176,11 +115,9 @@ def update_fits(fn, message):
                     continue
                 H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
             
-            # Add cdelt/crota params
-            H.set('CDELT1', cdcr[0], '[deg/pixel] X-axis plate scale', before='CD1_1')
-            H.set('CDELT2', cdcr[1], '[deg/pixel] Y-axis plate scale', before='CD1_1')
-            H.set('CROTA1', cdcr[2], '[deg] Roll angle w.r.t. X-axis', before='CD1_1')
-            H.set('CROTA2', cdcr[3], '[deg] Roll angle w.r.t. Y-axis', before='CD1_1')
+            # Add cdelt params using pixel scale value
+            H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CD1_1')
+            H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CD1_1')
 
             # Add history
             if 'HISTORY' not in H:
@@ -206,10 +143,8 @@ def update_fits(fn, message):
             H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
         
         # Add cdelt/crota params
-        H.set('CDELT1', cdcr[0], '[deg/pixel] X-axis plate scale', before='CD1_1')
-        H.set('CDELT2', cdcr[1], '[deg/pixel] Y-axis plate scale', before='CD1_1')
-        H.set('CROTA1', cdcr[2], '[deg] Roll angle w.r.t. X-axis', before='CD1_1')
-        H.set('CROTA2', cdcr[3], '[deg] Roll angle w.r.t. Y-axis', before='CD1_1')
+        H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CD1_1')
+        H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CD1_1')
 
         # Add history
         if 'HISTORY' not in H:
