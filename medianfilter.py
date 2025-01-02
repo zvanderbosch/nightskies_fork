@@ -21,6 +21,7 @@
 #History:
 #	Dan Duriscoe -- Created in java script as "med1.js"; used PixInsight
 #	Li-Wei Hung -- Rewrote in python; replaced PixInsight by python functions
+#   Zach Vanderbosch -- Py2 -> Py3 updates and replaced MaximDL with Astropy/PIL
 #
 #-----------------------------------------------------------------------------#
 
@@ -53,12 +54,9 @@ def FilterImage(arg):
         print(f'filtering images {m:d}/45')
 
     # Get FITS header/data
-    # outFits = 'tiff/median_%s.fit'%fn[-9:-4] #temporary file
     with fits.open(fn) as hdul:
         fits_data = median_filter(hdul[0].data, footprint=mask)
         fits_hdr = hdul[0].header
-        # hdul[0].data = fits_data
-        # hdul.writeto(fn[:-9]+outFits,overwrite=True)
 
     # Save as TIFF file. TIFF Tag IDs found here:
     # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
