@@ -28,11 +28,11 @@ from astropy.io import fits
 from glob import glob, iglob
 from multiprocessing import Pool
 from scipy.ndimage.filters import median_filter
-from win32com.client import Dispatch
+from PIL import Image
 
+import PIL
 import itertools
 import numpy as n
-import os
 
 # Local Source
 import filepath  
@@ -43,24 +43,43 @@ def FilterImage(arg):
     Apply the median filter using the given mask size and save the images in 
     .tif format.
     '''
-    fn, mask = arg
-    T = Dispatch('Maxim.Document')
 
+    # Parse input
+    fn, mask = arg
+
+    # Print out progress messages
     m = int(fn[-7:-4])
     if m in range(0,50,5): 
-        print 'filtering images %i/45'%m
-    
-    outFits = 'tiff/median_%s.fit'%fn[-9:-4] #temporary file
-    outTiff = 'tiff/median_%s.tif'%fn[-9:-4] #output file
-    D = fits.open(fn)[0]
-    D.data = median_filter(D.data, footprint=mask)
-    D.writeto(fn[:-9]+outFits, overwrite=True)
-    T.OpenFile(fn[:-9]+outFits)
-    T.SaveFile(fn[:-9]+outTiff,5,False,1,0)
-    T.Close
-    os.remove(fn[:-9]+outFits)
-    
+        print(f'filtering images {m:d}/45')
 
+    # Get FITS header/data
+    # outFits = 'tiff/median_%s.fit'%fn[-9:-4] #temporary file
+    with fits.open(fn) as hdul:
+        fits_data = median_filter(hdul[0].data, footprint=mask)
+        fits_hdr = hdul[0].header
+        # hdul[0].data = fits_data
+        # hdul.writeto(fn[:-9]+outFits,overwrite=True)
+
+    # Save as TIFF file. TIFF Tag IDs found here:
+    # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
+    outTiff = 'tiff/median_%s.tif'%fn[-9:-4] #output file
+    tiff_data = fits_data.astype(n.uint16)
+    software_info = f'pillow (PIL) version {PIL.__version__}'
+    tiff_info = {
+        270: fits_hdr['OBJECT'],   # Description
+        305: software_info,        # Software
+        259: 1,                    # Compression (1 = None)
+        282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
+        283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
+        296: 2,                    # Resolution unit (2 = dpi)
+        271: fits_hdr['INSTRUME']  # Camera Maker
+    }
+    tiff_output = Image.fromarray(tiff_data, mode="I;16")
+    tiff_output.save(
+        fn[:-9]+outTiff,
+        tiffinfo = tiff_info
+    )
+    
 
 
 def filter(dnight, sets, filter):
@@ -93,14 +112,11 @@ def filter(dnight, sets, filter):
     #loop through all the sets in that night
     for s in sets:
         calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
-        arg = itertools.izip(glob(calsetp+'ib???.fit'), itertools.repeat(mask))
+        arg = zip(glob(calsetp+'ib???.fit'), itertools.repeat(mask))
         p.map(FilterImage, arg)
         
     p.close()
     p.join()
-    
-    #close MaxIm_DL application
-    #os.system('taskkill /f /im MaxIm_DL.exe')
     
 
     
