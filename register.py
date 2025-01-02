@@ -101,7 +101,7 @@ def update_fits(fn, message):
     # Get pixel scale from the calibration file
     with open(fn_calib) as js:
         calib = json.load(js)
-    pixscale = calib['pixscale']
+    pixscale = calib['pixscale'] / 3600. # [deg/pix] platescale
 
     # If the solved image is different from the original 
     # image, save the WCS solution there first
