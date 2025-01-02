@@ -7,4 +7,5 @@ flats = "C:/Users/zvanderbosch/OneDrive - DOI/Documents/NSNSD_CCD/pipeline_orig/
 rawdata = "C:/Users/zvanderbosch/OneDrive - DOI/Documents/NSNSD_CCD/pipeline_orig/Data/FieldData/"
 calibdata = "C:/Users/zvanderbosch/OneDrive - DOI/Documents/NSNSD_CCD/pipeline_orig/Data/Calibdata/"
 tiff = "C:/Users/zvanderbosch/OneDrive - DOI/Documents/NSNSD_CCD/pipeline_orig/Data/Calibdata/"
+standards = "C:/Users/zvanderbosch/OneDrive - DOI/Documents/NSNSD_CCD/pipeline_orig/Data/Standards/"
 apikey = 'kdvqtjbqkbkbuyzb' 		#Astrometry API key

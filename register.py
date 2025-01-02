@@ -28,16 +28,17 @@
 #History:
 #	Dan Duriscoe -- Created in visual basic as "solve_images_v4b.vbs"
 #	Li-Wei Hung -- Cleaned and translated to python
+#   Zach Vanderbosch -- Updated Py2 --> Py3, removed ACP/ASCOM dependencies
 #
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
-from glob import glob, iglob
+from glob import glob
 from multiprocessing import Pool
-from multiprocessing.context import TimeoutError
 
 import os
 import time
+import json
 import subprocess
 import numpy as n
 
@@ -63,10 +64,6 @@ def update_fits(fn, message):
         and the name of the original FITS file that
         will be updated. The solve status can be
         'normal', 'cropped', or 'failed'.
-
-    Returns
-    -------
-    None
     """
 
     # WCS Solution FITS header keys to save into image headers
@@ -85,15 +82,15 @@ def update_fits(fn, message):
     fn_orig = message[1]
     if solve_status == 'failed':
         with fits.open(fn_orig, mode='update') as hdul:
-            hdul[0].header['PLTSOLVD'] = False
-            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+            hdul[0].header['PLTSOLVD'] = (False, 'Astrometric solution solved')
             hdul.flush()
         return
 
-    # Get path to the WCS file
+    # Get path to the WCS & calib files
     fn_base = fn.split("\\")[-1][:-4]
     astsetp = "{:s}/astrometry/".format(fn.split("\\")[0])
     fn_wcs = f"{astsetp}{fn_base}_wcs.fit"
+    fn_calib = f"{astsetp}{fn_base}_calib.txt"
 
     # Load the WCS and original FITS headers
     with fits.open(fn_wcs) as hdul:
@@ -101,17 +98,33 @@ def update_fits(fn, message):
     with fits.open(fn_orig) as hdul:
         orig_hdr = hdul[0].header
 
+    # Get pixel scale from the calibration file
+    with open(fn_calib) as js:
+        calib = json.load(js)
+    pixscale = calib['pixscale']
+
     # If the solved image is different from the original 
     # image, save the WCS solution there first
     if fn != fn_orig:
         with fits.open(fn, uint=False, mode='update') as hdul:
-            hdul[0].header['PLTSOLVD'] = True
-            hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+            H = hdul[0].header
+            H['PLTSOLVD'] = (True, 'Astrometric solution solved')
             for key in wcs_keys:
                 if key not in list(wcs_hdr.keys()):
                     continue
-                hdul[0].header[key] = wcs_hdr[key]
-                hdul[0].header.comments[key] = wcs_hdr.comments[key]
+                H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
+            
+            # Add cdelt params using pixel scale value
+            H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
+            H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CUNIT1')
+
+            # Add history
+            if 'HISTORY' not in H:
+                H['HISTORY'] = 'WCS created using the Astrometry.net suite'
+                H['HISTORY'] = wcs_hdr['HISTORY'][1]
+                H['HISTORY'] = wcs_hdr['HISTORY'][2]
+
+            # Flush changes to file
             hdul.flush()
 
     # Now update the WCS header values if a cropped image was used for solving
@@ -121,13 +134,24 @@ def update_fits(fn, message):
 
     # Update original FITS file's header
     with fits.open(fn_orig, uint=False, mode='update') as hdul:
-        hdul[0].header['PLTSOLVD'] = True
-        hdul[0].header.comments['PLTSOLVD'] = 'Astrometric solution solved'
+        H = hdul[0].header
+        H['PLTSOLVD'] = (True, 'Astrometric solution solved')
         for key in wcs_keys:
             if key not in list(wcs_hdr.keys()):
                 continue
-            hdul[0].header[key] = wcs_hdr[key]
-            hdul[0].header.comments[key] = wcs_hdr.comments[key]
+            H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
+        
+        # Add cdelt/crota params
+        H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
+        H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CUNIT1')
+
+        # Add history
+        if 'HISTORY' not in H:
+            H['HISTORY'] = 'WCS created using the Astrometry.net suite'
+            H['HISTORY'] = wcs_hdr['HISTORY'][1]
+            H['HISTORY'] = wcs_hdr['HISTORY'][2]
+
+        # Flush changes to file
         hdul.flush()
 
 
@@ -243,9 +267,8 @@ def matchstars(dnight, sets, filter):
 
     return(cropped_fn, failed_fn)
     
-    
-    
-    
+
+
 if __name__ == "__main__":
     #import time
     #t1 = time.time()

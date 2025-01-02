@@ -25,11 +25,12 @@ import numpy as n
 
 #-----------------------------------------------------------------------------#
 
-def Gaussian_2d((x, y), x0, y0, sigma, V):
+def Gaussian_2d(xy, x0, y0, sigma, V):
     '''
     This module returns the (x,y) value of the 2D gaussian function with the 
     given parameters. V is the volume under the curve. 
     '''
+    x,y = xy
     g = V/(2*n.pi*sigma**2)*n.exp(-((x-x0)**2+(y-y0)**2)/(2*sigma**2))
     return g.ravel()
 

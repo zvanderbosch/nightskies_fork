@@ -34,19 +34,27 @@
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
-from glob import glob, iglob
+from astropy.time import Time
+from astropy.visualization import PercentileInterval
+from glob import glob
+from tqdm import trange
 from scipy.optimize import curve_fit
-from win32com.client import Dispatch
 
-import pdb
+import astropy.units as u
+import astropy.wcs as wcs
+import astropy.coordinates as coord
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as n
+import pandas as pd
+import warnings
 
+# Ignore certain Astropy warnings
+warnings.simplefilter('ignore', category=wcs.FITSFixedWarning)
 
 # Local Source
 from gaussian import Gaussian_2d
 import filepath
-import pointing
 
 #-----------------------------------------------------------------------------#
 
@@ -77,6 +85,46 @@ def plot_fit_result(data, x, y, popt_list):
     plt.show(block=False) 
 
 
+def angular_separation(ra1, de1, ra2, de2):
+    '''
+    Compute great circle angular separation between a list
+    of coordinates (ra1, de1) and a single reference
+    coordinate (ra2, de2) using the Vincenty formula:
+    
+    https://en.wikipedia.org/wiki/Great-circle_distance
+
+    Parameters
+    ----------
+    ra1: array
+        An array of RA values [radians]
+    de1: array
+        An array of Dec values [radians]
+    ra2: float
+        The reference RA [radians]
+    de2: float
+        The reference Dec [radians]
+
+    Returns
+    -------
+    sep: float
+        Angular separation in degrees
+    '''
+
+    # Calculate portions of the Vincenty equation
+    deltaRA = abs(ra1 - ra2)
+    t1 = n.cos(de2) * n.sin(deltaRA)
+    t2 = n.cos(de1) * n.sin(de2)
+    t3 = n.sin(de1) * n.cos(de2) * n.cos(deltaRA)
+    t4 = n.sin(de1) * n.sin(de2)
+    t5 = n.cos(de1) * n.cos(de2) * n.cos(deltaRA)
+
+    # Vincenty equation
+    sep = n.arctan2(n.sqrt(t1**2 + (t2-t3)**2), t4+t5)
+    sep = n.rad2deg(sep)
+
+    return sep
+
+
 def extinction(dnight, sets, filter, plot_img=0):
     '''
     This module computes the extinction coefficient and the instrumental zero
@@ -84,17 +132,26 @@ def extinction(dnight, sets, filter, plot_img=0):
     the file containing the best-fit extinction coefficient, zeropoint, and
     their uncertainties. 
     '''
-    star = Dispatch('NOVAS.Star')
-    site = Dispatch('NOVAS.Site')
-    util = Dispatch('ACP.Util')
-    p = Dispatch('PinPoint.Plate')
+
     zeropoint_dnight = []
     
-    #read in the standard star catalog
-    hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
-    starn = hips[:,0]                                           #star names
-    ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float).T  #star properties
-    Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
+    # #read in the standard star catalog
+    # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
+    # starn = hips[:,0]                                             #star names
+    # ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
+    # Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
+
+    # # Convert the RA from hours to degress
+    # ras = ras * 360/24
+
+    #read inamd parse the standard star catalog
+    hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards.csv')
+    starn = hips['hip'].values.astype(str) # Hipparcos IDs
+    ras = hips['ra'].values          # Right Ascension coords [deg]
+    decs = hips['de'].values         # Declination coords [deg]
+    v_mag = hips['vmag'].values      # Hipparcos V-band magnitudes [mag]
+    bv = hips['b_v'].values          # Hipparcos B-V color [mag]
+    Mag = {'V':v_mag, 'B':v_mag+bv}  # V and B magnitudes
     
     #define image xy coordinates
     x = n.arange(0, 1024)
@@ -102,27 +159,36 @@ def extinction(dnight, sets, filter, plot_img=0):
     x, y = n.meshgrid(x, y)
     
     #parameters specific to datasets with different filters
-    F = n.array([('/',),('/B/',)],dtype=[('path','S3'),])
-    F = F.view(n.recarray)
-    k = {'V':0, 'B':1}
+    k = {'V':'/', 'B':'/B/'}
     
     #loop through all the sets in that night
     for s in sets:
-        calsetp = filepath.calibdata+dnight+'/S_0%s%s' %(s[0],F.path[k[filter]])
+        calsetp = filepath.calibdata+dnight+'/S_0%s%s' %(s[0],k[filter])
         bestfit = []
         xscale = []
         yscale = []
 
         #read in the header to set the site object's parameter
-        H = fits.open(calsetp+'ib001.fit')[0].header
-        site.longitude = H['LONGITUD']
-        site.latitude = H['LATITUDE']
-        site.height = 0
+        H = fits.getheader(calsetp+'ib001.fit',ext=0)
+        site = coord.EarthLocation.from_geodetic(
+            lon = H['LONGITUD']*u.deg,
+            lat = H['LATITUDE']*u.deg,
+            height = H['ELEVATIO']*u.m
+        )
         exp = H['exptime'] #[s]
                 
         # loop through each file in the set
-        for fn in iglob(calsetp+'ib???.fit'):
-            H = fits.open(fn)[0].header
+        print(f'Processing images for Set {s[0]}...')
+        images = sorted(glob(calsetp+'ib???.fit'))
+        for imnum in trange(len(images)):
+
+            # Get header and create WCS object
+            fn = images[imnum]
+            H = fits.getheader(fn,ext=0)
+            W = wcs.WCS(H)
+
+            # Get image observation time
+            obstime = Time(H['JD'], format='jd', scale='utc')
             
             #proceed only if the plate (what plate?) is solved
             try:
@@ -131,38 +197,54 @@ def extinction(dnight, sets, filter, plot_img=0):
             except KeyError:
                 continue
 
-            #find the standard stars within the 24 X 24 deg image
-            p.attachFits(fn)
-            img_dec = abs(decs-p.Declination) < 12
-            img_ra = abs(ras-p.RightAscension)<(12/(15*n.cos(n.deg2rad(decs))))
-            w1 = n.where(img_dec & img_ra)   # stars 
-            
-            #skip the image w/o standard stars
-            if len(w1[0])==0:  
-                p.DetachFITS()
+            # Convert RA/Dec to XY pix coords for stars covering the image
+            seps = angular_separation(
+                n.deg2rad(ras),
+                n.deg2rad(decs),
+                n.deg2rad(H['CRVAL1']),
+                n.deg2rad(H['CRVAL2'])
+            )
+            w0 = n.where(seps < 17) # Image half diagonal = 16.97 deg
+            hip_radec = [[r,d] for r,d in zip(ras[w0],decs[w0])]
+            hip_xypix = W.all_world2pix(hip_radec, 0)
+
+            # Skip the image with no nearby standard stars
+            if isinstance(hip_xypix, list): 
                 continue
             
-            #Get the XY pixel coordinates of the given RA/Dec locations
-            def SkyToXY(ra, dec):
-                p.SkyToXy(ra, dec)
-                return p.ScratchX, p.ScratchY
-            px1, py1 = n.array(map(SkyToXY, ras[w1], decs[w1])).T
-            p.DetachFITS()            
+            # Down select to stars strictly within the image 
+            w1 = n.where(
+                (hip_xypix[:,0] > 0) &
+                (hip_xypix[:,0] < H['NAXIS1']) &
+                (hip_xypix[:,1] > 0) &
+                (hip_xypix[:,1] < H['NAXIS2'])
+            )
+            w1 = w0[0][w1]
+
+            # PREVIOUS DISTANCE CONSTRAINTS
+            # img_dec = abs(decs-H['CRVAL2']) < 12
+            # img_ra = abs(ras-H['CRVAL1']) < (12/n.cos(n.deg2rad(decs)))
+            # w1 = n.where(img_dec & img_ra)[0]   # stars 
             
-            #find the standard stars within 490 pixels of the image center
+            # Skip the image w/o standard stars
+            if len(w1)==0:  
+                continue
+            
+            # Get the XY pixel coordinates of the given RA/Dec locations
+            radec = [[r,d] for r,d in zip(ras[w1],decs[w1])]
+            xypix = W.all_world2pix(radec, 0)
+            px1 = xypix[:,0]
+            py1 = xypix[:,1]
+            
+            # Find the standard stars within 490 pixels of the image center
             w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
-            w3 = w1[0][w2]
+            w3 = w1[w2]
             px, py = px1[w2], py1[w2]
             hip, ra, dec, M = starn[w3], ras[w3], decs[w3], Mag[filter][w3] 
 
-            data = fits.open(fn)[0].data
+            # Load in image data
+            data = fits.getdata(fn,ext=0)
             popt_plot_list = []
-            
-            #info needed for calculating the altitude of the stars later
-            JD = H['JD']                               #Julian Date
-            TJD = util.Julian_TJD(JD)                  #Terrestrial Julian Date
-            LAST = pointing.get_last(JD,H['LONGITUD']) #sidereal time [hr]
-            ct = util.Newct(H['LATITUDE'],LAST)
             
             #fit 2D Gaussians to standard stars in the image
             for i in range(len(px)):
@@ -174,21 +256,32 @@ def extinction(dnight, sets, filter, plot_img=0):
                 #subtract background from the fitted data
                 bg = n.median(data[b])
                 f = data[w].ravel() - bg
+
+                # Skip over objects near to saturation limit
+                if max(f + bg) > 60000:
+                    continue
                 
                 #fit
                 guess = (px[i], py[i], 0.6, 50000)  #(x,y,std,brightness)
-                try:
-                    popt = curve_fit(Gaussian_2d, (x[w],y[w]), f, p0=guess)[0]
-                except RuntimeError:
+                with warnings.catch_warnings():
+                    warnings.filterwarnings('error')
+                    try:
+                        popt = curve_fit(Gaussian_2d, (x[w],y[w]), f, p0=guess)[0]
+                    except:
+                        continue
+
+                # Calculate elevation of the star
+                star = coord.SkyCoord(
+                    ra=ra[i]*u.deg, dec=dec[i]*u.deg, frame='icrs'
+                )
+                StarTopo = star.transform_to(
+                    coord.AltAz(obstime=obstime, location=site)
+                )
+                elev = StarTopo.alt.deg
+
+                # Skip stars with elevation near zero
+                if elev < 5.0:
                     continue
-                
-                #calculate the elevation of the star
-                star.RightAscension = ra[i]
-                star.Declination = dec[i]
-                StarTopo = star.GetTopocentricPosition(TJD, site, False)
-                ct.RightAscension = StarTopo.RightAscension
-                ct.Declination = StarTopo.Declination
-                elev = ct.Elevation       #elevation[deg]
                 
                 #set the acceptance threshold and record the measurement
                 delta_position = n.sum(((popt-guess)**2)[0:2])   #position diff
@@ -201,6 +294,60 @@ def extinction(dnight, sets, filter, plot_img=0):
                     t.append(popt[3]/H['exptime'])
                     bestfit.append(t)
                     popt_plot_list.append(popt)
+
+                    # # Image diagnostic plots
+                    # if hip[i] in ['h104858']:
+                    #     fig = plt.figure('cutout',figsize=(11,5))
+                    #     ax = fig.add_subplot(121)
+                    #     bx = fig.add_subplot(122)
+
+                    #     # Plot the image cutout
+                    #     PI = PercentileInterval(92.5)
+                    #     imw = 7 #cutout width
+                    #     imdat = fits.getdata(fn,ext=0)
+                    #     vmin,vmax = PI.get_limits(
+                    #         imdat[int(py[i])-imw:int(py[i])+imw,
+                    #             int(px[i])-imw:int(px[i])+imw]
+                    #     )
+                    #     ax.imshow(imdat,vmin=vmin,vmax=vmax,cmap='Greys')
+                    #     for xp,yp in zip(x[w],y[w]):
+                    #         rect = patches.Rectangle(
+                    #             (xp-0.5,yp-0.5), 1,1,
+                    #             linewidth=1.0, edgecolor='r', facecolor='r',alpha=0.2
+                    #         )
+                    #         ax.add_patch(rect)
+                    #     circ = patches.Circle(
+                    #         (px[i], py[i]), 3, 
+                    #         linewidth=1.5, edgecolor='g', facecolor='none'
+                    #     )
+                    #     ax.add_patch(circ)
+                    #     ax.scatter(px[i], py[i],marker='o',c='greenyellow',s=20)
+                    #     ax.scatter(popt[0],popt[1],marker='x',c='r',lw=1.5,s=100)
+                    #     ax.set_xlim(px[i]-imw, px[i]+imw)
+                    #     ax.set_ylim(py[i]-imw, py[i]+imw)
+                    #     ax.set_xlabel('X (pix)',fontsize=12)
+                    #     ax.set_ylabel('Y (pix)',fontsize=12)
+
+
+                    #     # Plot flux profile
+                    #     Robs = ((x-popt[0])**2+(y-popt[1])**2)**0.5
+                    #     Rmod = n.arange(0,4,0.02)
+                    #     Fmod = popt[3]/(2*n.pi*popt[2]**2)*n.exp(-(Rmod**2)/(2*popt[2]**2))
+                    #     bx.axhline(0.0,ls=':',c='k')
+                    #     bx.scatter(Robs[w],f/1e3,c='k',marker='o',s=20)
+                    #     bx.plot(Rmod,Fmod/1e3,ls='-',c='r')
+                    #     bx.set_xlim(0,4)
+                    #     yrange = bx.get_ylim()[1] - bx.get_ylim()[0]
+                    #     bx.set_ylim(bx.get_ylim()[0]-0.1*yrange,bx.get_ylim()[1]+0.15*yrange)
+                    #     bx.set_xlabel('Radial Distance (pix)',fontsize=12)
+                    #     bx.set_ylabel('Flux ($10^3$ DN)',fontsize=12)
+
+                    #     # Save figure
+                    #     fn_base = fn.split("\\")[-1]
+                    #     plt.suptitle(f'HIP {hip[i]} in Image {fn_base}, {dnight}', y=0.95, fontsize=14)
+                    #     imgname = f'{filepath.calibdata}{dnight}/cutouts/cutout_{hip[i]}.png'
+                    #     plt.savefig(imgname,dpi=200,bbox_inches='tight')
+                    #     plt.close()
             
             #plot the image overlaid with the bestfit contours
             if int(fn[-7:-4]) == plot_img:
@@ -225,6 +372,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         flux = n.float64(stars[:,7])         #flux, background subtracted [DN]
         airmass = 1/n.sin(n.deg2rad(elev))   #airmass
         m = -2.5*n.log10(flux)               #v_mag, apparent
+        Nfit = len(M)
         
         param, cov = n.polyfit(airmass, M-m, 1, cov=True)
         c, z = param                         #bestfit coefficient and zeropoint
@@ -238,18 +386,23 @@ def extinction(dnight, sets, filter, plot_img=0):
         zeropoint_dnight.append(fit_entry)
                 
         #plot the zeropoint and extinction coefficient fitting result
-        a = n.arange(8)
-        fig = plt.figure('zeropoint')
-        plt.plot(airmass, M-m, 'o', label='Hipparcos standard stars')
-        plt.plot(a,c*a+z,'-',lw=2,label='Best fit: %.2fx+%.3f' %(c,z))
-        plt.errorbar(0,z,z_err,fmt='o',label='zeropoint: %.3f+-%.3f'%(z,z_err))
-        plt.legend(loc=0, numpoints=1)
-        plt.xlabel('Airmass',fontsize=14)
-        plt.ylabel('M-m',fontsize=14)
-        plt.title('Zeropoint and Extinction Coefficient',fontsize=14)
+        a = n.arange(0,max(airmass),0.2)
+        fig = plt.figure('zeropoint', figsize=(8,5))
+        ax = fig.add_subplot(111)
+        ax.plot(airmass, M-m, 'o', label=f'Hipparcos standard stars (N={Nfit})')
+        ax.plot(a,c*a+z,'-',lw=2,label='Best fit: %.2fx+%.3f' %(c,z))
+        ax.errorbar(0,z,z_err,fmt='o',label='zeropoint: %.3f+-%.3f'%(z,z_err))
+        ax.set_axisbelow(True)
+        ax.grid(ls=':',lw=0.5,c='silver')
+        ax.legend(loc=0, numpoints=1)
+        ax.set_xlabel('Airmass',fontsize=14)
+        ax.set_ylabel('M-m',fontsize=14)
+        ax.set_title('Zeropoint and Extinction Coefficient',fontsize=14)
+        # ax.set_xlim(-1,14)
+        # ax.set_ylim(13.2,15.0)
         imgout = filepath.calibdata+dnight+'/extinction_fit_%s_%s.png' \
                  %(filter,s[0])
-        plt.savefig(imgout)
+        plt.savefig(imgout,dpi=200,bbox_inches='tight')
         plt.close('zeropoint')
     
     #save the bestfit zeropoint and extinction coefficient     
