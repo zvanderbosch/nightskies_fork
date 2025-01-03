@@ -23,18 +23,18 @@
 #-----------------------------------------------------------------------------#
 
 from astropy import units as u
-from astropy.coordinates import get_sun, SkyCoord
 from astropy.io import fits
+from astropy.wcs import WCS
 from astropy.time import Time
 from glob import glob, iglob
-from win32com.client import Dispatch
+# from win32com.client import Dispatch
 
 import numpy as n
-import pdb
+import astropy.coordinates as coord
 
 # Local Source
 import filepath
-import pointing
+# import pointing
 
 #-----------------------------------------------------------------------------#
 def bearing_angle(lat1, lon1, lat2, lon2):
@@ -50,17 +50,47 @@ def bearing_angle(lat1, lon1, lat2, lon2):
     if x < 0: bearing += 180
     return -bearing % 360.
 
+
+def wcs_position_angle(hdr):
+    '''
+    Calculates position angle of image using WCS CD matrix.
+    Using code from Astrometry.net (see get_orientation):
+    https://github.com/dstndstn/astrometry.net/blob/main/net/wcs.py
+
+    Parameters:
+    -----------
+    hdr: Astropy FITS Header
+        FITS header with WCS CD matrix values
+
+    Returns:
+    --------
+    orient: float
+        Position angle in range 0-360, measured CCW east from north
+    '''
+
+    # Find parity of image
+    detCD = hdr['CD1_1']*hdr['CD2_2'] - \
+            hdr['CD1_2']*hdr['CD2_1']
+    if detCD >= 0:
+        parity = 1.
+    else:
+        parity = -1.
+    
+    # Get positive position angle (0-360), measured CCW East from North
+    T = parity * hdr['CD1_1'] + hdr['CD2_2']
+    A = parity * hdr['CD2_1'] - hdr['CD1_2']
+    orient = -n.rad2deg(n.arctan2(A,T)) + 180.
+
+    return orient
+
     
 def galactic_ecliptic_coords(dnight, sets):
     '''
     This module computes the galactic and ecliptic coordinates needed for 
     building the natural sky model. 
     '''
-    util = Dispatch('ACP.Util')
-    star = Dispatch('NOVAS.Star')
-    site = Dispatch('NOVAS.Site')
-    site.height = 0
     
+    # Define the ecliptic and galactic N-poles in RA-Dec coords
     ecliptic_pole = [66.56, 18.]            #N pole Dec [deg] and RA [hr]
     galactic_pole = [27.1283, 167.1405]     #N pole latitude and longitude [deg]
     
@@ -70,58 +100,113 @@ def galactic_ecliptic_coords(dnight, sets):
         outlist = []
         
         #read in the header to set the site object's parameter
-        H = fits.open(calsetp+'ib001.fit')[0].header
-        site.longitude = H['LONGITUD']
-        site.latitude = H['LATITUDE']
+        H = fits.getheader(calsetp+'ib001.fit',ext=0)
+        site = coord.EarthLocation.from_geodetic(
+            lon = H['LONGITUD']*u.deg,
+            lat = H['LATITUDE']*u.deg,
+            height = H['ELEVATIO']*u.m
+        )
         
         #read in the registered images coordinates
-        fnum, Obs_AZ, Obs_ALT = n.loadtxt(filepath.calibdata+dnight+
-        '/pointerr_%s.txt' %s[0], usecols=(0,3,4)).T
+        fnum, Obs_AZ, Obs_ALT = n.loadtxt(
+            f'{filepath.calibdata}{dnight}/pointerr_{s[0]}.txt', 
+            usecols=(0,3,4)
+        ).T
 
         # loop through each file in the set
-        for fn in iglob(calsetp+'ib???.fit'):
-            H = fits.open(fn)[0].header
+        file_list = sorted(glob(calsetp+'ib???.fit'))
+        for i,fn in enumerate(file_list):
+
+            H = fits.getheader(fn,ext=0)
             w = n.where(fnum==int(fn[-7:-4]))
-            
-            #new CoordinateTransform object
-            JD = H['JD']                               #Julian Date
-            TJD = util.Julian_TJD(JD)                  #Terrestrial Julian Date
-            
-            LAST = pointing.get_last(JD, H['LONGITUD']) 
-            ct = util.Newct(H['LATITUDE'],LAST)
+
+            # Get the observation time from header
+            obstime = Time(H['JD'], format='jd', scale='utc')
 
             #------------- Calculate the galactic coordinates
-            ra, dec = H['RA'], H['DEC']
+            if ('PLTSOLVD' in H.keys()) and H['PLTSOLVD']:
+                ra, dec = H['CRVAL1'], H['CRVAL2']
+                c = coord.SkyCoord(
+                    ra, dec, 
+                    unit=(u.deg, u.deg), 
+                    distance=100*u.kpc
+                )
+            else:
+                ra, dec = H['RA'], H['DEC']
+                c = coord.SkyCoord(
+                    ra, dec, 
+                    unit=(u.hourangle, u.deg), 
+                    distance=100*u.kpc
+                )
 
-            c = SkyCoord(ra, dec, unit=(u.hourangle, u.deg), distance=100*u.kpc)
-            g = c.galactic
-            galactic_l = (-g.l.value+180)%360-180
-            galactic_b = g.b.value
+            # Convert image center RA/Dec to Galactic coords
+            # g = c.galactic
+            # galactic_l = (-g.l.value+180)%360-180
+            # galactic_b = g.b.value
+            galactic_l = -c.galactic.l.wrap_at(180*u.deg).deg
+            galactic_b = c.galactic.b.deg
             
             if ('PLTSOLVD' in H.keys()) and H['PLTSOLVD']:   #if plate is solved
-                b = bearing_angle(c.dec.degree, -c.ra.degree, *galactic_pole)
-                galactic_angle = (b+H['PA'])%360
+                pa = wcs_position_angle(H)
+                b = bearing_angle(c.dec.deg, -c.ra.deg, *galactic_pole)
+                # galactic_angle = (b+H['PA'])%360
+                galactic_angle = (b + pa) % 360
             else: 
-                star.RightAscension = galactic_pole[1]/15  #ecliptic N pole [hr]
-                star.Declination = galactic_pole[0]       #ecliptic N pole [deg]
-                StarTopo = star.GetTopocentricPosition(TJD, site, False)
-                ct.RightAscension = StarTopo.RightAscension*15
-                ct.Declination = StarTopo.Declination 
-                b_in = [Obs_ALT[w][0], Obs_AZ[w][0], ct.Elevation, -ct.Azimuth]
-                galactic_angle = bearing_angle(*b_in)
+                # star.RightAscension = galactic_pole[1]/15  #ecliptic N pole [hr]
+                # star.Declination = galactic_pole[0]       #ecliptic N pole [deg]
+                # StarTopo = star.GetTopocentricPosition(TJD, site, False)
+                # ct.RightAscension = StarTopo.RightAscension*15
+                # ct.Declination = StarTopo.Declination 
+                # b_in = [Obs_ALT[w][0], Obs_AZ[w][0], ct.Elevation, -ct.Azimuth]
+                # galactic_angle = bearing_angle(*b_in)
+
+                # Generate topocentric coord object
+                galPoleCoord = coord.SkyCoord(
+                    ra = galactic_pole[1]*u.deg,
+                    dec = galactic_pole[0]*u.deg,
+                    frame='icrs'
+                )
+                galPoleTopo = galPoleCoord.transform_to(
+                    coord.AltAz(obstime=obstime, location=site)
+                )
+                galactic_angle = bearing_angle(
+                    Obs_ALT[w][0], 
+                    Obs_AZ[w][0], 
+                    galPoleTopo.alt.deg, 
+                    galPoleTopo.az.deg
+                )
 
             #------------- Calculate the ecliptic coordinates
-            star.RightAscension = ecliptic_pole[1]         #ecliptic N pole [hr]
-            star.Declination = ecliptic_pole[0]           #ecliptic N pole [deg]
-            StarTopo = star.GetTopocentricPosition(TJD, site, False)
+            # star.RightAscension = ecliptic_pole[1]         #ecliptic N pole [hr]
+            # star.Declination = ecliptic_pole[0]           #ecliptic N pole [deg]
+            # StarTopo = star.GetTopocentricPosition(TJD, site, False)
 
-            ct.RightAscension = StarTopo.RightAscension
-            ct.Declination = StarTopo.Declination
+            # ct.RightAscension = StarTopo.RightAscension
+            # ct.Declination = StarTopo.Declination
 
-            ecliptic_angle = bearing_angle(Obs_ALT[w][0], Obs_AZ[w][0], 
-            ct.Elevation, ct.Azimuth)
+            # ecliptic_angle = bearing_angle(
+            #     Obs_ALT[w][0], 
+            #     Obs_AZ[w][0], 
+            #     ct.Elevation, 
+            #     ct.Azimuth
+            # )
 
-            csun = get_sun(Time(JD, format='jd'))
+            eclPoleCoord = coord.SkyCoord(
+                ra = ecliptic_pole[1]*360/24*u.deg,
+                dec = ecliptic_pole[0]*u.deg,
+                frame='icrs'
+            )
+            eclPoleTopo = eclPoleCoord.transform_to(
+                coord.AltAz(obstime=obstime, location=site)
+            )
+            ecliptic_angle = bearing_angle(
+                Obs_ALT[w][0], 
+                Obs_AZ[w][0], 
+                eclPoleTopo.alt.deg, 
+                eclPoleTopo.az.deg
+            )
+
+            csun = coord.get_sun(obstime)
             ecliptic_l = -(c.heliocentrictrueecliptic.lon.degree-csun.ra.degree)
             ecliptic_l = (ecliptic_l+180)%360-180
             ecliptic_b = c.heliocentrictrueecliptic.lat.degree
