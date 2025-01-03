@@ -245,7 +245,7 @@ def matchstars(dnight, sets, filter):
     
     # Set number of parallel processes that can be
     # sent in to Astrometry.net
-    threads = 1
+    threads = 5
 
     #looping through all the sets in that night
     t0 = time.time()
