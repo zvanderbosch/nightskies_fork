@@ -40,7 +40,8 @@ import os
 import time
 import json
 import subprocess
-import numpy as n
+import astropy.coordinates as coord
+import astropy.units as u
 
 # Local Source
 import filepath     
@@ -98,6 +99,13 @@ def update_fits(fn, message):
     with fits.open(fn_orig) as hdul:
         orig_hdr = hdul[0].header
 
+    # Create coordinate object using CRVAL values
+    imgCoord = coord.SkyCoord(
+        ra=wcs_hdr['CRVAL1']*u.deg,
+        dec=wcs_hdr['CRVAL2']*u.deg,
+        frame='icrs'
+    )
+
     # Get pixel scale from the calibration file
     with open(fn_calib) as js:
         calib = json.load(js)
@@ -113,6 +121,10 @@ def update_fits(fn, message):
                 if key not in list(wcs_hdr.keys()):
                     continue
                 H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
+
+            # Update the RA and DEC values in the header
+            H['RA'] = imgCoord.ra.to_string(unit='hour',sep=' ',precision=2)
+            H['DEC'] = imgCoord.dec.to_string(unit='deg',sep=' ',precision=1)
             
             # Add cdelt params using pixel scale value
             H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
@@ -140,6 +152,10 @@ def update_fits(fn, message):
             if key not in list(wcs_hdr.keys()):
                 continue
             H[key] = (wcs_hdr[key], wcs_hdr.comments[key])
+
+        # Update the RA and DEC values in the header
+        H['RA'] = imgCoord.ra.to_string(unit='hour',sep=' ',precision=2)
+        H['DEC'] = imgCoord.dec.to_string(unit='deg',sep=' ',precision=1)
         
         # Add cdelt/crota params
         H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
