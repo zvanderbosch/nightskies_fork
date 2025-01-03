@@ -124,20 +124,12 @@ def galactic_ecliptic_coords(dnight, sets):
             obstime = Time(H['JD'], format='jd', scale='utc')
 
             #------------- Calculate the galactic coordinates
-            if ('PLTSOLVD' in H.keys()) and H['PLTSOLVD']:
-                ra, dec = H['CRVAL1'], H['CRVAL2']
-                c = coord.SkyCoord(
-                    ra, dec, 
-                    unit=(u.deg, u.deg), 
-                    distance=100*u.kpc
-                )
-            else:
-                ra, dec = H['RA'], H['DEC']
-                c = coord.SkyCoord(
-                    ra, dec, 
-                    unit=(u.hourangle, u.deg), 
-                    distance=100*u.kpc
-                )
+            ra, dec = H['RA'], H['DEC']
+            c = coord.SkyCoord(
+                ra, dec, 
+                unit=(u.hourangle, u.deg), 
+                distance=100*u.kpc
+            )
 
             # Convert image center RA/Dec to Galactic coords
             # g = c.galactic
