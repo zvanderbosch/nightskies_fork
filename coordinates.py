@@ -19,6 +19,7 @@
 #History:
 #	Dan Duriscoe -- Created in visual basic "compute image coordinates v4.vbs"
 #	Li-Wei Hung -- Cleaned, improved, and translated to python
+#   Zach Vanderbosch -- Py2 -> Py3 updates and replaced ACP/ASCOM with Astropy
 #
 #-----------------------------------------------------------------------------#
 
