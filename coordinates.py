@@ -24,17 +24,14 @@
 
 from astropy import units as u
 from astropy.io import fits
-from astropy.wcs import WCS
 from astropy.time import Time
-from glob import glob, iglob
-# from win32com.client import Dispatch
+from glob import glob
 
 import numpy as n
 import astropy.coordinates as coord
 
 # Local Source
 import filepath
-# import pointing
 
 #-----------------------------------------------------------------------------#
 def bearing_angle(lat1, lon1, lat2, lon2):
@@ -93,7 +90,8 @@ def galactic_ecliptic_coords(dnight, sets):
     # Define the ecliptic and galactic N-poles in RA-Dec coords
     ecliptic_pole = [66.56, 18.]            #N pole Dec [deg] and RA [hr]
     galactic_pole = [27.1283, 167.1405]     #N pole latitude and longitude [deg]
-    
+
+
     #loop through all the sets in that night
     for s in sets:
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
@@ -128,30 +126,19 @@ def galactic_ecliptic_coords(dnight, sets):
             c = coord.SkyCoord(
                 ra, dec, 
                 unit=(u.hourangle, u.deg), 
-                distance=100*u.kpc
+                distance=100*u.kpc,
+                equinox=obstime
             )
 
             # Convert image center RA/Dec to Galactic coords
-            # g = c.galactic
-            # galactic_l = (-g.l.value+180)%360-180
-            # galactic_b = g.b.value
             galactic_l = -c.galactic.l.wrap_at(180*u.deg).deg
             galactic_b = c.galactic.b.deg
             
             if ('PLTSOLVD' in H.keys()) and H['PLTSOLVD']:   #if plate is solved
                 pa = wcs_position_angle(H)
                 b = bearing_angle(c.dec.deg, -c.ra.deg, *galactic_pole)
-                # galactic_angle = (b+H['PA'])%360
                 galactic_angle = (b + pa) % 360
             else: 
-                # star.RightAscension = galactic_pole[1]/15  #ecliptic N pole [hr]
-                # star.Declination = galactic_pole[0]       #ecliptic N pole [deg]
-                # StarTopo = star.GetTopocentricPosition(TJD, site, False)
-                # ct.RightAscension = StarTopo.RightAscension*15
-                # ct.Declination = StarTopo.Declination 
-                # b_in = [Obs_ALT[w][0], Obs_AZ[w][0], ct.Elevation, -ct.Azimuth]
-                # galactic_angle = bearing_angle(*b_in)
-
                 # Generate topocentric coord object
                 galPoleCoord = coord.SkyCoord(
                     ra = galactic_pole[1]*u.deg,
@@ -169,19 +156,6 @@ def galactic_ecliptic_coords(dnight, sets):
                 )
 
             #------------- Calculate the ecliptic coordinates
-            # star.RightAscension = ecliptic_pole[1]         #ecliptic N pole [hr]
-            # star.Declination = ecliptic_pole[0]           #ecliptic N pole [deg]
-            # StarTopo = star.GetTopocentricPosition(TJD, site, False)
-
-            # ct.RightAscension = StarTopo.RightAscension
-            # ct.Declination = StarTopo.Declination
-
-            # ecliptic_angle = bearing_angle(
-            #     Obs_ALT[w][0], 
-            #     Obs_AZ[w][0], 
-            #     ct.Elevation, 
-            #     ct.Azimuth
-            # )
 
             eclPoleCoord = coord.SkyCoord(
                 ra = ecliptic_pole[1]*360/24*u.deg,
@@ -204,11 +178,11 @@ def galactic_ecliptic_coords(dnight, sets):
             ecliptic_b = c.heliocentrictrueecliptic.lat.degree
             
             outlist.append([int(fn[-7:-4]), galactic_angle, galactic_l, 
-            galactic_b , ecliptic_angle, ecliptic_l, ecliptic_b]) #[deg]
+            galactic_b , ecliptic_angle, ecliptic_l, ecliptic_b, c.ra.deg, c.dec.deg]) #[deg]
             
         #save the coordinates
-        fmt = ['%5i','%8.2f','%8.2f','%8.2f','%8.2f','%8.2f','%8.2f']
-        H = 'File  Gal_ang   Gal_l    Gal_b   Ecl_ang   Ecl_l    Ecl_b   [deg]'
+        fmt = ['%5i','%8.2f','%8.2f','%8.2f','%8.2f','%8.2f','%8.2f','%12.6f','%10.6f']
+        H = 'File  Gal_ang   Gal_l    Gal_b   Ecl_ang   Ecl_l    Ecl_b   RA          Dec      [deg]'
         fileout = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
         n.savetxt(fileout,n.array(outlist),fmt=fmt,header=H)
 
