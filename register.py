@@ -199,7 +199,7 @@ def solve(fn):
         '--crpix-center'
     ]
     try: 
-        response = subprocess.run(cmd, timeout=60)
+        response = subprocess.run(cmd, timeout=None)
         response.check_returncode()
         message = ['normal', fn_orig] # files that have been solved normally
     except Exception as e:
@@ -225,7 +225,7 @@ def solve(fn):
             '--crpix-center'
         ]
         try:
-            response = subprocess.run(cmd, timeout=60)
+            response = subprocess.run(cmd, timeout=None)
             response.check_returncode()
             message = ['cropped',fn_orig] #files that have been cropped & solved
         except Exception as e:
