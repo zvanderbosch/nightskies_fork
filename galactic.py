@@ -25,12 +25,10 @@
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
-# from glob import glob, iglob
 from skimage.transform import downscale_local_mean
 from tqdm import trange
 
 import arcpy
-# import pdb
 import numpy as n
 import os
 import shutil
@@ -117,8 +115,6 @@ def mosaic(dnight, sets):
 
     for s in sets:
         #file paths
-        # calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
-        # gridsetp = filepath.griddata+dnight+'/S_0%s/gal/' %s[0]
         calsetp = f"{filepath.calibdata}{dnight}/"
         gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/gal/"
         if os.path.exists(gridsetp):
