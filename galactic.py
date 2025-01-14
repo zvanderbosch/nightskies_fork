@@ -22,24 +22,25 @@
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
+#   Zach Vanderbosch -- Updated to Python3 and ArcGIS Pro
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
-from glob import glob, iglob
 from skimage.transform import downscale_local_mean
+from tqdm import trange
 
 import arcpy
-#import pdb
 import numpy as n
 import os
+import stat
 import shutil
 
 # Local Source
 import filepath  
 
 #-----------------------------------------------------------------------------#
-if not os.path.exists(filepath.rasters+'scratch_galactic/'):
-    os.makedirs(filepath.rasters+'scratch_galactic/')
+if not os.path.exists(f'{filepath.rasters}scratch_galactic/'):
+    os.makedirs(f'{filepath.rasters}scratch_galactic/')
 
 #set arcpy environment variables part 1/2
 arcpy.env.rasterStatistics = "STATISTICS 2 2 (-999)"
@@ -47,10 +48,10 @@ arcpy.env.overwriteOutput = True
 arcpy.env.pyramid = "NONE"
 
 #input rasters for galactic model
-galraster  = arcpy.sa.Raster(filepath.rasters+'galmagsnew')
-galraster1 = arcpy.sa.Raster(filepath.rasters+'galmagsnew180')
-galrastern = arcpy.sa.Raster(filepath.rasters+'galnewnorth')
-galrasters = arcpy.sa.Raster(filepath.rasters+'galnewsouth')
+galraster  = arcpy.sa.Raster(f'{filepath.rasters}galmagsnew')
+galraster1 = arcpy.sa.Raster(f'{filepath.rasters}galmagsnew180')
+galrastern = arcpy.sa.Raster(f'{filepath.rasters}galnewnorth')
+galrasters = arcpy.sa.Raster(f'{filepath.rasters}galnewsouth')
 
 geogcs = "GEOGCS['GCS_Sphere_EMEP',\
           DATUM['D_Sphere_EMEP',SPHEROID['Sphere_EMEP',6370000.0,0.0]],\
@@ -92,104 +93,130 @@ def tc(lon,lat):
 def get_galgn(lon,lat):
     rectangle = gal_envelope(lon,lat)
     if abs(lat)<71:
-        if abs(lon)<90: arcpy.Clip_management(galraster,rectangle,"galclip.tif")
-        else: arcpy.Clip_management(galraster1, rectangle, "galclip.tif")
+        if abs(lon)<90: arcpy.management.Clip(galraster,rectangle,"galclip.tif")
+        else: arcpy.management.Clip(galraster1, rectangle, "galclip.tif")
         lon = (lon+90) % 180 - 90
         p = [tc(lon,lat),"BILINEAR", "6000"]
-        arcpy.ProjectRaster_management("galclip.tif", "galgn.tif", *p)
+        arcpy.management.ProjectRaster("galclip.tif", "galgn.tif", *p)
     else: 
         p = [tc(lon,lat),"BILINEAR", "6000"]
         if lat>=71:
-            arcpy.ProjectRaster_management(galrastern, "galtemp.tif", *p)
+            arcpy.management.ProjectRaster(galrastern, "galtemp.tif", *p)
         else:
-            arcpy.ProjectRaster_management(galrasters, "galtemp.tif", *p)
-        arcpy.Clip_management('galtemp.tif', rectangle, 'galgn.tif')
+            arcpy.management.ProjectRaster(galrasters, "galtemp.tif", *p)
+        arcpy.management.Clip('galtemp.tif', rectangle, 'galgn.tif')
+
+  
+def remove_readonly(func, path, excinfo):
+    '''
+    Error-catching function to handle removal of read-only folders
+    '''
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+  
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
         
 
 def mosaic(dnight, sets):
     '''
     This module creates the mosaic of the galactic model for each data set.
     '''
-    #set arcpy environment variables part 2/2
-    arcpy.env.workspace = filepath.rasters+'scratch_galactic/'
-    arcpy.env.scratchWorkspace = filepath.rasters+'scratch_galactic'
+    # Set arcpy environment variables part 2/2
+    arcpy.env.workspace = f'{filepath.rasters}scratch_galactic/'
+    arcpy.env.scratchWorkspace = f'{filepath.rasters}scratch_galactic'
 
     for s in sets:
-        #file paths
-        calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
-        gridsetp = filepath.griddata+dnight+'/S_0%s/gal/' %s[0]
+
+        # Clear out scratch directory
+        clear_scratch(f'{filepath.rasters}scratch_galactic/')
+
+        # File paths
+        calsetp = f"{filepath.calibdata}{dnight}/"
+        gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/gal/"
         if os.path.exists(gridsetp):
-            shutil.rmtree(gridsetp)
+            shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
         
-        #read in the galactic coordinates from coordinates_%s.txt
-        file = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
+        # Read in the galactic coordinates from coordinates_%s.txt
+        file = f'{calsetp}coordinates_{s[0]}.txt'
         Gal_ang, Gal_l, Gal_b = n.loadtxt(file,usecols=(1,2,3)).T
         
-        #read in the registered images coordinates
-        file = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
+        # Read in the registered images coordinates
+        file = f'{calsetp}pointerr_{s[0]}.txt'
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
         Obs_AZ[35] %= 360
         
-        #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        # Loop through each file in the set
+        print('Generating galactic images...')
+        for w in trange(len(Obs_AZ)+1):
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
                 
             get_galgn(Gal_l[w], Gal_b[w])
-            if v in range(0,50,5): print 'Generating galactic image %i/45'%v
         
-            #rotate by galctic angle
-            arcpy.Rotate_management('galgn.tif', 
-                                    'rotaterasterg.tif', 
-                                    str(Gal_ang[w]), 
-                                    "0 0",
-                                    "BILINEAR")
+            # Rotate by galctic angle
+            arcpy.management.Rotate(
+                'galgn.tif', 
+                'rotaterasterg.tif', 
+                str(Gal_ang[w]), 
+                "0 0",
+                "BILINEAR"
+            )
                                     
-            #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management('rotaterasterg.tif',
-                                            tc(Obs_AZ[w],Obs_ALT[w]))
+            # Re-define projection to topocentric coordinates
+            arcpy.management.DefineProjection(
+                'rotaterasterg.tif',
+                tc(Obs_AZ[w],Obs_ALT[w])
+            )
                                             
-            #reproject into GCS
-            arcpy.ProjectRaster_management('rotaterasterg.tif', 
-                                        'gal%02d.tif'%v, 
-                                        geogcs,
-                                        "BILINEAR",
-                                        "0.05")
+            # Reproject into GCS
+            arcpy.management.ProjectRaster(
+                'rotaterasterg.tif', 
+                f'gal{v:02d}.tif', 
+                geogcs,
+                "BILINEAR",
+                "0.05"
+            )
                                         
-            #clip to image boundary
+            # Clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("gal%02d.tif"%v, rectangle, "gali%02d"%v)
+            arcpy.management.Clip(f"gal{v:02d}.tif", rectangle, f"gali{v:02d}")
         
-        #Mosaic to topocentric coordinate model; save in Griddata\
-        print "Mosaicking into all sky galactic model"
-        R = ';'.join(['gali%02d' %i for i in range(1,47)])
-        arcpy.MosaicToNewRaster_management(R, gridsetp, 'galtopmags', geogcs, 
-                                        "32_BIT_FLOAT", "0.05", "1", "BLEND", 
-                                        "FIRST")
-    
-        print "Creating layer files for galactic mosaic"
-        layerfile = filepath.griddata+dnight+'/galtopmags%s.lyr' %s[0]
-        arcpy.MakeRasterLayer_management(gridsetp+'galtopmags', 'galtoplyr')
-        arcpy.SaveToLayerFile_management('galtoplyr', layerfile, "ABSOLUTE")
-    
-        #Set layer symbology to magnitudes layer
-        symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','galtopmags',
-                                  'FALSE')
-        lyrFile.save()
+        # Mosaic to topocentric coordinate model; save in Griddata\
+        print("Mosaicking into all sky galactic model...")
+        R = ';'.join([f'gali{i:02d}' for i in range(1,47)])
+        arcpy.management.MosaicToNewRaster(
+            R, gridsetp, 'galtopmags', geogcs, 
+            "32_BIT_FLOAT", "0.05", "1", "BLEND", "FIRST"
+        )
+
+        # Create Raster layer, add magnitudes symbology, and save layer to file
+        print("Creating layer files for galactic mosaic...")
+        layerfile = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.lyrx'
+        symbologyFile = f'{filepath.rasters}magnitudes.lyrx'
+        arcpy.management.MakeRasterLayer(gridsetp+'galtopmags', 'galtoplyr')
+        arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
+        arcpy.management.SaveToLayerFile('galtoplyr', layerfile, "ABSOLUTE")
         
-        #Downscale the raster and save it as a fits file
-        file = filepath.griddata+dnight+"/S_0"+s[0]+"/gal/galtopmags"
-        arcpy_raster = arcpy.sa.Raster(file)  
+        # Downscale the raster and save it as a fits file
+        file = f'{gridsetp}galtopmags'
+        arcpy_raster = arcpy.sa.Raster(file)
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
-        fname = filepath.griddata+dnight+'/galtopmags%s.fits' %s[0]
+        fname = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.fits'
         fits.writeto(fname, A_small, overwrite=True)
 
 if __name__ == "__main__":
