@@ -196,6 +196,7 @@ def solve(fn):
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
+        '--wait-time', '120.0',
         '--crpix-center'
     ]
     try: 
@@ -222,6 +223,7 @@ def solve(fn):
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
+            '--wait-time', '120.0',
             '--crpix-center'
         ]
         try:
