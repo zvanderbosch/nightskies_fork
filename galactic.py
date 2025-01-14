@@ -92,18 +92,18 @@ def tc(lon,lat):
 def get_galgn(lon,lat):
     rectangle = gal_envelope(lon,lat)
     if abs(lat)<71:
-        if abs(lon)<90: arcpy.Clip_management(galraster,rectangle,"galclip.tif")
-        else: arcpy.Clip_management(galraster1, rectangle, "galclip.tif")
+        if abs(lon)<90: arcpy.management.Clip(galraster,rectangle,"galclip.tif")
+        else: arcpy.management.Clip(galraster1, rectangle, "galclip.tif")
         lon = (lon+90) % 180 - 90
         p = [tc(lon,lat),"BILINEAR", "6000"]
-        arcpy.ProjectRaster_management("galclip.tif", "galgn.tif", *p)
+        arcpy.management.ProjectRaster("galclip.tif", "galgn.tif", *p)
     else: 
         p = [tc(lon,lat),"BILINEAR", "6000"]
         if lat>=71:
-            arcpy.ProjectRaster_management(galrastern, "galtemp.tif", *p)
+            arcpy.management.ProjectRaster(galrastern, "galtemp.tif", *p)
         else:
-            arcpy.ProjectRaster_management(galrasters, "galtemp.tif", *p)
-        arcpy.Clip_management('galtemp.tif', rectangle, 'galgn.tif')
+            arcpy.management.ProjectRaster(galrasters, "galtemp.tif", *p)
+        arcpy.management.Clip('galtemp.tif', rectangle, 'galgn.tif')
         
 
 def mosaic(dnight, sets):
@@ -115,6 +115,7 @@ def mosaic(dnight, sets):
     arcpy.env.scratchWorkspace = filepath.rasters+'scratch_galactic'
 
     for s in sets:
+
         #file paths
         calsetp = f"{filepath.calibdata}{dnight}/"
         gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/gal/"
@@ -170,13 +171,12 @@ def mosaic(dnight, sets):
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
             arcpy.management.Clip("gal%02d.tif"%v, rectangle, "gali%02d"%v)
         
-        #Mosaic to topocentric coordinate model; save in Griddata\
+        # Mosaic to topocentric coordinate model; save in Griddata\
         print("Mosaicking into all sky galactic model...")
         R = ';'.join(['gali%02d' %i for i in range(1,47)])
         arcpy.MosaicToNewRaster_management(
             R, gridsetp, 'galtopmags', geogcs, 
-            "32_BIT_FLOAT", "0.05", "1", "BLEND", 
-            "FIRST"
+            "32_BIT_FLOAT", "0.05", "1", "BLEND", "FIRST"
         )
 
         # Create Raster layer, add magnitudes symbology, and save layer to file
@@ -187,8 +187,8 @@ def mosaic(dnight, sets):
         arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
         arcpy.management.SaveToLayerFile('galtoplyr', layerfile, "ABSOLUTE")
         
-        #Downscale the raster and save it as a fits file
-        file = filepath.griddata+dnight+"/S_0"+s[0]+"/gal/galtopmags"
+        # Downscale the raster and save it as a fits file
+        file = gridsetp+"galtopmags"
         arcpy_raster = arcpy.sa.Raster(file)
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
