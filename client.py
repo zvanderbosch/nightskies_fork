@@ -416,7 +416,7 @@ if __name__ == '__main__':
 
         for url,fn in retrieveurls:
             
-            # Try retrieveing URL
+            # Try retrieving URL
             delay = 5.0       # Seconds between retry attempts
             max_retries = 10  # Max number of retries
             for attempts in range(max_retries):
