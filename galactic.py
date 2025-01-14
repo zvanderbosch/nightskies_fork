@@ -22,6 +22,7 @@
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
+#   Zach Vanderbosch -- Updated to Python3 and ArcGIS Pro
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
@@ -185,22 +186,6 @@ def mosaic(dnight, sets):
         arcpy.management.MakeRasterLayer(gridsetp+'galtopmags', 'galtoplyr')
         arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
         arcpy.management.SaveToLayerFile('galtoplyr', layerfile, "ABSOLUTE")
-    
-        # Update data source for layer file
-        # lyrFile = arcpy.mapping.Layer(layerfile)
-        # lyrFile.replaceDataSource(
-        #     gridsetp,'RASTER_WORKSPACE','galtopmags','FALSE'
-        # )
-
-        # Update data source for layer file
-        # ZV: Not sure why this is needed, leaving commented out for now
-        # lyrFile = arcpy.mp.LayerFile(layerfile)
-        # for lyr in lyrFile.listLayers():
-        #     lyr.updateConnectionProperties(
-        #         lyr.connectionProperties, 
-        #         gridsetp+'galtopmags'
-        #     )
-        # lyrFile.save()
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+"/S_0"+s[0]+"/gal/galtopmags"
