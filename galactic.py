@@ -33,7 +33,6 @@ import arcpy
 import numpy as n
 import os
 import stat
-import errno
 import shutil
 
 # Local Source
