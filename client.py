@@ -279,6 +279,7 @@ if __name__ == '__main__':
     parser.add_option('--jobs', '-J', dest='myjobs', action='store_true', help='Get all my jobs')
     parser.add_option('--jobsbyexacttag', '-T', dest='jobs_by_exact_tag', help='Get a list of jobs associated with a given tag--exact match')
     parser.add_option('--jobsbytag', '-t', dest='jobs_by_tag', help='Get a list of jobs associated with a given tag')
+    parser.add_option('--wait-time', '-W', dest='wait_time', default=120., type=float, help='Max wait time for job results.')
     parser.add_option( '--private', '-p',
         dest='public',
         action='store_const',
@@ -387,6 +388,7 @@ if __name__ == '__main__':
                         break
                 time.sleep(5)
 
+        time_waiting = 0.0
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
             if stat.get('status','') in ['success']:
@@ -395,7 +397,11 @@ if __name__ == '__main__':
             elif stat.get('status','') in ['failure']:
                 print(f"  Image solving FAILED for {img_name}", flush=True)
                 sys.exit(-1)
+            elif time_waiting > opt.wait_time:
+                print(f"  Image solving FAILED for {img_name}", flush=True)
+                sys.exit(-1)
             time.sleep(5)
+            time_waiting += 5.0
 
     if opt.solved_id:
         # we have a jobId for retrieving results
