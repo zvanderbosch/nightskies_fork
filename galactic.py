@@ -25,11 +25,12 @@
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
-from glob import glob, iglob
+# from glob import glob, iglob
 from skimage.transform import downscale_local_mean
+from tqdm import trange
 
 import arcpy
-#import pdb
+# import pdb
 import numpy as n
 import os
 import shutil
@@ -116,77 +117,98 @@ def mosaic(dnight, sets):
 
     for s in sets:
         #file paths
-        calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
-        gridsetp = filepath.griddata+dnight+'/S_0%s/gal/' %s[0]
+        # calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
+        # gridsetp = filepath.griddata+dnight+'/S_0%s/gal/' %s[0]
+        calsetp = f"{filepath.calibdata}{dnight}/"
+        gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/gal/"
         if os.path.exists(gridsetp):
             shutil.rmtree(gridsetp)
         os.makedirs(gridsetp)
         
         #read in the galactic coordinates from coordinates_%s.txt
-        file = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
+        file = f'{calsetp}coordinates_{s[0]}.txt'
         Gal_ang, Gal_l, Gal_b = n.loadtxt(file,usecols=(1,2,3)).T
         
         #read in the registered images coordinates
-        file = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
+        file = f'{calsetp}pointerr_{s[0]}.txt'
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
         Obs_AZ[35] %= 360
         
         #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        print('Generating galactic images...')
+        for w in trange(len(Obs_AZ)+1):
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
                 
             get_galgn(Gal_l[w], Gal_b[w])
-            if v in range(0,50,5): print 'Generating galactic image %i/45'%v
         
             #rotate by galctic angle
-            arcpy.Rotate_management('galgn.tif', 
-                                    'rotaterasterg.tif', 
-                                    str(Gal_ang[w]), 
-                                    "0 0",
-                                    "BILINEAR")
+            arcpy.management.Rotate(
+                'galgn.tif', 
+                'rotaterasterg.tif', 
+                str(Gal_ang[w]), 
+                "0 0",
+                "BILINEAR"
+            )
                                     
             #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management('rotaterasterg.tif',
-                                            tc(Obs_AZ[w],Obs_ALT[w]))
+            arcpy.management.DefineProjection(
+                'rotaterasterg.tif',
+                tc(Obs_AZ[w],Obs_ALT[w])
+            )
                                             
             #reproject into GCS
-            arcpy.ProjectRaster_management('rotaterasterg.tif', 
-                                        'gal%02d.tif'%v, 
-                                        geogcs,
-                                        "BILINEAR",
-                                        "0.05")
+            arcpy.management.ProjectRaster(
+                'rotaterasterg.tif', 
+                'gal%02d.tif'%v, 
+                geogcs,
+                "BILINEAR",
+                "0.05"
+            )
                                         
             #clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("gal%02d.tif"%v, rectangle, "gali%02d"%v)
+            arcpy.management.Clip("gal%02d.tif"%v, rectangle, "gali%02d"%v)
         
         #Mosaic to topocentric coordinate model; save in Griddata\
-        print "Mosaicking into all sky galactic model"
+        print("Mosaicking into all sky galactic model...")
         R = ';'.join(['gali%02d' %i for i in range(1,47)])
-        arcpy.MosaicToNewRaster_management(R, gridsetp, 'galtopmags', geogcs, 
-                                        "32_BIT_FLOAT", "0.05", "1", "BLEND", 
-                                        "FIRST")
+        arcpy.MosaicToNewRaster_management(
+            R, gridsetp, 'galtopmags', geogcs, 
+            "32_BIT_FLOAT", "0.05", "1", "BLEND", 
+            "FIRST"
+        )
+
+        # Create Raster layer, add magnitudes symbology, and save layer to file
+        print("Creating layer files for galactic mosaic...")
+        layerfile = filepath.griddata+dnight+'/galtopmags%s.lyrx' %s[0]
+        symbologyFile = filepath.rasters+'magnitudes.lyrx'
+        arcpy.management.MakeRasterLayer(gridsetp+'galtopmags', 'galtoplyr')
+        arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
+        arcpy.management.SaveToLayerFile('galtoplyr', layerfile, "ABSOLUTE")
     
-        print "Creating layer files for galactic mosaic"
-        layerfile = filepath.griddata+dnight+'/galtopmags%s.lyr' %s[0]
-        arcpy.MakeRasterLayer_management(gridsetp+'galtopmags', 'galtoplyr')
-        arcpy.SaveToLayerFile_management('galtoplyr', layerfile, "ABSOLUTE")
-    
-        #Set layer symbology to magnitudes layer
-        symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','galtopmags',
-                                  'FALSE')
-        lyrFile.save()
+        # Update data source for layer file
+        # lyrFile = arcpy.mapping.Layer(layerfile)
+        # lyrFile.replaceDataSource(
+        #     gridsetp,'RASTER_WORKSPACE','galtopmags','FALSE'
+        # )
+
+        # Update data source for layer file
+        # ZV: Not sure why this is needed, leaving commented out for now
+        # lyrFile = arcpy.mp.LayerFile(layerfile)
+        # for lyr in lyrFile.listLayers():
+        #     lyr.updateConnectionProperties(
+        #         lyr.connectionProperties, 
+        #         gridsetp+'galtopmags'
+        #     )
+        # lyrFile.save()
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+"/S_0"+s[0]+"/gal/galtopmags"
-        arcpy_raster = arcpy.sa.Raster(file)  
+        arcpy_raster = arcpy.sa.Raster(file)
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
         fname = filepath.griddata+dnight+'/galtopmags%s.fits' %s[0]
