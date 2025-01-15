@@ -139,22 +139,28 @@ def mosaic(dnight, sets):
             if v in range(0,50,5): print(f'Generating zodiacal image %{v}/45')
             
             #rotate by zodiacal angle
-            arcpy.management.Rotate('zodgn.tif', 
-                                    'rotateraster.tif', 
-                                    str(Ecl_ang[w]), 
-                                    "0 0",
-                                    "BILINEAR")
+            arcpy.management.Rotate(
+                'zodgn.tif', 
+                'rotateraster.tif', 
+                str(Ecl_ang[w]), 
+                "0 0",
+                "BILINEAR"
+            )
                                     
             #re-define projection to topocentric coordinates
-            arcpy.management.DefineProjection('rotateraster.tif',
-                                            tc(Obs_AZ[w],Obs_ALT[w]))
+            arcpy.management.DefineProjection(
+                'rotateraster.tif',
+                tc(Obs_AZ[w],Obs_ALT[w])
+            )
 
             #reproject into GCS
-            arcpy.management.ProjectRaster('rotateraster.tif', 
-                                        'zod%02d.tif'%v, 
-                                        geogcs,
-                                        "BILINEAR",
-                                        "0.1")
+            arcpy.management.ProjectRaster(
+                'rotateraster.tif', 
+                'zod%02d.tif'%v, 
+                geogcs,
+                "BILINEAR",
+                "0.1"
+            )
 
             #clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
