@@ -169,9 +169,11 @@ def mosaic(dnight, sets):
         #Mosaic to topocentric coordinate model; save in Griddata\
         print("Mosaicking into all sky zodiacal model...")
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
-        arcpy.management.MosaicToNewRaster(R, gridsetp, 'zodtopo', geogcs, 
-                                        "32_BIT_FLOAT", "0.1", "1", "BLEND", 
-                                        "FIRST")
+        arcpy.management.MosaicToNewRaster(
+            R, gridsetp, 'zodtopo', geogcs, 
+            "32_BIT_FLOAT", "0.1", "1", "BLEND", 
+            "FIRST"
+        )
                                         
         #re-sampling to 0.05 degree resolution
         gridname = gridsetp + "zodtopmags"
