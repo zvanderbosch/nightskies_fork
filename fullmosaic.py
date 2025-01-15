@@ -226,24 +226,12 @@ def mosaic(dnight, sets, filter):
         skytopomags.save(gridsetp + os.sep + 'skytopomags')
     
         print("Creating layer files for full-resolution mosaic...")
+        layerName = dnight+'_%s_fullres%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyr' %(f[filter],s[0])
-        arcpy.management.MakeRasterLayer(
-            gridsetp+'skytopomags', 
-            dnight+'_%s_fullres%s'%(s[0],f[filter])
-        )
-        arcpy.management.SaveToLayerFile(
-            dnight+'_%s_fullres%s'%(s[0],f[filter]), 
-            layerfile, 
-            "RELATIVE"
-        )
-    
-        #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.management.ApplySymbologyFromLayer(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','skytopomags',
-                                  'FALSE')
-        lyrFile.save()
+        arcpy.management.MakeRasterLayer(gridsetp+'skytopomags', layerName)
+        arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
+        arcpy.management.SaveToLayerFile(layerName, layerfile, "RELATIVE")
 
     
 if __name__ == "__main__":
