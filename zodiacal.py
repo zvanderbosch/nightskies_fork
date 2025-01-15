@@ -194,26 +194,20 @@ def mosaic(dnight, sets):
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'zodtopo', geogcs, 
-            "32_BIT_FLOAT", "0.1", "1", "BLEND", 
-            "FIRST"
+            "32_BIT_FLOAT", "0.1", "1", "BLEND", "FIRST"
         )
                                         
         #re-sampling to 0.05 degree resolution
         gridname = gridsetp + "zodtopmags"
         arcpy.management.Resample(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
     
+        #Create Raster layer, add magnitudes symbology, and save layer to file
         print("Creating layer files for zodiacal mosaic...")
         layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyr' %s[0]
-        arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
-        arcpy.management.SaveToLayerFile('zodtoplyr', layerfile, "ABSOLUTE")
-    
-        #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.management.ApplySymbologyFromLayer(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','zodtopmags',
-                                  'FALSE')
-        lyrFile.save()
+        arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
+        arcpy.management.ApplySymbologyFromLayer('zodtoplyr', symbologyLayer)
+        arcpy.management.SaveToLayerFile('zodtoplyr', layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+"/S_0"+s[0]+"/zod/zodtopmags"
