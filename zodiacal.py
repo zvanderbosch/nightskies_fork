@@ -90,15 +90,15 @@ def tc(lon,lat):
 def get_zodgn(lon,lat):
     rectangle = zod_envelope(lon,lat)
     if abs(lat)<71:
-        if abs(lon)<90: arcpy.Clip_management(zodraster,rectangle,"zodclip.tif")
-        else: arcpy.Clip_management(zodraster1, rectangle, "zodclip.tif")
+        if abs(lon)<90: arcpy.management.Clip(zodraster,rectangle,"zodclip.tif")
+        else: arcpy.management.Clip(zodraster1, rectangle, "zodclip.tif")
         lon = (lon+90) % 180 - 90
         p = [tc(lon,lat),"BILINEAR", "6000"]
-        arcpy.ProjectRaster_management("zodclip.tif", "zodgn.tif", *p)
+        arcpy.management.ProjectRaster("zodclip.tif", "zodgn.tif", *p)
     else: 
         p = [tc(lon,lat),"BILINEAR", "6000"]
-        arcpy.ProjectRaster_management(zodraster, "zodtemp.tif", *p)
-        arcpy.Clip_management('zodtemp.tif', rectangle, 'zodgn.tif')
+        arcpy.management.ProjectRaster(zodraster, "zodtemp.tif", *p)
+        arcpy.management.Clip('zodtemp.tif', rectangle, 'zodgn.tif')
 
 
 def mosaic(dnight, sets):
@@ -139,18 +139,18 @@ def mosaic(dnight, sets):
             if v in range(0,50,5): print(f'Generating zodiacal image %{v}/45')
             
             #rotate by zodiacal angle
-            arcpy.Rotate_management('zodgn.tif', 
+            arcpy.management.Rotate('zodgn.tif', 
                                     'rotateraster.tif', 
                                     str(Ecl_ang[w]), 
                                     "0 0",
                                     "BILINEAR")
                                     
             #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management('rotateraster.tif',
+            arcpy.management.DefineProjection('rotateraster.tif',
                                             tc(Obs_AZ[w],Obs_ALT[w]))
 
             #reproject into GCS
-            arcpy.ProjectRaster_management('rotateraster.tif', 
+            arcpy.management.ProjectRaster('rotateraster.tif', 
                                         'zod%02d.tif'%v, 
                                         geogcs,
                                         "BILINEAR",
@@ -158,27 +158,27 @@ def mosaic(dnight, sets):
 
             #clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
+            arcpy.management.Clip("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
             
         #Mosaic to topocentric coordinate model; save in Griddata\
         print("Mosaicking into all sky zodiacal model...")
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
-        arcpy.MosaicToNewRaster_management(R, gridsetp, 'zodtopo', geogcs, 
+        arcpy.management.MosaicToNewRaster(R, gridsetp, 'zodtopo', geogcs, 
                                         "32_BIT_FLOAT", "0.1", "1", "BLEND", 
                                         "FIRST")
                                         
         #re-sampling to 0.05 degree resolution
         gridname = gridsetp + "zodtopmags"
-        arcpy.Resample_management(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
+        arcpy.management.Resample(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
     
         print("Creating layer files for zodiacal mosaic...")
         layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyr' %s[0]
-        arcpy.MakeRasterLayer_management(gridsetp+'zodtopmags', 'zodtoplyr')
-        arcpy.SaveToLayerFile_management('zodtoplyr', layerfile, "ABSOLUTE")
+        arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
+        arcpy.management.SaveToLayerFile('zodtoplyr', layerfile, "ABSOLUTE")
     
         #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
+        arcpy.management.ApplySymbologyFromLayer(layerfile, symbologyLayer)
         lyrFile = arcpy.mapping.Layer(layerfile)
         lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','zodtopmags',
                                   'FALSE')
