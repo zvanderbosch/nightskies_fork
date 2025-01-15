@@ -132,7 +132,7 @@ def mosaic(dnight, sets, filter):
             
             if v in range(0,50,5): print 'Generating fullres image %i/45'%v
             
-            arcpy.CopyRaster_management(
+            arcpy.management.CopyRaster(
                 calsetp+'/tiff/ib%03d.tif' %(w+1), 
                 'ib%03d.tif' %v,
                 "DEFAULTS",
@@ -141,13 +141,13 @@ def mosaic(dnight, sets, filter):
             )
             
             #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management(
+            arcpy.management.DefineProjection(
                 "ib%03d.tif" %v,
                 tc(Obs_AZ[w],Obs_ALT[w])
             )
             
             #warp image to remove barrel distortion image
-            arcpy.Warp_management(
+            arcpy.management.Warp(
                 "ib%03d.tif"%v, 
                 source_pnt, 
                 target_pnt, 
@@ -157,7 +157,7 @@ def mosaic(dnight, sets, filter):
             )
 
             #reproject into GCS
-            arcpy.ProjectRaster_management(
+            arcpy.management.ProjectRaster(
                 'ibw%03d.tif' %v, 
                 'fwib%03d.tif' %v, 
                 geogcs, 
@@ -167,7 +167,7 @@ def mosaic(dnight, sets, filter):
                                        
             #clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
+            arcpy.management.Clip("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
             
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
@@ -185,7 +185,7 @@ def mosaic(dnight, sets, filter):
 
         #mosaic to topocentric coordinate image; save in Griddata\
         print "Mosaicking into all sky full-resolution image"
-        arcpy.MosaicToNewRaster_management(
+        arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopo', geogcs, 
             "32_BIT_FLOAT", "0.0261", "1", "BLEND", "FIRST"
         )
@@ -205,11 +205,11 @@ def mosaic(dnight, sets, filter):
     
         print "Creating layer files for full-resolution mosaic"
         layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyr' %(f[filter],s[0])
-        arcpy.MakeRasterLayer_management(
+        arcpy.management.MakeRasterLayer(
             gridsetp+'skytopomags', 
             dnight+'_%s_fullres%s'%(s[0],f[filter])
         )
-        arcpy.SaveToLayerFile_management(
+        arcpy.management.SaveToLayerFile(
             dnight+'_%s_fullres%s'%(s[0],f[filter]), 
             layerfile, 
             "RELATIVE"
@@ -217,7 +217,7 @@ def mosaic(dnight, sets, filter):
     
         #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
+        arcpy.management.ApplySymbologyFromLayer(layerfile, symbologyLayer)
         lyrFile = arcpy.mapping.Layer(layerfile)
         lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','skytopomags',
                                   'FALSE')
