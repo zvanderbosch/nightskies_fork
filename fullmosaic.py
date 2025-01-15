@@ -25,11 +25,10 @@
 #	Li-Wei Hung -- Cleaned and improved the code
 #
 #-----------------------------------------------------------------------------#
-from glob import glob, iglob
+
 from scipy.misc import imread
 
 import arcpy
-import pdb
 import numpy as n
 import os
 import shutil
