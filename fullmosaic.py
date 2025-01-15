@@ -28,7 +28,6 @@
 
 from tqdm import trange
 from PIL import Image
-# from scipy.ndimage import imread
 
 import arcpy
 import numpy as n
@@ -145,7 +144,9 @@ def mosaic(dnight, sets, filter):
         
         #read in the best-fit zeropoint and plate scale
         file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-        zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
+        zeropoint, platescale, exptime = n.loadtxt(
+            file, usecols=(2,8,9), unpack=True, ndmin=2
+        )
         
         #loop through each file in the set
         print(f'Generating fullres images for Set {s[0]}...')
@@ -196,7 +197,6 @@ def mosaic(dnight, sets, filter):
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
         while v < (len(Obs_AZ)+1):
-            # im = imread(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
             tiff = Image.open(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
             im = n.array(tiff)
             if n.max(im) > 255:
@@ -218,7 +218,7 @@ def mosaic(dnight, sets, filter):
         
 
         #convert to magnitudes per square arc second
-        print("Converting the mosaic to mag per squard arcsec...")
+        print("Converting the mosaic to mag per square arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopo')
         stm2 = stm1 / exptime[0]
