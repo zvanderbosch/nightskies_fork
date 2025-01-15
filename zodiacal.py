@@ -25,6 +25,7 @@
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
+from tqdm import trange
 from skimage.transform import downscale_local_mean
 
 import arcpy
@@ -127,14 +128,14 @@ def mosaic(dnight, sets):
         Obs_AZ[35] %= 360
         
         #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        print(f'Generating zodiacal images for Set {s[0]}...')
+        for w in trange(len(Obs_AZ)+1):
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
             
             get_zodgn(Ecl_l[w], Ecl_b[w])
-            if v in range(0,50,5): print(f'Generating zodiacal image %{v}/45')
             
             #rotate by zodiacal angle
             arcpy.management.Rotate(
