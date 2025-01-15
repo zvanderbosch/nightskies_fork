@@ -31,6 +31,7 @@ from skimage.transform import downscale_local_mean
 import arcpy
 import numpy as n
 import os
+import stat
 import shutil
 
 # Local Source
@@ -99,6 +100,25 @@ def get_zodgn(lon,lat):
         arcpy.management.ProjectRaster(zodraster, "zodtemp.tif", *p)
         arcpy.management.Clip('zodtemp.tif', rectangle, 'zodgn.tif')
 
+def remove_readonly(func, path, excinfo):
+    '''
+    Error-catching function to handle removal of read-only folders
+    '''
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+  
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
+
 
 def mosaic(dnight, sets):
     '''
@@ -110,11 +130,15 @@ def mosaic(dnight, sets):
     arcpy.env.scratchWorkspace = filepath.rasters+'scratch_zodiacal'
 
     for s in sets:
+
+        # Clear out scratch directory
+        clear_scratch(f'{filepath.rasters}scratch_zodiacal/')
+
         #file paths
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
         gridsetp = filepath.griddata+dnight+'/S_0%s/zod/' %s[0]
         if os.path.exists(gridsetp):
-            shutil.rmtree(gridsetp)
+            shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
         
         #read in the zodiacal coordinates from coordinates_%s.txt
