@@ -25,13 +25,13 @@
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
-from glob import glob, iglob
+from tqdm import trange
 from skimage.transform import downscale_local_mean
 
 import arcpy
-import pdb
 import numpy as n
 import os
+import stat
 import shutil
 
 # Local Source
@@ -90,15 +90,34 @@ def tc(lon,lat):
 def get_zodgn(lon,lat):
     rectangle = zod_envelope(lon,lat)
     if abs(lat)<71:
-        if abs(lon)<90: arcpy.Clip_management(zodraster,rectangle,"zodclip.tif")
-        else: arcpy.Clip_management(zodraster1, rectangle, "zodclip.tif")
+        if abs(lon)<90: arcpy.management.Clip(zodraster,rectangle,"zodclip.tif")
+        else: arcpy.management.Clip(zodraster1, rectangle, "zodclip.tif")
         lon = (lon+90) % 180 - 90
         p = [tc(lon,lat),"BILINEAR", "6000"]
-        arcpy.ProjectRaster_management("zodclip.tif", "zodgn.tif", *p)
+        arcpy.management.ProjectRaster("zodclip.tif", "zodgn.tif", *p)
     else: 
         p = [tc(lon,lat),"BILINEAR", "6000"]
-        arcpy.ProjectRaster_management(zodraster, "zodtemp.tif", *p)
-        arcpy.Clip_management('zodtemp.tif', rectangle, 'zodgn.tif')
+        arcpy.management.ProjectRaster(zodraster, "zodtemp.tif", *p)
+        arcpy.management.Clip('zodtemp.tif', rectangle, 'zodgn.tif')
+
+def remove_readonly(func, path, excinfo):
+    '''
+    Error-catching function to handle removal of read-only folders
+    '''
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+  
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
 
 
 def mosaic(dnight, sets):
@@ -111,11 +130,15 @@ def mosaic(dnight, sets):
     arcpy.env.scratchWorkspace = filepath.rasters+'scratch_zodiacal'
 
     for s in sets:
+
+        # Clear out scratch directory
+        clear_scratch(f'{filepath.rasters}scratch_zodiacal/')
+
         #file paths
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
         gridsetp = filepath.griddata+dnight+'/S_0%s/zod/' %s[0]
         if os.path.exists(gridsetp):
-            shutil.rmtree(gridsetp)
+            shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
         
         #read in the zodiacal coordinates from coordinates_%s.txt
@@ -129,60 +152,62 @@ def mosaic(dnight, sets):
         Obs_AZ[35] %= 360
         
         #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        print(f'Generating zodiacal images for Set {s[0]}...')
+        for w in trange(len(Obs_AZ)+1):
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
             
             get_zodgn(Ecl_l[w], Ecl_b[w])
-            if v in range(0,50,5): print 'Generating zodiacal image %i/45'%v
             
             #rotate by zodiacal angle
-            arcpy.Rotate_management('zodgn.tif', 
-                                    'rotateraster.tif', 
-                                    str(Ecl_ang[w]), 
-                                    "0 0",
-                                    "BILINEAR")
+            arcpy.management.Rotate(
+                'zodgn.tif', 
+                'rotateraster.tif', 
+                str(Ecl_ang[w]), 
+                "0 0",
+                "BILINEAR"
+            )
                                     
             #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management('rotateraster.tif',
-                                            tc(Obs_AZ[w],Obs_ALT[w]))
+            arcpy.management.DefineProjection(
+                'rotateraster.tif',
+                tc(Obs_AZ[w],Obs_ALT[w])
+            )
 
             #reproject into GCS
-            arcpy.ProjectRaster_management('rotateraster.tif', 
-                                        'zod%02d.tif'%v, 
-                                        geogcs,
-                                        "BILINEAR",
-                                        "0.1")
+            arcpy.management.ProjectRaster(
+                'rotateraster.tif', 
+                'zod%02d.tif'%v, 
+                geogcs,
+                "BILINEAR",
+                "0.1"
+            )
 
             #clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
+            arcpy.management.Clip("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
             
         #Mosaic to topocentric coordinate model; save in Griddata\
-        print "Mosaicking into all sky zodiacal model"
+        print("Mosaicking into all sky zodiacal model...")
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
-        arcpy.MosaicToNewRaster_management(R, gridsetp, 'zodtopo', geogcs, 
-                                        "32_BIT_FLOAT", "0.1", "1", "BLEND", 
-                                        "FIRST")
+        arcpy.management.MosaicToNewRaster(
+            R, gridsetp, 'zodtopo', geogcs, 
+            "32_BIT_FLOAT", "0.1", "1", "BLEND", "FIRST"
+        )
                                         
         #re-sampling to 0.05 degree resolution
         gridname = gridsetp + "zodtopmags"
-        arcpy.Resample_management(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
+        arcpy.management.Resample(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
     
-        print "Creating layer files for zodiacal mosaic"
+        #Create Raster layer, add magnitudes symbology, and save layer to file
+        print("Creating layer files for zodiacal mosaic...")
         layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyr' %s[0]
-        arcpy.MakeRasterLayer_management(gridsetp+'zodtopmags', 'zodtoplyr')
-        arcpy.SaveToLayerFile_management('zodtoplyr', layerfile, "ABSOLUTE")
-    
-        #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','zodtopmags',
-                                  'FALSE')
-        lyrFile.save()
+        arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
+        arcpy.management.ApplySymbologyFromLayer('zodtoplyr', symbologyLayer)
+        arcpy.management.SaveToLayerFile('zodtoplyr', layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+"/S_0"+s[0]+"/zod/zodtopmags"
