@@ -89,6 +89,25 @@ def tc(lon,lat):
     PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],\
     PARAMETER['Longitude_Of_Center',%s],PARAMETER['Latitude_Of_Center',%s],\
     UNIT['Meter',1.0]]"%(geogcs,str(lon),str(lat))
+
+def remove_readonly(func, path, excinfo):
+    '''
+    Error-catching function to handle removal of read-only folders
+    '''
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+  
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
     
 
 def mosaic(dnight, sets, filter):
@@ -105,11 +124,15 @@ def mosaic(dnight, sets, filter):
     f = {'V':'', 'B':'b'}
     
     for s in sets:
+
+        #clear scratch directory
+        clear_scratch(filepath.rasters+'scratch_fullres/')
+
         #file paths
         calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
         gridsetp = filepath.griddata+dnight+'/S_0%s/%sfullres/' %(s[0],F[filter])
         if os.path.exists(gridsetp):
-            shutil.rmtree(gridsetp)
+            shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
                 
         #read in the registered images coordinates
