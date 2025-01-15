@@ -27,11 +27,13 @@
 #-----------------------------------------------------------------------------#
 
 from tqdm import trange
-from scipy.misc import imread
+from PIL import Image
+# from scipy.ndimage import imread
 
 import arcpy
 import numpy as n
 import os
+import stat
 import shutil
 
 # Local Source
@@ -194,7 +196,9 @@ def mosaic(dnight, sets, filter):
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
         while v < (len(Obs_AZ)+1):
-            im = imread(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
+            # im = imread(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
+            tiff = Image.open(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
+            im = n.array(tiff)
             if n.max(im) > 255:
                 mstart = v
                 break
