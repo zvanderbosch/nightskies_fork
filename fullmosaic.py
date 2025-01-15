@@ -130,7 +130,7 @@ def mosaic(dnight, sets, filter):
                 w = 35
                 Obs_AZ[w] -= 360
             
-            if v in range(0,50,5): print 'Generating fullres image %i/45'%v
+            if v in range(0,50,5): print('Generating fullres image %i/45'%v)
             
             arcpy.management.CopyRaster(
                 calsetp+'/tiff/ib%03d.tif' %(w+1), 
@@ -184,7 +184,7 @@ def mosaic(dnight, sets, filter):
         R = R1+';'+R2
 
         #mosaic to topocentric coordinate image; save in Griddata\
-        print "Mosaicking into all sky full-resolution image"
+        print("Mosaicking into all sky full-resolution image...")
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopo', geogcs, 
             "32_BIT_FLOAT", "0.0261", "1", "BLEND", "FIRST"
@@ -192,7 +192,7 @@ def mosaic(dnight, sets, filter):
         
 
         #convert to magnitudes per square arc second
-        print "Converting the mosaic to mag per squard arcsec"
+        print("Converting the mosaic to mag per squard arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopo')
         stm2 = stm1 / exptime[0]
@@ -203,7 +203,7 @@ def mosaic(dnight, sets, filter):
         #save mags mosaic to disk
         skytopomags.save(gridsetp + os.sep + 'skytopomags')
     
-        print "Creating layer files for full-resolution mosaic"
+        print("Creating layer files for full-resolution mosaic...")
         layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyr' %(f[filter],s[0])
         arcpy.management.MakeRasterLayer(
             gridsetp+'skytopomags', 
