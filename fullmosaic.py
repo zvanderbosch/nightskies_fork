@@ -26,6 +26,7 @@
 #
 #-----------------------------------------------------------------------------#
 
+from tqdm import trange
 from scipy.misc import imread
 
 import arcpy
@@ -122,14 +123,13 @@ def mosaic(dnight, sets, filter):
         zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
         
         #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        print('Generating fullres images...')
+        for w in trange(len(Obs_AZ)+1):
 
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
-            
-            if v in range(0,50,5): print('Generating fullres image %i/45'%v)
             
             arcpy.management.CopyRaster(
                 calsetp+'/tiff/ib%03d.tif' %(w+1), 
