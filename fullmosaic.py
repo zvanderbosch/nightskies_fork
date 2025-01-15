@@ -146,7 +146,7 @@ def mosaic(dnight, sets, filter):
         zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
         
         #loop through each file in the set
-        print('Generating fullres images...')
+        print(f'Generating fullres images for Set {s[0]}...')
         for w in trange(len(Obs_AZ)+1):
 
             v = w+1
