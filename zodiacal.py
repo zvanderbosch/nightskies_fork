@@ -136,7 +136,7 @@ def mosaic(dnight, sets):
                 Obs_AZ[w] -= 360
             
             get_zodgn(Ecl_l[w], Ecl_b[w])
-            if v in range(0,50,5): print 'Generating zodiacal image %i/45'%v
+            if v in range(0,50,5): print(f'Generating zodiacal image %{v}/45')
             
             #rotate by zodiacal angle
             arcpy.Rotate_management('zodgn.tif', 
@@ -161,7 +161,7 @@ def mosaic(dnight, sets):
             arcpy.Clip_management("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
             
         #Mosaic to topocentric coordinate model; save in Griddata\
-        print "Mosaicking into all sky zodiacal model"
+        print("Mosaicking into all sky zodiacal model...")
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
         arcpy.MosaicToNewRaster_management(R, gridsetp, 'zodtopo', geogcs, 
                                         "32_BIT_FLOAT", "0.1", "1", "BLEND", 
@@ -171,7 +171,7 @@ def mosaic(dnight, sets):
         gridname = gridsetp + "zodtopmags"
         arcpy.Resample_management(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
     
-        print "Creating layer files for zodiacal mosaic"
+        print("Creating layer files for zodiacal mosaic...")
         layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyr' %s[0]
         arcpy.MakeRasterLayer_management(gridsetp+'zodtopmags', 'zodtoplyr')
         arcpy.SaveToLayerFile_management('zodtoplyr', layerfile, "ABSOLUTE")
