@@ -167,7 +167,7 @@ def mosaic(dnight, sets):
                 
             get_galgn(Gal_l[w], Gal_b[w])
         
-            # Rotate by galctic angle
+            # Rotate by galactic angle
             arcpy.management.Rotate(
                 'galgn.tif', 
                 'rotaterasterg.tif', 
