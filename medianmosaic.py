@@ -140,7 +140,7 @@ def mosaic(dnight, sets, filter):
                 w = 35
                 Obs_AZ[w] -= 360
             
-            if v in range(0,50,5): print 'Generating median image %i/45'%v
+            if v in range(0,50,5): print('Generating median image %i/45'%v)
             
             arcpy.CopyRaster_management(calsetp+'/tiff/median_ib%03d.tif' %(w+1), 'ib%03d.tif' %v,"DEFAULTS","","","","","16_BIT_UNSIGNED")
             
@@ -172,7 +172,7 @@ def mosaic(dnight, sets, filter):
         R = R1+';'+R2
         
         #mosaic to topocentric coordinate image; save in Griddata\
-        print "Mosaicking into all sky median image"
+        print("Mosaicking into all sky median image...")
         arcpy.MosaicToNewRaster_management(R, gridsetp, 'skytopom', geogcs, 
                                         "32_BIT_FLOAT", "0.0266", "1", "BLEND", 
                                         "FIRST")                                       
@@ -182,14 +182,14 @@ def mosaic(dnight, sets, filter):
         arcpy.Resample_management(gridsetp+'skytopom',gridsetp+'skybright','0.05','BILINEAR')
         
         #convert to magnitudes per square arc second
-        print "Converting the mosaic to mag per squard arcsec"
+        print("Converting the mosaic to mag per squard arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         skytopomags = zeropoint[int(s[0])-1] + psa - 2.5*arcpy.sa.Log10(arcpy.sa.Raster(gridsetp+'skybright')/exptime[0])
         
         #save mags mosaic to disk
         skytopomags.save(gridsetp+'skybrightmags')
     
-        print "Creating layer files for median mosaic"
+        print("Creating layer files for median mosaic...")
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyr'%(f[filter],s[0])
         arcpy.MakeRasterLayer_management(gridsetp+'skybrightmags', dnight+'_%s_median%s'%(s[0],f[filter]))
         arcpy.SaveToLayerFile_management(dnight+'_%s_median%s'%(s[0],f[filter]), layerfile, "ABSOLUTE")
