@@ -142,16 +142,38 @@ def mosaic(dnight, sets, filter):
             
             if v in range(0,50,5): print('Generating median image %i/45'%v)
             
-            arcpy.CopyRaster_management(calsetp+'/tiff/median_ib%03d.tif' %(w+1), 'ib%03d.tif' %v,"DEFAULTS","","","","","16_BIT_UNSIGNED")
+            arcpy.CopyRaster_management(
+                calsetp+'/tiff/median_ib%03d.tif' %(w+1), 
+                'ib%03d.tif' %v,
+                "DEFAULTS",
+                "","","","",
+                "16_BIT_UNSIGNED"
+            )
             
             #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management("ib%03d.tif" %v,tc(Obs_AZ[w],Obs_ALT[w]))
+            arcpy.DefineProjection_management(
+                "ib%03d.tif" %v,
+                tc(Obs_AZ[w],Obs_ALT[w])
+            )
             
             #warp image to remove barrel distortion image
-            arcpy.Warp_management('ib%03d.tif'%v, source_pnt, target_pnt, 'ibw%03d.tif'%v, "POLYORDER3", "BILINEAR")
+            arcpy.Warp_management(
+                'ib%03d.tif'%v, 
+                source_pnt, 
+                target_pnt, 
+                'ibw%03d.tif'%v, 
+                "POLYORDER3", 
+                "BILINEAR"
+            )
 
             #reproject into GCS
-            arcpy.ProjectRaster_management('ibw%03d.tif' %v, 'wib%03d.tif' %v, geogcs, "BILINEAR", "0.0266")
+            arcpy.ProjectRaster_management(
+                'ibw%03d.tif' %v, 
+                'wib%03d.tif' %v, 
+                geogcs, 
+                "BILINEAR", 
+                "0.0266"
+            )
                                        
             #clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
@@ -173,13 +195,19 @@ def mosaic(dnight, sets, filter):
         
         #mosaic to topocentric coordinate image; save in Griddata\
         print("Mosaicking into all sky median image...")
-        arcpy.MosaicToNewRaster_management(R, gridsetp, 'skytopom', geogcs, 
-                                        "32_BIT_FLOAT", "0.0266", "1", "BLEND", 
-                                        "FIRST")                                       
+        arcpy.MosaicToNewRaster_management(
+            R, gridsetp, 'skytopom', geogcs, 
+            "32_BIT_FLOAT", "0.0266", "1", "BLEND", "FIRST"
+        )                                       
                                         
         #re-sampling to 0.05 degree resolution
         gridname = gridsetp + "skybrightmags"
-        arcpy.Resample_management(gridsetp+'skytopom',gridsetp+'skybright','0.05','BILINEAR')
+        arcpy.Resample_management(
+            gridsetp+'skytopom',
+            gridsetp+'skybright',
+            '0.05',
+            'BILINEAR'
+        )
         
         #convert to magnitudes per square arc second
         print("Converting the mosaic to mag per squard arcsec...")
@@ -191,8 +219,15 @@ def mosaic(dnight, sets, filter):
     
         print("Creating layer files for median mosaic...")
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyr'%(f[filter],s[0])
-        arcpy.MakeRasterLayer_management(gridsetp+'skybrightmags', dnight+'_%s_median%s'%(s[0],f[filter]))
-        arcpy.SaveToLayerFile_management(dnight+'_%s_median%s'%(s[0],f[filter]), layerfile, "ABSOLUTE")
+        arcpy.MakeRasterLayer_management(
+            gridsetp+'skybrightmags', 
+            dnight+'_%s_median%s'%(s[0],f[filter])
+        )
+        arcpy.SaveToLayerFile_management(
+            dnight+'_%s_median%s'%(s[0],f[filter]), 
+            layerfile, 
+            "ABSOLUTE"
+        )
     
         #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
