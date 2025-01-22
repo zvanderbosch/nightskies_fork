@@ -23,15 +23,17 @@
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
 #
 #-----------------------------------------------------------------------------#
-from glob import glob, iglob
-from scipy.misc import imread
+
+from tqdm import trange
+from PIL import Image
 
 import arcpy
-import pdb
 import numpy as n
 import os
+import stat
 import shutil
 
 # Local Source
@@ -41,34 +43,61 @@ import filepath
 if not os.path.exists(filepath.rasters+'scratch_fullres/'):
     os.makedirs(filepath.rasters+'scratch_fullres/')
     
-geogcs = "GEOGCS['GCS_Sphere_EMEP',\
-          DATUM['D_Sphere_EMEP',SPHEROID['Sphere_EMEP',6370000.0,0.0]],\
-          PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]"
+# The geographic coordinate system WKT string
+geogcs = (
+    "GEOGCS["
+        "'GCS_Sphere_EMEP',"
+        "DATUM['D_Sphere_EMEP',"
+        "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
+        "PRIMEM['Greenwich',0.0],"
+        "UNIT['Degree',0.0174532925199433]"
+    "]"
+)
           
 #set arcpy environment variables part 1/2
 arcpy.env.rasterStatistics = "NONE"
 arcpy.env.overwriteOutput = True
 arcpy.env.pyramid = "NONE"
+arcpy.env.compression = "NONE"
 
-# define source control points
-source_pnt = "'0 0';'0 296039.8';'0 590759.1';'0 884157.9';'0 1176236';\
-'0 1466994';'0 -296039.8';'0 -590759.1';'0 -884157.9';'0 -1176236';\
-'0 -1466994';'-296039.8 0';'-590759.1 0';'-884157.9 0';'-1176236 0';\
-'-1466994 0';'296039.8 0';'590759.1 0';'884157.9 0';'1176236 0';'1466994 0';\
-'1241985 1241985';'-1241985 -1241985';'-1241985 1241985';'1241985 -1241985';\
-'1445714 1445714';'-1445714 1445714';'-1445714 -1445714';'1445714 -1445714';\
-'1037322 1037322';'-1037322 1037322';'-1037322 -1037322';'1037322 -1037322';\
-'417730 417730';'-417730 417730';'-417730 -417730';'417730 -417730'"
+# define source control points (37 points total, units = meters)
+########################
+#           *          #
+#   *       *       *  #
+#     *     *     *    #
+#       *   *   *      #
+#         * * *        #
+# * * * * * * * * * * *#
+#         * * *        #
+#       *   *   *      #
+#     *     *     *    #
+#   *       *       *  #
+#           *          #
+########################
+source_pnt = (
+    "'0 0';"
+    "'0 296039.8';'0 590759.1';'0 884157.9';'0 1176236';'0 1466994';"
+    "'0 -296039.8';'0 -590759.1';'0 -884157.9';'0 -1176236';'0 -1466994';"
+    "'-296039.8 0';'-590759.1 0';'-884157.9 0';'-1176236 0';'-1466994 0';"
+    "'296039.8 0';'590759.1 0';'884157.9 0';'1176236 0';'1466994 0';"
+    "'1241985 1241985';'-1241985 -1241985';'-1241985 1241985';'1241985 -1241985';"
+    "'1445714 1445714';'-1445714 1445714';'-1445714 -1445714';'1445714 -1445714';"
+    "'1037322 1037322';'-1037322 1037322';'-1037322 -1037322';'1037322 -1037322';"
+    "'417730 417730';'-417730 417730';'-417730 -417730';'417730 -417730'"
+)
 
-# define target control points
-target_pnt = "'0 0';'0 296708';'0 593400';'0 890100';'0 1186800';'0 1483500';\
-'0 -296700';'0 -593400';'0 -890100';'0 -1186800';'0 -1483500';'-296700 0';\
-'-593400 0';'-890100 0';'-1186800 0';'-1483500 0';'296700 0';'593400 0';\
-'890100 0';'1186800 0';'1483500 0';'1258791 1258791';'-1258791 -1258791';\
-'-1258791 1258791';'1258791 -1258791';'1468590 1468590';'-1468590 1468590';\
-'-1468590 -1468590';'1468590 -1468590';'1048993 1048993';'-1048993 1048993';\
-'-1048993 -1048993';'1048993 -1048993';'419597 419597';'-419597 419597';\
-'-419597 -419597';'419597 -419597'"
+# define target control points (37 points total)
+target_pnt = (
+    "'0 0';"
+    "'0 296708';'0 593400';'0 890100';'0 1186800';'0 1483500';"
+    "'0 -296700';'0 -593400';'0 -890100';'0 -1186800';'0 -1483500';"
+    "'-296700 0';'-593400 0';'-890100 0';'-1186800 0';'-1483500 0';"
+    "'296700 0';'593400 0';'890100 0';'1186800 0';'1483500 0';"
+    "'1258791 1258791';'-1258791 -1258791';'-1258791 1258791';'1258791 -1258791';"
+    "'1468590 1468590';'-1468590 1468590';'-1468590 -1468590';'1468590 -1468590';"
+    "'1048993 1048993';'-1048993 1048993';'-1048993 -1048993';'1048993 -1048993';"
+    "'419597 419597';'-419597 419597';'-419597 -419597';'419597 -419597'"
+)
           
 #-----------------------------------------------------------------------------#
 def clip_envelope(AZ, ALT, i):
@@ -84,11 +113,42 @@ def clip_envelope(AZ, ALT, i):
     
     
 def tc(lon,lat):
-    '''Returns the topocentric coordinate setting'''
-    return "PROJCS['gnomonic',%s,PROJECTION['Gnomonic'],\
-    PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],\
-    PARAMETER['Longitude_Of_Center',%s],PARAMETER['Latitude_Of_Center',%s],\
-    UNIT['Meter',1.0]]"%(geogcs,str(lon),str(lat))
+    '''
+    Returns the topocentric coordinate setting in WKT format
+    '''
+    topoCoord = (
+        "PROJCS["
+            "'gnomonic',"
+            f"{geogcs},"
+            "PROJECTION['Gnomonic'],"
+            "PARAMETER['False_Easting',0.0],"
+            "PARAMETER['False_Northing',0.0],"
+            f"PARAMETER['Longitude_Of_Center',{str(lon)}],"
+            f"PARAMETER['Latitude_Of_Center',{str(lat)}],"
+            "UNIT['Meter',1.0]"
+        "]"
+    )
+    return topoCoord
+
+
+def remove_readonly(func, path, excinfo):
+    '''
+    Error-catching function to handle removal of read-only folders
+    '''
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+  
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
     
 
 def mosaic(dnight, sets, filter):
@@ -105,11 +165,15 @@ def mosaic(dnight, sets, filter):
     f = {'V':'', 'B':'b'}
     
     for s in sets:
+
+        #clear scratch directory
+        clear_scratch(filepath.rasters+'scratch_fullres/')
+
         #file paths
         calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
         gridsetp = filepath.griddata+dnight+'/S_0%s/%sfullres/' %(s[0],F[filter])
         if os.path.exists(gridsetp):
-            shutil.rmtree(gridsetp)
+            shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
                 
         #read in the registered images coordinates
@@ -120,37 +184,62 @@ def mosaic(dnight, sets, filter):
         
         #read in the best-fit zeropoint and plate scale
         file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-        zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
+        zeropoint, platescale, exptime = n.loadtxt(
+            file, usecols=(2,8,9), unpack=True, ndmin=2
+        )
         
         #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        print(f'Generating fullres images for Set {s[0]}...')
+        for w in trange(len(Obs_AZ)+1):
 
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
-            
-            if v in range(0,50,5): print 'Generating fullres image %i/45'%v
-            
-            arcpy.CopyRaster_management(calsetp+'/tiff/ib%03d.tif' %(w+1), 'ib%03d.tif' %v,"DEFAULTS","","","","","16_BIT_UNSIGNED")
-            
-            #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management("ib%03d.tif" %v,tc(Obs_AZ[w],Obs_ALT[w]))
-            
-            #warp image to remove barrel distortion image
-            arcpy.Warp_management("ib%03d.tif"%v, source_pnt, target_pnt, 'ibw%03d.tif'%v, "POLYORDER3", "BILINEAR")
 
-            #reproject into GCS
-            arcpy.ProjectRaster_management('ibw%03d.tif' %v, 'fwib%03d.tif' %v, geogcs, "BILINEAR", "0.0261")
+            # Copy TIFF file to scratch directory
+            arcpy.management.CopyRaster(
+                calsetp+'/tiff/ib%03d.tif' %(w+1), 
+                'ib%03d.tif' %v,
+                "DEFAULTS",
+                "","","","",
+                "16_BIT_UNSIGNED"
+            )
+            
+            # Re-define projection to topocentric coordinates
+            arcpy.management.DefineProjection(
+                "ib%03d.tif" %v,
+                tc(Obs_AZ[w],Obs_ALT[w])
+            )
+            
+            # Warp image to remove barrel distortion image
+            arcpy.management.Warp(
+                "ib%03d.tif"%v, 
+                source_pnt, 
+                target_pnt, 
+                'ibw%03d.tif'%v, 
+                "POLYORDER3", 
+                "BILINEAR"
+            )
+
+            # Reproject into GCS
+            arcpy.management.ProjectRaster(
+                'ibw%03d.tif' %v, 
+                'fwib%03d.tif' %v, 
+                geogcs, 
+                "BILINEAR", 
+                "0.0261"
+            )
                                        
-            #clip to image boundary
+            # Clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
+            arcpy.management.Clip("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
             
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
         while v < (len(Obs_AZ)+1):
-            im = imread(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
+            tiff = Image.open(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
+            im = n.array(tiff)
             if n.max(im) > 255:
                 mstart = v
                 break
@@ -162,14 +251,14 @@ def mosaic(dnight, sets, filter):
         R = R1+';'+R2
 
         #mosaic to topocentric coordinate image; save in Griddata\
-        print "Mosaicking into all sky full-resolution image"
-        arcpy.MosaicToNewRaster_management(R, gridsetp, 'skytopo', geogcs, 
-                                        "32_BIT_FLOAT", "0.0261", "1", "BLEND", 
-                                        "FIRST")
+        print("Mosaicking into all sky full-resolution image...")
+        arcpy.management.MosaicToNewRaster(
+            R, gridsetp, 'skytopo', geogcs, 
+            "32_BIT_FLOAT", "0.0261", "1", "BLEND", "FIRST"
+        )
         
-
         #convert to magnitudes per square arc second
-        print "Converting the mosaic to mag per squard arcsec"
+        print("Converting the mosaic to mag per square arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopo')
         stm2 = stm1 / exptime[0]
@@ -180,18 +269,13 @@ def mosaic(dnight, sets, filter):
         #save mags mosaic to disk
         skytopomags.save(gridsetp + os.sep + 'skytopomags')
     
-        print "Creating layer files for full-resolution mosaic"
+        print("Creating layer files for full-resolution mosaic...")
+        layerName = dnight+'_%s_fullres%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyr' %(f[filter],s[0])
-        arcpy.MakeRasterLayer_management(gridsetp+'skytopomags', dnight+'_%s_fullres%s'%(s[0],f[filter]))
-        arcpy.SaveToLayerFile_management(dnight+'_%s_fullres%s'%(s[0],f[filter]), layerfile, "RELATIVE")
-    
-        #Set layer symbology to magnitudes layer
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','skytopomags',
-                                  'FALSE')
-        lyrFile.save()
+        arcpy.management.MakeRasterLayer(gridsetp+'skytopomags', layerName)
+        arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
+        arcpy.management.SaveToLayerFile(layerName, layerfile, "RELATIVE")
 
     
 if __name__ == "__main__":

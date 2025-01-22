@@ -158,7 +158,7 @@ def mosaic(dnight, sets):
         Obs_AZ[35] %= 360
         
         # Loop through each file in the set
-        print('Generating galactic images for Set {s[0]}...')
+        print(f'Generating galactic images for Set {s[0]}...')
         for w in trange(len(Obs_AZ)+1):
             v = w+1
             if w == 45:
@@ -167,7 +167,7 @@ def mosaic(dnight, sets):
                 
             get_galgn(Gal_l[w], Gal_b[w])
         
-            # Rotate by galctic angle
+            # Rotate by galactic angle
             arcpy.management.Rotate(
                 'galgn.tif', 
                 'rotaterasterg.tif', 
