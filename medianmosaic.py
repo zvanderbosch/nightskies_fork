@@ -44,9 +44,16 @@ import filepath
 if not os.path.exists(filepath.rasters+'scratch_median/'):
     os.makedirs(filepath.rasters+'scratch_median/')
     
-geogcs = "GEOGCS['GCS_Sphere_EMEP',\
-          DATUM['D_Sphere_EMEP',SPHEROID['Sphere_EMEP',6370000.0,0.0]],\
-          PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]"
+# The geographic coordinate system WKT string
+geogcs = (
+    "GEOGCS["
+        "'GCS_Sphere_EMEP',"
+        "DATUM['D_Sphere_EMEP',"
+        "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
+        "PRIMEM['Greenwich',0.0],"
+        "UNIT['Degree',0.0174532925199433]"
+    "]"
+)
           
 #set arcpy environment variables part 1/2
 arcpy.env.rasterStatistics = "STATISTICS 2 2 (-999)"
