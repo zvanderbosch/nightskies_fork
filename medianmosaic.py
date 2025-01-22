@@ -121,11 +121,22 @@ def clip_envelope(AZ, ALT, i):
     
     
 def tc(lon,lat):
-    '''Returns the topocentric coordinate setting'''
-    return "PROJCS['gnomonic',%s,PROJECTION['Gnomonic'],\
-    PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],\
-    PARAMETER['Longitude_Of_Center',%s],PARAMETER['Latitude_Of_Center',%s],\
-    UNIT['Meter',1.0]]"%(geogcs,str(lon),str(lat))
+    '''
+    Returns the topocentric coordinate setting in WKT format
+    '''
+    topoCoord = (
+        "PROJCS["
+            "'gnomonic',"
+            f"{geogcs},"
+            "PROJECTION['Gnomonic'],"
+            "PARAMETER['False_Easting',0.0],"
+            "PARAMETER['False_Northing',0.0],"
+            f"PARAMETER['Longitude_Of_Center',{str(lon)}],"
+            f"PARAMETER['Latitude_Of_Center',{str(lat)}],"
+            "UNIT['Meter',1.0]"
+        "]"
+    )
+    return topoCoord
     
 
 def mosaic(dnight, sets, filter):
