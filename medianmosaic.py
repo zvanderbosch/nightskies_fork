@@ -263,7 +263,6 @@ def mosaic(dnight, sets, filter):
         )                                       
                                         
         #re-sampling to 0.05 degree resolution
-        gridname = gridsetp + "skybrightmags"
         arcpy.Resample_management(
             gridsetp+'skytopom',
             gridsetp+'skybright',
