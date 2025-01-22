@@ -23,6 +23,7 @@
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
 #
 #-----------------------------------------------------------------------------#
 
@@ -42,34 +43,61 @@ import filepath
 if not os.path.exists(filepath.rasters+'scratch_fullres/'):
     os.makedirs(filepath.rasters+'scratch_fullres/')
     
-geogcs = "GEOGCS['GCS_Sphere_EMEP',\
-          DATUM['D_Sphere_EMEP',SPHEROID['Sphere_EMEP',6370000.0,0.0]],\
-          PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]"
+# The geographic coordinate system WKT string
+geogcs = (
+    "GEOGCS["
+        "'GCS_Sphere_EMEP',"
+        "DATUM['D_Sphere_EMEP',"
+        "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
+        "PRIMEM['Greenwich',0.0],"
+        "UNIT['Degree',0.0174532925199433]"
+    "]"
+)
           
 #set arcpy environment variables part 1/2
 arcpy.env.rasterStatistics = "NONE"
 arcpy.env.overwriteOutput = True
 arcpy.env.pyramid = "NONE"
+arcpy.env.compression = "NONE"
 
-# define source control points
-source_pnt = "'0 0';'0 296039.8';'0 590759.1';'0 884157.9';'0 1176236';\
-'0 1466994';'0 -296039.8';'0 -590759.1';'0 -884157.9';'0 -1176236';\
-'0 -1466994';'-296039.8 0';'-590759.1 0';'-884157.9 0';'-1176236 0';\
-'-1466994 0';'296039.8 0';'590759.1 0';'884157.9 0';'1176236 0';'1466994 0';\
-'1241985 1241985';'-1241985 -1241985';'-1241985 1241985';'1241985 -1241985';\
-'1445714 1445714';'-1445714 1445714';'-1445714 -1445714';'1445714 -1445714';\
-'1037322 1037322';'-1037322 1037322';'-1037322 -1037322';'1037322 -1037322';\
-'417730 417730';'-417730 417730';'-417730 -417730';'417730 -417730'"
+# define source control points (37 points total, units = meters)
+########################
+#           *          #
+#   *       *       *  #
+#     *     *     *    #
+#       *   *   *      #
+#         * * *        #
+# * * * * * * * * * * *#
+#         * * *        #
+#       *   *   *      #
+#     *     *     *    #
+#   *       *       *  #
+#           *          #
+########################
+source_pnt = (
+    "'0 0';"
+    "'0 296039.8';'0 590759.1';'0 884157.9';'0 1176236';'0 1466994';"
+    "'0 -296039.8';'0 -590759.1';'0 -884157.9';'0 -1176236';'0 -1466994';"
+    "'-296039.8 0';'-590759.1 0';'-884157.9 0';'-1176236 0';'-1466994 0';"
+    "'296039.8 0';'590759.1 0';'884157.9 0';'1176236 0';'1466994 0';"
+    "'1241985 1241985';'-1241985 -1241985';'-1241985 1241985';'1241985 -1241985';"
+    "'1445714 1445714';'-1445714 1445714';'-1445714 -1445714';'1445714 -1445714';"
+    "'1037322 1037322';'-1037322 1037322';'-1037322 -1037322';'1037322 -1037322';"
+    "'417730 417730';'-417730 417730';'-417730 -417730';'417730 -417730'"
+)
 
-# define target control points
-target_pnt = "'0 0';'0 296708';'0 593400';'0 890100';'0 1186800';'0 1483500';\
-'0 -296700';'0 -593400';'0 -890100';'0 -1186800';'0 -1483500';'-296700 0';\
-'-593400 0';'-890100 0';'-1186800 0';'-1483500 0';'296700 0';'593400 0';\
-'890100 0';'1186800 0';'1483500 0';'1258791 1258791';'-1258791 -1258791';\
-'-1258791 1258791';'1258791 -1258791';'1468590 1468590';'-1468590 1468590';\
-'-1468590 -1468590';'1468590 -1468590';'1048993 1048993';'-1048993 1048993';\
-'-1048993 -1048993';'1048993 -1048993';'419597 419597';'-419597 419597';\
-'-419597 -419597';'419597 -419597'"
+# define target control points (37 points total)
+target_pnt = (
+    "'0 0';"
+    "'0 296708';'0 593400';'0 890100';'0 1186800';'0 1483500';"
+    "'0 -296700';'0 -593400';'0 -890100';'0 -1186800';'0 -1483500';"
+    "'-296700 0';'-593400 0';'-890100 0';'-1186800 0';'-1483500 0';"
+    "'296700 0';'593400 0';'890100 0';'1186800 0';'1483500 0';"
+    "'1258791 1258791';'-1258791 -1258791';'-1258791 1258791';'1258791 -1258791';"
+    "'1468590 1468590';'-1468590 1468590';'-1468590 -1468590';'1468590 -1468590';"
+    "'1048993 1048993';'-1048993 1048993';'-1048993 -1048993';'1048993 -1048993';"
+    "'419597 419597';'-419597 419597';'-419597 -419597';'419597 -419597'"
+)
           
 #-----------------------------------------------------------------------------#
 def clip_envelope(AZ, ALT, i):
@@ -85,11 +113,23 @@ def clip_envelope(AZ, ALT, i):
     
     
 def tc(lon,lat):
-    '''Returns the topocentric coordinate setting'''
-    return "PROJCS['gnomonic',%s,PROJECTION['Gnomonic'],\
-    PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],\
-    PARAMETER['Longitude_Of_Center',%s],PARAMETER['Latitude_Of_Center',%s],\
-    UNIT['Meter',1.0]]"%(geogcs,str(lon),str(lat))
+    '''
+    Returns the topocentric coordinate setting in WKT format
+    '''
+    topoCoord = (
+        "PROJCS["
+            "'gnomonic',"
+            f"{geogcs},"
+            "PROJECTION['Gnomonic'],"
+            "PARAMETER['False_Easting',0.0],"
+            "PARAMETER['False_Northing',0.0],"
+            f"PARAMETER['Longitude_Of_Center',{str(lon)}],"
+            f"PARAMETER['Latitude_Of_Center',{str(lat)}],"
+            "UNIT['Meter',1.0]"
+        "]"
+    )
+    return topoCoord
+
 
 def remove_readonly(func, path, excinfo):
     '''
@@ -156,7 +196,8 @@ def mosaic(dnight, sets, filter):
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
-            
+
+            # Copy TIFF file to scratch directory
             arcpy.management.CopyRaster(
                 calsetp+'/tiff/ib%03d.tif' %(w+1), 
                 'ib%03d.tif' %v,
@@ -165,13 +206,13 @@ def mosaic(dnight, sets, filter):
                 "16_BIT_UNSIGNED"
             )
             
-            #re-define projection to topocentric coordinates
+            # Re-define projection to topocentric coordinates
             arcpy.management.DefineProjection(
                 "ib%03d.tif" %v,
                 tc(Obs_AZ[w],Obs_ALT[w])
             )
             
-            #warp image to remove barrel distortion image
+            # Warp image to remove barrel distortion image
             arcpy.management.Warp(
                 "ib%03d.tif"%v, 
                 source_pnt, 
@@ -181,7 +222,7 @@ def mosaic(dnight, sets, filter):
                 "BILINEAR"
             )
 
-            #reproject into GCS
+            # Reproject into GCS
             arcpy.management.ProjectRaster(
                 'ibw%03d.tif' %v, 
                 'fwib%03d.tif' %v, 
@@ -190,7 +231,7 @@ def mosaic(dnight, sets, filter):
                 "0.0261"
             )
                                        
-            #clip to image boundary
+            # Clip to image boundary
             rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
             arcpy.management.Clip("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
             
@@ -216,7 +257,6 @@ def mosaic(dnight, sets, filter):
             "32_BIT_FLOAT", "0.0261", "1", "BLEND", "FIRST"
         )
         
-
         #convert to magnitudes per square arc second
         print("Converting the mosaic to mag per square arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
