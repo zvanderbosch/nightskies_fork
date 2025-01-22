@@ -281,23 +281,19 @@ def mosaic(dnight, sets, filter):
     
         print("Creating layer files for median mosaic...")
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyr'%(f[filter],s[0])
+        symbologyLayer = filepath.rasters+'magnitudes.lyr'
         arcpy.MakeRasterLayer_management(
             gridsetp+'skybrightmags', 
             dnight+'_%s_median%s'%(s[0],f[filter])
+        )
+        arcpy.ApplySymbologyFromLayer_management(
+            layerfile, symbologyLayer
         )
         arcpy.SaveToLayerFile_management(
             dnight+'_%s_median%s'%(s[0],f[filter]), 
             layerfile, 
             "ABSOLUTE"
         )
-    
-        #Set layer symbology to magnitudes layer
-        symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.ApplySymbologyFromLayer_management(layerfile, symbologyLayer)
-        lyrFile = arcpy.mapping.Layer(layerfile)
-        lyrFile.replaceDataSource(gridsetp,'RASTER_WORKSPACE','skybrightmags',
-                                  'FALSE')
-        lyrFile.save()
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+'/S_0%s/%smedian/skybrightmags' %(s[0],F[filter])
@@ -310,8 +306,13 @@ def mosaic(dnight, sets, filter):
     #create mask.tif for horizon masking in the later process
     mask = filepath.griddata+dnight+'/mask.tif'
     if not os.path.isfile(mask):
-        arcpy.CopyRaster_management(gridsetp+'skybright',mask,"DEFAULTS","0",
-        "0","","","16_BIT_UNSIGNED")
+        arcpy.CopyRaster_management(
+            gridsetp+'skybright',
+            mask,
+            "DEFAULTS",
+            "0","0","","",
+            "16_BIT_UNSIGNED"
+        )
 
     
 if __name__ == "__main__":
