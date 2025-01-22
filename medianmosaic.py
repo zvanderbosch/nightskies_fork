@@ -59,6 +59,7 @@ geogcs = (
 arcpy.env.rasterStatistics = "STATISTICS 2 2 (-999)"
 arcpy.env.overwriteOutput = True
 arcpy.env.pyramid = "NONE"
+arcpy.env.compression = "NONE"
 
 # define source control points (37 points total, units = meters)
 ########################
