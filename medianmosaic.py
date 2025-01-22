@@ -280,20 +280,12 @@ def mosaic(dnight, sets, filter):
         skytopomags.save(gridsetp+'skybrightmags')
     
         print("Creating layer files for median mosaic...")
+        layerName = dnight+'_%s_median%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyr'%(f[filter],s[0])
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.MakeRasterLayer_management(
-            gridsetp+'skybrightmags', 
-            dnight+'_%s_median%s'%(s[0],f[filter])
-        )
-        arcpy.ApplySymbologyFromLayer_management(
-            layerfile, symbologyLayer
-        )
-        arcpy.SaveToLayerFile_management(
-            dnight+'_%s_median%s'%(s[0],f[filter]), 
-            layerfile, 
-            "ABSOLUTE"
-        )
+        arcpy.MakeRasterLayer_management(gridsetp+'skybrightmags', layerName)
+        arcpy.ApplySymbologyFromLayer_management(layerName, symbologyLayer)
+        arcpy.SaveToLayerFile_management(layerName, layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+'/S_0%s/%smedian/skybrightmags' %(s[0],F[filter])
