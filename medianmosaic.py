@@ -27,6 +27,7 @@
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
+from tqdm import trange
 from skimage.transform import downscale_local_mean
 
 import arcpy
@@ -192,14 +193,13 @@ def mosaic(dnight, sets, filter):
         zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
         
         #loop through each file in the set
-        for w in range(len(Obs_AZ)+1):
+        print(f'Generating median images for Set {s[0]}...')
+        for w in trange(len(Obs_AZ)+1):
 
             v = w+1
             if w == 45:
                 w = 35
                 Obs_AZ[w] -= 360
-            
-            if v in range(0,50,5): print('Generating median image %i/45'%v)
             
             arcpy.CopyRaster_management(
                 calsetp+'/tiff/median_ib%03d.tif' %(w+1), 
