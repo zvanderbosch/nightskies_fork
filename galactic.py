@@ -60,7 +60,7 @@ geogcs = "GEOGCS['GCS_Sphere_EMEP',\
 #-----------------------------------------------------------------------------#
 def gal_envelope(lon,lat):
     if abs(lat)<71:
-        #expension angle
+        #expansion angle
         if abs(lat)<55: ang = 22/n.cos(n.deg2rad(lat))
         else: ang = 89
         lon = (lon+90) % 180 - 90
@@ -137,15 +137,19 @@ def mosaic(dnight, sets):
 
     for s in sets:
 
-        # Clear out scratch directory
-        clear_scratch(f'{filepath.rasters}scratch_galactic/')
-
-        # File paths
+        # Define file paths
         calsetp = f"{filepath.calibdata}{dnight}/"
         gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/gal/"
+        scratchsetp = f"{filepath.rasters}scratch_galactic/"
+        domainsetp = f"{calsetp}/S_0{s[0]}/domains/"
+
+        # Remove and/or create gridsetp directory
         if os.path.exists(gridsetp):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
+
+        # Clear scratch directory
+        clear_scratch(scratchsetp)
         
         # Read in the galactic coordinates from coordinates_%s.txt
         file = f'{calsetp}coordinates_{s[0]}.txt'
@@ -192,8 +196,18 @@ def mosaic(dnight, sets):
             )
                                         
             # Clip to image boundary
-            rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.management.Clip(f"gal{v:02d}.tif", rectangle, f"gali{v:02d}")
+            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+            # arcpy.management.Clip(f"gal{v:02d}.tif", rectangle, f"gali{v:02d}")
+            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+            arcpy.management.Clip(
+                f"gal{v:02d}.tif", 
+                "", 
+                f"gali{v:02d}", 
+                clipFile,
+                "0",
+                "ClippingGeometry",
+                "NO_MAINTAIN_EXTENT"
+            )
         
         # Mosaic to topocentric coordinate model; save in Griddata\
         print("Mosaicking into all sky galactic model...")
@@ -203,11 +217,18 @@ def mosaic(dnight, sets):
             "32_BIT_FLOAT", "0.05", "1", "BLEND", "FIRST"
         )
 
+        # Crop lower latitude limit to -6.0 degrees
+        arcpy.management.Clip(
+            f'{gridsetp}galtopmags', 
+            "-180.000 -6.000 180.000 90.000", 
+            f'{gridsetp}galtopmagsc'
+        )
+
         # Create Raster layer, add magnitudes symbology, and save layer to file
         print("Creating layer files for galactic mosaic...")
         layerfile = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.lyrx'
         symbologyFile = f'{filepath.rasters}magnitudes.lyrx'
-        arcpy.management.MakeRasterLayer(gridsetp+'galtopmags', 'galtoplyr')
+        arcpy.management.MakeRasterLayer(gridsetp+'galtopmagsc', 'galtoplyr')
         arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
         arcpy.management.SaveToLayerFile('galtoplyr', layerfile, "ABSOLUTE")
         
