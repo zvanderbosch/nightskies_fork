@@ -174,9 +174,6 @@ def mosaic(dnight, sets, filter):
     
     for s in sets:
 
-        #clear scratch directory
-        clear_scratch(filepath.rasters+'scratch_median/')
-
         # Define file paths
         calsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/{F[filter]}"
         gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/{F[filter]}median/"
@@ -234,7 +231,7 @@ def mosaic(dnight, sets, filter):
                 "BILINEAR"
             )
 
-            #set zero values to NoData
+            # Set any zero values created during Warp to NoData
             outSetNull = arcpy.sa.SetNull(
                 'ibw%03d.tif' %v, 
                 'ibw%03d.tif' %v, 
@@ -245,21 +242,21 @@ def mosaic(dnight, sets, filter):
             #reproject into GCS
             arcpy.management.ProjectRaster(
                 'ibw%03d.tif' %v, 
-                'wib%03d.tif' %v, 
+                'fwib%03d.tif' %v, 
                 geogcs, 
                 "BILINEAR", 
                 "0.0266"
             )
 
-            #set zero values to NoData
+            # Set any zero values created by projection to NoData
             outSetNull = arcpy.sa.SetNull(
-                'wib%03d.tif' %v, 
-                'wib%03d.tif' %v, 
+                'fwib%03d.tif' %v, 
+                'fwib%03d.tif' %v, 
                 "VALUE <= 0"
             )
-            outSetNull.save('nwib%03d.tif' %v)
+            outSetNull.save('fwib%03d.tif' %v)
                                        
-            #clip to image boundary
+            # Clip to image boundary
             # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
             # arcpy.management.Clip("wib%03d.tif"%v, rectangle, "cib%03d"%v)
             clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
@@ -284,8 +281,8 @@ def mosaic(dnight, sets, filter):
             v+=1
                         
         #mosaic raster list
-        R1 = ';'.join(['nwib%03d.tif' %i for i in range(mstart,47)])
-        R2 = ';'.join(['nwib%03d.tif' %i for i in range(1,mstart)])
+        R1 = ';'.join(['fcib%03d' %i for i in range(mstart,47)])
+        R2 = ';'.join(['fcib%03d' %i for i in range(1,mstart)])
         R = R1+';'+R2
         
         #mosaic to topocentric coordinate image; save in Griddata\
