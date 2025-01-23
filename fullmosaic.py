@@ -237,7 +237,7 @@ def mosaic(dnight, sets, filter):
             outSetNull = arcpy.sa.SetNull(
                 'ibw%03d.tif' %v, 
                 'ibw%03d.tif' %v, 
-                "VALUE = 0"
+                "VALUE <= 0"
             )
             outSetNull.save('ibw%03d.tif' %v)
 
@@ -254,7 +254,7 @@ def mosaic(dnight, sets, filter):
             outSetNull = arcpy.sa.SetNull(
                 'fwib%03d.tif' %v, 
                 'fwib%03d.tif' %v, 
-                "VALUE = 0"
+                "VALUE <= 0"
             )
             outSetNull.save('fwib%03d.tif' %v)
 
