@@ -136,7 +136,7 @@ def mosaic(dnight, sets):
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
         gridsetp = filepath.griddata+dnight+'/S_0%s/zod/' %s[0]
         scratchsetp = f"{filepath.rasters}scratch_zodiacal/"
-        domainsetp = f"{calsetp}/S_0{s[0]}/domains/"
+        domainsetp = f"{calsetp}domains/"
 
         if os.path.exists(gridsetp):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
