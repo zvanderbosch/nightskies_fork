@@ -59,6 +59,7 @@ arcpy.env.rasterStatistics = "NONE"
 arcpy.env.overwriteOutput = True
 arcpy.env.pyramid = "NONE"
 arcpy.env.compression = "NONE"
+arcpy.CheckOutExtension("3D")
 
 # define source control points (37 points total, units = meters)
 ########################
@@ -138,12 +139,12 @@ def remove_readonly(func, path, excinfo):
     os.chmod(path, stat.S_IWRITE)
     func(path)
   
-def clear_scratch(scratch_dir):
+def clear_dir(dir_path):
     '''
     Function to clear out all files and folders from
-    the scratch directory.
+    the specified directory.
     '''
-    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+    for root, dirs, files in os.walk(dir_path, topdown=False):
         for name in files:
             os.remove(os.path.join(root, name))
         for name in dirs:
@@ -166,15 +167,25 @@ def mosaic(dnight, sets, filter):
     
     for s in sets:
 
-        #clear scratch directory
-        clear_scratch(filepath.rasters+'scratch_fullres/')
+        # Define file paths
+        calsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/{F[filter]}"
+        gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/{F[filter]}fullres/"
+        scratchsetp = f"{filepath.rasters}scratch_fullres/"
+        domainsetp = f"{calsetp}/domains/"
 
-        #file paths
-        calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
-        gridsetp = filepath.griddata+dnight+'/S_0%s/%sfullres/' %(s[0],F[filter])
+        # Remove and/or create gridsetp directory
         if os.path.exists(gridsetp):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
+
+        # Create domainsetp if non-existent, else clear out directory
+        if not os.path.exists(domainsetp):
+            os.makedirs(domainsetp)
+        else:
+            clear_dir(domainsetp)
+
+        # Clear out the scratch directory
+        clear_dir(scratchsetp)
                 
         #read in the registered images coordinates
         file = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
@@ -222,6 +233,14 @@ def mosaic(dnight, sets, filter):
                 "BILINEAR"
             )
 
+            #set zero values to NoData
+            outSetNull = arcpy.sa.SetNull(
+                'ibw%03d.tif' %v, 
+                'ibw%03d.tif' %v, 
+                "VALUE = 0"
+            )
+            outSetNull.save('ibw%03d.tif' %v)
+
             # Reproject into GCS
             arcpy.management.ProjectRaster(
                 'ibw%03d.tif' %v, 
@@ -230,12 +249,46 @@ def mosaic(dnight, sets, filter):
                 "BILINEAR", 
                 "0.0261"
             )
+
+            # Set zero values to NoData
+            outSetNull = arcpy.sa.SetNull(
+                'fwib%03d.tif' %v, 
+                'fwib%03d.tif' %v, 
+                "VALUE = 0"
+            )
+            outSetNull.save('fwib%03d.tif' %v)
+
+            # Create a raster border for clipping
+            os.makedirs(f'{domainsetp}ib{v:03d}/')
+            arcpy.ddd.RasterDomain(
+                f'fwib{v:03d}.tif',
+                f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
+                'POLYGON'
+            )
+            arcpy.management.EliminatePolygonPart(
+                f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
+                f'{domainsetp}ib{v:03d}/ib{v:03d}_border',
+                "PERCENT",
+                "",
+                "10",
+                "CONTAINED_ONLY"
+            )
                                        
             # Clip to image boundary
-            rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.management.Clip("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
+            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+            # arcpy.management.Clip("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
+            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+            arcpy.management.Clip(
+                f"fwib{v:03d}.tif", 
+                "", 
+                f"fcib{v:03d}", 
+                clipFile,
+                "0",
+                "ClippingGeometry",
+                "NO_MAINTAIN_EXTENT"
+            )
             
-        #mosaic raster list must start with an image with max pixel value > 256
+        # Mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
         while v < (len(Obs_AZ)+1):
             tiff = Image.open(filepath.rasters+'scratch_fullres/ib%03d.tif' %v)
@@ -245,34 +298,41 @@ def mosaic(dnight, sets, filter):
                 break
             v+=1
                         
-        #mosaic raster list
+        # Mosaic raster list
         R1 = ';'.join(['fcib%03d' %i for i in range(mstart,47)])
         R2 = ';'.join(['fcib%03d' %i for i in range(1,mstart)])
         R = R1+';'+R2
 
-        #mosaic to topocentric coordinate image; save in Griddata\
+        # Mosaic to topocentric coordinate image; save in Griddata\
         print("Mosaicking into all sky full-resolution image...")
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopo', geogcs, 
             "32_BIT_FLOAT", "0.0261", "1", "BLEND", "FIRST"
         )
+
+        # Crop lower latitude limit to -6.0 degrees
+        arcpy.management.Clip(
+            f'{gridsetp}skytopo', 
+            "-180.000 -6.000 180.000 90.000", 
+            f'{gridsetp}skytopoc'
+        )
         
-        #convert to magnitudes per square arc second
+        # Convert to magnitudes per square arc second
         print("Converting the mosaic to mag per square arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
-        stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopo')
+        stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopoc')
         stm2 = stm1 / exptime[0]
         stm3 = arcpy.sa.Log10(stm2)
         stm4 = 2.5 * stm3
         skytopomags = zeropoint[int(s[0])-1] + psa - stm4
 
-        #save mags mosaic to disk
+        # Save mags mosaic to disk
         skytopomags.save(gridsetp + os.sep + 'skytopomags')
     
         print("Creating layer files for full-resolution mosaic...")
         layerName = dnight+'_%s_fullres%s'%(s[0],f[filter])
-        layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyr' %(f[filter],s[0])
-        symbologyLayer = filepath.rasters+'magnitudes.lyr'
+        layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyrx' %(f[filter],s[0])
+        symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'skytopomags', layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "RELATIVE")
