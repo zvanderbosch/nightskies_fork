@@ -175,14 +175,21 @@ def mosaic(dnight, sets, filter):
     for s in sets:
 
         #clear scratch directory
-        clear_scratch(filepath.rasters+'scratch_fullres/')
+        clear_scratch(filepath.rasters+'scratch_median/')
 
-        #file paths
-        calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
-        gridsetp = filepath.griddata+dnight+'/S_0%s/%smedian/' %(s[0],F[filter])
+        # Define file paths
+        calsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/{F[filter]}"
+        gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/{F[filter]}median/"
+        scratchsetp = f"{filepath.rasters}scratch_median/"
+        domainsetp = f"{calsetp}/domains/"
+
+        # Remove and/or create gridsetp directory
         if os.path.exists(gridsetp):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
+
+        # Clear scratch directory
+        clear_scratch(scratchsetp)
                 
         #read in the registered images coordinates
         file = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
@@ -203,7 +210,7 @@ def mosaic(dnight, sets, filter):
                 w = 35
                 Obs_AZ[w] -= 360
             
-            arcpy.CopyRaster_management(
+            arcpy.management.CopyRaster(
                 calsetp+'/tiff/median_ib%03d.tif' %(w+1), 
                 'ib%03d.tif' %v,
                 "DEFAULTS",
@@ -212,13 +219,13 @@ def mosaic(dnight, sets, filter):
             )
             
             #re-define projection to topocentric coordinates
-            arcpy.DefineProjection_management(
+            arcpy.management.DefineProjection(
                 "ib%03d.tif" %v,
                 tc(Obs_AZ[w],Obs_ALT[w])
             )
             
             #warp image to remove barrel distortion image
-            arcpy.Warp_management(
+            arcpy.management.Warp(
                 'ib%03d.tif'%v, 
                 source_pnt, 
                 target_pnt, 
@@ -227,23 +234,49 @@ def mosaic(dnight, sets, filter):
                 "BILINEAR"
             )
 
+            #set zero values to NoData
+            outSetNull = arcpy.sa.SetNull(
+                'ibw%03d.tif' %v, 
+                'ibw%03d.tif' %v, 
+                "VALUE <= 0"
+            )
+            outSetNull.save('ibw%03d.tif' %v)
+
             #reproject into GCS
-            arcpy.ProjectRaster_management(
+            arcpy.management.ProjectRaster(
                 'ibw%03d.tif' %v, 
                 'wib%03d.tif' %v, 
                 geogcs, 
                 "BILINEAR", 
                 "0.0266"
             )
+
+            #set zero values to NoData
+            outSetNull = arcpy.sa.SetNull(
+                'wib%03d.tif' %v, 
+                'wib%03d.tif' %v, 
+                "VALUE <= 0"
+            )
+            outSetNull.save('nwib%03d.tif' %v)
                                        
             #clip to image boundary
-            rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.Clip_management("wib%03d.tif"%v, rectangle, "cib%03d"%v)
+            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+            # arcpy.management.Clip("wib%03d.tif"%v, rectangle, "cib%03d"%v)
+            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+            arcpy.management.Clip(
+                f"fwib{v:03d}.tif", 
+                "", 
+                f"fcib{v:03d}", 
+                clipFile,
+                "0",
+                "ClippingGeometry",
+                "NO_MAINTAIN_EXTENT"
+            )
         
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
         while v < (len(Obs_AZ)+1):
-            tiff = Image.open(filepath.rasters+'scratch_median/ib%03d.tif' %v)
+            tiff = Image.open(f'{scratchsetp}ib{v:03d}.tif')
             im = n.array(tiff)
             if n.max(im) > 255:
                 mstart = v
@@ -251,20 +284,27 @@ def mosaic(dnight, sets, filter):
             v+=1
                         
         #mosaic raster list
-        R1 = ';'.join(['cib%03d' %i for i in range(mstart,47)])
-        R2 = ';'.join(['cib%03d' %i for i in range(1,mstart)])
+        R1 = ';'.join(['nwib%03d.tif' %i for i in range(mstart,47)])
+        R2 = ';'.join(['nwib%03d.tif' %i for i in range(1,mstart)])
         R = R1+';'+R2
         
         #mosaic to topocentric coordinate image; save in Griddata\
         print("Mosaicking into all sky median image...")
-        arcpy.MosaicToNewRaster_management(
+        arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopom', geogcs, 
             "32_BIT_FLOAT", "0.0266", "1", "BLEND", "FIRST"
-        )                                       
+        )
+
+        # Crop lower latitude limit to -6.0 degrees
+        arcpy.management.Clip(
+            f'{gridsetp}skytopom', 
+            "-180.000 -6.000 180.000 90.000", 
+            f'{gridsetp}skytopomc'
+        )                                      
                                         
         #re-sampling to 0.05 degree resolution
-        arcpy.Resample_management(
-            gridsetp+'skytopom',
+        arcpy.management.Resample(
+            gridsetp+'skytopomc',
             gridsetp+'skybright',
             '0.05',
             'BILINEAR'
@@ -282,9 +322,9 @@ def mosaic(dnight, sets, filter):
         layerName = dnight+'_%s_median%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyr'%(f[filter],s[0])
         symbologyLayer = filepath.rasters+'magnitudes.lyr'
-        arcpy.MakeRasterLayer_management(gridsetp+'skybrightmags', layerName)
-        arcpy.ApplySymbologyFromLayer_management(layerName, symbologyLayer)
-        arcpy.SaveToLayerFile_management(layerName, layerfile, "ABSOLUTE")
+        arcpy.management.MakeRasterLayer(gridsetp+'skybrightmags', layerName)
+        arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
+        arcpy.management.SaveToLayerFile(layerName, layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
         file = filepath.griddata+dnight+'/S_0%s/%smedian/skybrightmags' %(s[0],F[filter])
@@ -297,7 +337,7 @@ def mosaic(dnight, sets, filter):
     #create mask.tif for horizon masking in the later process
     mask = filepath.griddata+dnight+'/mask.tif'
     if not os.path.isfile(mask):
-        arcpy.CopyRaster_management(
+        arcpy.management.CopyRaster(
             gridsetp+'skybright',
             mask,
             "DEFAULTS",
