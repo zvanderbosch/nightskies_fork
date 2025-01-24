@@ -45,6 +45,17 @@ import filepath
 
 #-----------------------------------------------------------------------------#
 
+def stretch_to_range(values, new_min, new_max):
+    '''
+    Function to perform a linear stretch of an array of values 
+    to fit within a new min and max range.
+    '''
+    old_min = min(values.flatten())
+    old_max = max(values.flatten())
+    new_values = ((values - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+    return new_values
+
+
 def reducev(dnight, sets, flatname, curve):
     '''
     This module is for calibrating the V-band data.
@@ -124,6 +135,8 @@ def reducev(dnight, sets, flatname, curve):
                 f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
                 f.data -= corthermal                  # subtract dark
                 f.data /= flat                        # divide by flat
+                f.data = f.data.clip(min=1.0)         # Set minimum value to 1
+                f.data = f.data.astype(n.uint16)      # Convert to uint16 values
                 f.header['IMAGETYP'] = 'CALIB_M'      # Update header
                 f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
 
@@ -186,6 +199,8 @@ def reduceb(dnight, sets, flatname, curve):
             f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
             f.data -= corthermal                  # subtract dark
             f.data /= flat                        # divide by flat
+            f.data = f.data.clip(min=1.0)         # Set minimum value to 1
+            f.data = f.data.astype(n.uint16)      # Convert to uint16 values
             f.header['IMAGETYP'] = 'CALIB_M'
             f.writeto(calsetp+file[i][len(rawsetp):-5]+'.fit', overwrite=True)
 
