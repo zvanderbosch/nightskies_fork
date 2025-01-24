@@ -144,13 +144,13 @@ def set_null_values(rasterFile):
     outSetNull.save(rasterFile)
 
 
-
 def remove_readonly(func, path, excinfo):
     '''
     Error-catching function to handle removal of read-only folders
     '''
     os.chmod(path, stat.S_IWRITE)
     func(path)
+  
   
 def clear_dir(dir_path):
     '''
