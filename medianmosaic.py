@@ -139,6 +139,18 @@ def tc(lon,lat):
     return topoCoord
 
 
+def set_null_values(rasterFile):
+    '''
+    Function to set values within raster File to NoData
+    '''
+    outSetNull = arcpy.sa.SetNull(
+        rasterFile, 
+        rasterFile, 
+        "VALUE <= 0"
+    )
+    outSetNull.save(rasterFile)
+
+
 def remove_readonly(func, path, excinfo):
     '''
     Error-catching function to handle removal of read-only folders
@@ -208,8 +220,8 @@ def mosaic(dnight, sets, filter):
                 Obs_AZ[w] -= 360
             
             arcpy.management.CopyRaster(
-                calsetp+'/tiff/median_ib%03d.tif' %(w+1), 
-                'ib%03d.tif' %v,
+                f'{calsetp}/tiff/median_ib{w+1:03d}.tif', 
+                f'ib{v:03d}.tif',
                 "DEFAULTS",
                 "","","","",
                 "16_BIT_UNSIGNED"
@@ -217,44 +229,30 @@ def mosaic(dnight, sets, filter):
             
             #re-define projection to topocentric coordinates
             arcpy.management.DefineProjection(
-                "ib%03d.tif" %v,
+                f'ib{v:03d}.tif',
                 tc(Obs_AZ[w],Obs_ALT[w])
             )
             
             #warp image to remove barrel distortion image
             arcpy.management.Warp(
-                'ib%03d.tif'%v, 
+                f'ib{v:03d}.tif', 
                 source_pnt, 
                 target_pnt, 
-                'ibw%03d.tif'%v, 
+                f'ibw{v:03d}.tif', 
                 "POLYORDER3", 
                 "BILINEAR"
             )
-
-            # Set any zero values created during Warp to NoData
-            outSetNull = arcpy.sa.SetNull(
-                'ibw%03d.tif' %v, 
-                'ibw%03d.tif' %v, 
-                "VALUE <= 0"
-            )
-            outSetNull.save('ibw%03d.tif' %v)
+            set_null_values(f'ibw{v:03d}.tif')
 
             #reproject into GCS
             arcpy.management.ProjectRaster(
-                'ibw%03d.tif' %v, 
-                'fwib%03d.tif' %v, 
+                f'ibw{v:03d}.tif',
+                f'fwib{v:03d}.tif',
                 geogcs, 
                 "BILINEAR", 
                 "0.0266"
             )
-
-            # Set any zero values created by projection to NoData
-            outSetNull = arcpy.sa.SetNull(
-                'fwib%03d.tif' %v, 
-                'fwib%03d.tif' %v, 
-                "VALUE <= 0"
-            )
-            outSetNull.save('fwib%03d.tif' %v)
+            set_null_values(f'fwib{v:03d}.tif')
                                        
             # Clip to image boundary
             # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
