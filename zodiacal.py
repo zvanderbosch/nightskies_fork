@@ -132,15 +132,18 @@ def mosaic(dnight, sets):
 
     for s in sets:
 
-        # Clear out scratch directory
-        clear_scratch(f'{filepath.rasters}scratch_zodiacal/')
-
-        #file paths
+        # Define file paths
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
         gridsetp = filepath.griddata+dnight+'/S_0%s/zod/' %s[0]
+        scratchsetp = f"{filepath.rasters}scratch_zodiacal/"
+        domainsetp = f"{calsetp}domains/"
+
         if os.path.exists(gridsetp):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
+
+        # Clear out scratch directory
+        clear_scratch(scratchsetp)
         
         #read in the zodiacal coordinates from coordinates_%s.txt
         file = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
@@ -187,8 +190,18 @@ def mosaic(dnight, sets):
             )
 
             #clip to image boundary
-            rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            arcpy.management.Clip("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
+            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+            # arcpy.management.Clip("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
+            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+            arcpy.management.Clip(
+                f"zod{v:02d}.tif", 
+                "", 
+                f"zodi{v:02d}", 
+                clipFile,
+                "0",
+                "ClippingGeometry",
+                "NO_MAINTAIN_EXTENT"
+            )
             
         #Mosaic to topocentric coordinate model; save in Griddata\
         print("Mosaicking into all sky zodiacal model...")
@@ -197,10 +210,21 @@ def mosaic(dnight, sets):
             R, gridsetp, 'zodtopo', geogcs, 
             "32_BIT_FLOAT", "0.1", "1", "BLEND", "FIRST"
         )
+
+        # Crop lower latitude limit to -6.0 degrees
+        arcpy.management.Clip(
+            f'{gridsetp}zodtopo', 
+            "-180.000 -6.000 180.000 90.000", 
+            f'{gridsetp}zodtopoc'
+        )
                                         
         #re-sampling to 0.05 degree resolution
         gridname = gridsetp + "zodtopmags"
-        arcpy.management.Resample(gridsetp+'zodtopo',gridname,'0.05','BILINEAR')
+        arcpy.management.Resample(
+            gridsetp+'zodtopoc',
+            gridname,'0.05',
+            'BILINEAR'
+        )
     
         #Create Raster layer, add magnitudes symbology, and save layer to file
         print("Creating layer files for zodiacal mosaic...")
