@@ -132,6 +132,19 @@ def tc(lon,lat):
     return topoCoord
 
 
+def set_null_values(rasterFile):
+    '''
+    Function to set values within raster File to NoData
+    '''
+    outSetNull = arcpy.sa.SetNull(
+        rasterFile, 
+        rasterFile, 
+        "VALUE <= 0"
+    )
+    outSetNull.save(rasterFile)
+
+
+
 def remove_readonly(func, path, excinfo):
     '''
     Error-catching function to handle removal of read-only folders
@@ -210,8 +223,8 @@ def mosaic(dnight, sets, filter):
 
             # Copy TIFF file to scratch directory
             arcpy.management.CopyRaster(
-                calsetp+'/tiff/ib%03d.tif' %(w+1), 
-                'ib%03d.tif' %v,
+                f'{calsetp}/tiff/ib{w+1:03d}.tif', 
+                f'ib{v:03d}.tif',
                 "DEFAULTS",
                 "","","","",
                 "16_BIT_UNSIGNED"
@@ -219,44 +232,30 @@ def mosaic(dnight, sets, filter):
             
             # Re-define projection to topocentric coordinates
             arcpy.management.DefineProjection(
-                "ib%03d.tif" %v,
+                f'ib{v:03d}.tif',
                 tc(Obs_AZ[w],Obs_ALT[w])
             )
             
             # Warp image to remove barrel distortion image
             arcpy.management.Warp(
-                "ib%03d.tif"%v, 
+                f'ib{v:03d}.tif', 
                 source_pnt, 
                 target_pnt, 
-                'ibw%03d.tif'%v, 
+                f'ibw{v:03d}.tif', 
                 "POLYORDER3", 
                 "BILINEAR"
             )
-
-            #set zero values to NoData
-            outSetNull = arcpy.sa.SetNull(
-                'ibw%03d.tif' %v, 
-                'ibw%03d.tif' %v, 
-                "VALUE <= 0"
-            )
-            outSetNull.save('ibw%03d.tif' %v)
+            set_null_values(f'ibw{v:03d}.tif')
 
             # Reproject into GCS
             arcpy.management.ProjectRaster(
-                'ibw%03d.tif' %v, 
-                'fwib%03d.tif' %v, 
+                f'ibw{v:03d}.tif', 
+                f'fwib{v:03d}.tif', 
                 geogcs, 
                 "BILINEAR", 
                 "0.0261"
             )
-
-            # Set zero values to NoData
-            outSetNull = arcpy.sa.SetNull(
-                'fwib%03d.tif' %v, 
-                'fwib%03d.tif' %v, 
-                "VALUE <= 0"
-            )
-            outSetNull.save('fwib%03d.tif' %v)
+            set_null_values(f'fwib{v:03d}.tif')
 
             # Create a raster border for clipping
             os.makedirs(f'{domainsetp}ib{v:03d}/')
@@ -313,7 +312,7 @@ def mosaic(dnight, sets, filter):
         # Crop lower latitude limit to -6.0 degrees
         arcpy.management.Clip(
             f'{gridsetp}skytopo', 
-            "-180.000 -6.000 180.000 90.000", 
+            "-180.0 -6.0 180.0 90.0", 
             f'{gridsetp}skytopoc'
         )
         
