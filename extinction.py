@@ -30,6 +30,7 @@
 #History:
 #	Dan Duriscoe -- Created in visual basic as "extinction v4.vbs"
 #	Li-Wei Hung -- Cleaned, improved, and translated to python
+#   Zach Vanderbosch -- Updated to Python 3.11, replaced ACP with Astropy
 #
 #-----------------------------------------------------------------------------#
 
