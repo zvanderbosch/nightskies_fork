@@ -182,10 +182,22 @@ def poly_sigfit(x,y,signum=5,niter=10):
 
         # Get number of rejected points
         nrej += N - len(fit_x)
-    
-    print(f'{nrej} out of {len(x)} data points clipped with signum={signum} and niter={niter}.')
 
-    return param, cov, fit_x, fit_y
+    # Get final indices of stars used for the fit
+    N = len(fit_x)
+    mod_fit = n.polyval(param, fit_x)
+    mod_full = n.polyval(param, x)
+    sigma = n.sqrt(sum((mod_fit-fit_y)**2)/(N-1))
+    fit_indices = (
+        (y-mod_full > -signum*sigma) & 
+        (y-mod_full <  signum*sigma)
+    )
+    print(
+        f'{nrej} out of {len(x)} stars clipped '
+        f'with signum={signum} and niter={niter}.'
+    )
+
+    return param, cov, fit_indices
 
 
 def extinction(dnight, sets, filter, plot_img=0):
@@ -421,15 +433,8 @@ def extinction(dnight, sets, filter, plot_img=0):
             yscale.append(abs(H['CDELT2']))
             
         
-        #save the list of stars that will be used for calculating the zeropoint
+        # Fit for the zeropoint and extinction coefficient
         stars = n.array((bestfit),dtype=object)
-        fmt = ['%7s','%8s','%7.2f','%9.2f','%7.1f','%6.1f','%5.2f','%7.f']
-        H = 'File    Star   Magnitude Elevation   X      Y   sigma flux[DN/s]'
-        fileout = filepath.calibdata+dnight+'/extinction_stars_%s_%s.txt'\
-                  %(filter,s[0])
-        n.savetxt(fileout,stars,fmt=fmt,header=H)
-        
-        #fit for the zeropoint and extinction coefficient
         M = n.float64(stars[:,2])            #V_mag, absolute
         elev = n.float64(stars[:,3])         #elevation[deg]
         flux = n.float64(stars[:,7])         #flux, background subtracted [DN]
@@ -438,17 +443,24 @@ def extinction(dnight, sets, filter, plot_img=0):
         Nfit = len(M)
         
         # Perform fit with sigma-clipping
-        param, cov, airmass_clipped, mag_clipped = poly_sigfit(
+        param, cov, clipped_index = poly_sigfit(
             airmass, M-m, signum=5, niter=10
         )
-        c, z = param                         #bestfit coefficient and zeropoint
-        c_err, z_err = n.sqrt(cov.diagonal())#uncertainties
+        c, z = param                          # bestfit coefficient and zeropoint
+        c_err, z_err = n.sqrt(cov.diagonal()) # uncertainties
+
+        # Save the list of stars used for calculating the zeropoint
+        fmt = ['%7s','%8s','%7.2f','%9.2f','%7.1f','%6.1f','%5.2f','%7.f']
+        H = 'File    Star   Magnitude Elevation   X      Y   sigma flux[DN/s]'
+        fileout = filepath.calibdata+dnight+'/extinction_stars_%s_%s.txt'\
+                  %(filter,s[0])
+        n.savetxt(fileout,stars[clipped_index,:],fmt=fmt,header=H)
         
         sx = n.mean(xscale) * 60             #x plate scale ['/pix]
         sy = n.mean(yscale) * 60             #y plate scale ['/pix]
         sa = n.mean(xscale+yscale) * 60      #average plate scale ['/pix]
         
-        fit_entry = [int(s[0]), len(stars), z, z_err, c, c_err, sx, sy, sa, exp]
+        fit_entry = [int(s[0]), sum(clipped_index), z, z_err, c, c_err, sx, sy, sa, exp]
         zeropoint_dnight.append(fit_entry)
                 
         #plot the zeropoint and extinction coefficient fitting result
@@ -456,7 +468,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         fig = plt.figure('zeropoint', figsize=(8,5))
         ax = fig.add_subplot(111)
         ax.plot(
-            airmass_clipped, mag_clipped, 'o', 
+            airmass[clipped_index], M[clipped_index]-m[clipped_index], 'o', 
             label=f'Hipparcos standard stars (N={Nfit})'
         )
         ax.plot(
