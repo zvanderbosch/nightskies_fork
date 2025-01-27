@@ -125,6 +125,62 @@ def angular_separation(ra1, de1, ra2, de2):
     return sep
 
 
+def poly_sigfit(x,y,signum=5,niter=10):
+    '''
+    Function to perform iterative sigma clipping while
+    fitting a linear trend to M-m (mag) versus airmass.
+
+    Parameters:
+    -----------
+    x: array
+        x values to be fit
+    y: array
+        y values to be fit
+    signum: int
+        Number of standard deviations above and below
+        residuals top perform sigma clipping
+    niter: int
+        Number of rejection interations to perform
+
+    Returns:
+    --------
+    param: list
+        Best fit parameters [slope, y-intercept]
+    cov: list
+        Covariance matrix
+    '''
+
+    # Get copies of x/y arrays
+    fit_x = n.copy(x)
+    fit_y = n.copy(y)
+
+    # Perform fits and sigma rejections
+    nrej = 0
+    for _ in range(niter):
+
+        # Update number of data points being used in fit
+        N = len(fit_x)
+
+        # Try fitting linear trend to data
+        param, cov = n.polyfit(fit_x, fit_y, 1, cov=True)
+
+        # Calculate model values and residuals
+        mod = n.polyval(param, fit_x)
+        sigma = n.sqrt(sum((mod-fit_y)**2)/(N-1))
+        residual = fit_y - mod
+
+        # Re-define fitx/fity with sigma clipping
+        fit_x = fit_x[(residual > -signum*sigma) & (residual < signum*sigma)]
+        fit_y = fit_y[(residual > -signum*sigma) & (residual < signum*sigma)]
+
+        # Get number of rejected points
+        nrej += N - len(fit_x)
+    
+    print(f'{nrej} out of {len(x)} data points clipped with signum={signum} and niter={niter}.')
+
+    return param, cov, fit_x, fit_y
+
+
 def extinction(dnight, sets, filter, plot_img=0):
     '''
     This module computes the extinction coefficient and the instrumental zero
@@ -374,7 +430,10 @@ def extinction(dnight, sets, filter, plot_img=0):
         m = -2.5*n.log10(flux)               #v_mag, apparent
         Nfit = len(M)
         
-        param, cov = n.polyfit(airmass, M-m, 1, cov=True)
+        # Perform fit with sigma-clipping
+        param, cov, airmass_clipped, mag_clipped = poly_sigfit(
+            airmass, M-m, signum=5, niter=10
+        )
         c, z = param                         #bestfit coefficient and zeropoint
         c_err, z_err = n.sqrt(cov.diagonal())#uncertainties
         
@@ -389,17 +448,24 @@ def extinction(dnight, sets, filter, plot_img=0):
         a = n.arange(0,max(airmass),0.2)
         fig = plt.figure('zeropoint', figsize=(8,5))
         ax = fig.add_subplot(111)
-        ax.plot(airmass, M-m, 'o', label=f'Hipparcos standard stars (N={Nfit})')
-        ax.plot(a,c*a+z,'-',lw=2,label='Best fit: %.2fx+%.3f' %(c,z))
-        ax.errorbar(0,z,z_err,fmt='o',label='zeropoint: %.3f+-%.3f'%(z,z_err))
+        ax.plot(
+            airmass_clipped, mag_clipped, 'o', 
+            label=f'Hipparcos standard stars (N={Nfit})'
+        )
+        ax.plot(
+            a, c*a+z, '-', lw=2,
+            label='Best fit: %.3fx+%.3f' %(c,z)
+        )
+        ax.errorbar(
+            0, z, z_err, fmt='o',
+            label='zeropoint: %.3f+-%.3f'%(z,z_err)
+        )
         ax.set_axisbelow(True)
         ax.grid(ls=':',lw=0.5,c='silver')
         ax.legend(loc=0, numpoints=1)
         ax.set_xlabel('Airmass',fontsize=14)
         ax.set_ylabel('M-m',fontsize=14)
         ax.set_title('Zeropoint and Extinction Coefficient',fontsize=14)
-        # ax.set_xlim(-1,14)
-        # ax.set_ylim(13.2,15.0)
         imgout = filepath.calibdata+dnight+'/extinction_fit_%s_%s.png' \
                  %(filter,s[0])
         plt.savefig(imgout,dpi=200,bbox_inches='tight')
