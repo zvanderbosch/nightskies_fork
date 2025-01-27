@@ -30,13 +30,12 @@
 #History:
 #	Dan Duriscoe -- Created in visual basic as "extinction v4.vbs"
 #	Li-Wei Hung -- Cleaned, improved, and translated to python
-#   Zach Vanderbosch -- Updated to Python 3.11, replaced ACP with Astropy
+#   Zach Vanderbosch -- Updated to Python 3.11, replaced ACP/ASCOM with Astropy
 #
 #-----------------------------------------------------------------------------#
 
 from astropy.io import fits
 from astropy.time import Time
-from astropy.visualization import PercentileInterval
 from glob import glob
 from tqdm import trange
 from scipy.optimize import curve_fit
@@ -45,7 +44,6 @@ import astropy.units as u
 import astropy.wcs as wcs
 import astropy.coordinates as coord
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import numpy as n
 import pandas as pd
 import warnings
@@ -369,60 +367,6 @@ def extinction(dnight, sets, filter, plot_img=0):
                     t.append(popt[3]/H['exptime'])
                     bestfit.append(t)
                     popt_plot_list.append(popt)
-
-                    # # Image diagnostic plots
-                    # if hip[i] in ['h104858']:
-                    #     fig = plt.figure('cutout',figsize=(11,5))
-                    #     ax = fig.add_subplot(121)
-                    #     bx = fig.add_subplot(122)
-
-                    #     # Plot the image cutout
-                    #     PI = PercentileInterval(92.5)
-                    #     imw = 7 #cutout width
-                    #     imdat = fits.getdata(fn,ext=0)
-                    #     vmin,vmax = PI.get_limits(
-                    #         imdat[int(py[i])-imw:int(py[i])+imw,
-                    #             int(px[i])-imw:int(px[i])+imw]
-                    #     )
-                    #     ax.imshow(imdat,vmin=vmin,vmax=vmax,cmap='Greys')
-                    #     for xp,yp in zip(x[w],y[w]):
-                    #         rect = patches.Rectangle(
-                    #             (xp-0.5,yp-0.5), 1,1,
-                    #             linewidth=1.0, edgecolor='r', facecolor='r',alpha=0.2
-                    #         )
-                    #         ax.add_patch(rect)
-                    #     circ = patches.Circle(
-                    #         (px[i], py[i]), 3, 
-                    #         linewidth=1.5, edgecolor='g', facecolor='none'
-                    #     )
-                    #     ax.add_patch(circ)
-                    #     ax.scatter(px[i], py[i],marker='o',c='greenyellow',s=20)
-                    #     ax.scatter(popt[0],popt[1],marker='x',c='r',lw=1.5,s=100)
-                    #     ax.set_xlim(px[i]-imw, px[i]+imw)
-                    #     ax.set_ylim(py[i]-imw, py[i]+imw)
-                    #     ax.set_xlabel('X (pix)',fontsize=12)
-                    #     ax.set_ylabel('Y (pix)',fontsize=12)
-
-
-                    #     # Plot flux profile
-                    #     Robs = ((x-popt[0])**2+(y-popt[1])**2)**0.5
-                    #     Rmod = n.arange(0,4,0.02)
-                    #     Fmod = popt[3]/(2*n.pi*popt[2]**2)*n.exp(-(Rmod**2)/(2*popt[2]**2))
-                    #     bx.axhline(0.0,ls=':',c='k')
-                    #     bx.scatter(Robs[w],f/1e3,c='k',marker='o',s=20)
-                    #     bx.plot(Rmod,Fmod/1e3,ls='-',c='r')
-                    #     bx.set_xlim(0,4)
-                    #     yrange = bx.get_ylim()[1] - bx.get_ylim()[0]
-                    #     bx.set_ylim(bx.get_ylim()[0]-0.1*yrange,bx.get_ylim()[1]+0.15*yrange)
-                    #     bx.set_xlabel('Radial Distance (pix)',fontsize=12)
-                    #     bx.set_ylabel('Flux ($10^3$ DN)',fontsize=12)
-
-                    #     # Save figure
-                    #     fn_base = fn.split("\\")[-1]
-                    #     plt.suptitle(f'HIP {hip[i]} in Image {fn_base}, {dnight}', y=0.95, fontsize=14)
-                    #     imgname = f'{filepath.calibdata}{dnight}/cutouts/cutout_{hip[i]}.png'
-                    #     plt.savefig(imgname,dpi=200,bbox_inches='tight')
-                    #     plt.close()
             
             #plot the image overlaid with the bestfit contours
             if int(fn[-7:-4]) == plot_img:
