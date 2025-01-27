@@ -170,8 +170,14 @@ def poly_sigfit(x,y,signum=5,niter=10):
         residual = fit_y - mod
 
         # Re-define fitx/fity with sigma clipping
-        fit_x = fit_x[(residual > -signum*sigma) & (residual < signum*sigma)]
-        fit_y = fit_y[(residual > -signum*sigma) & (residual < signum*sigma)]
+        fit_x = fit_x[
+            (residual > -signum*sigma) & 
+            (residual <  signum*sigma)
+        ]
+        fit_y = fit_y[
+            (residual > -signum*sigma) & 
+            (residual <  signum*sigma)
+        ]
 
         # Get number of rejected points
         nrej += N - len(fit_x)
