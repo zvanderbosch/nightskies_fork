@@ -256,14 +256,18 @@ def mosaic(dnight, sets, filter):
                                        
             # Clip to image boundary
             # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            # arcpy.management.Clip("wib%03d.tif"%v, rectangle, "cib%03d"%v)
+            # arcpy.management.Clip(
+            #     f"fwib{v:03d}.tif", 
+            #     rectangle, 
+            #     f"fcib{v:03d}"
+            # )
             clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
             arcpy.management.Clip(
                 f"fwib{v:03d}.tif", 
                 "", 
                 f"fcib{v:03d}", 
                 clipFile,
-                "0",
+                "",
                 "ClippingGeometry",
                 "NO_MAINTAIN_EXTENT"
             )
@@ -308,7 +312,10 @@ def mosaic(dnight, sets, filter):
         #convert to magnitudes per square arc second
         print("Converting the mosaic to mag per squard arcsec...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
-        skytopomags = zeropoint[int(s[0])-1] + psa - 2.5*arcpy.sa.Log10(arcpy.sa.Raster(gridsetp+'skybright')/exptime[0])
+        stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skybright')
+        stm2 = stm1 / exptime[0]
+        stm3 = 2.5 * arcpy.sa.Log10(stm2)
+        skytopomags = zeropoint[int(s[0])-1] + psa - stm3
         
         #save mags mosaic to disk
         skytopomags.save(gridsetp+'skybrightmags')
