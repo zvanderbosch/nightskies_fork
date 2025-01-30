@@ -310,10 +310,20 @@ def extinction(dnight, sets, filter, plot_img=0):
             py1 = xypix[:,1]
             
             # Find the standard stars within 490 pixels of the image center
-            w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
+            # w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
+
+            # Find standard stars > buffer value from image edge
+            buffer = 25  # edge buffer in pixels
+            w2 = n.where(
+                (px1 > 0 + buffer) &
+                (px1 < 1024 - buffer) &
+                (py1 > 0 + buffer) &
+                (py1 < 1024 - buffer)
+            )
             w3 = w1[w2]
             px, py = px1[w2], py1[w2]
             hip, ra, dec, M = starn[w3], ras[w3], decs[w3], Mag[filter][w3] 
+
 
             # Load in image data
             data = fits.getdata(fn,ext=0)
@@ -384,7 +394,6 @@ def extinction(dnight, sets, filter, plot_img=0):
         flux = n.float64(stars[:,7])         #flux, background subtracted [DN]
         airmass = 1/n.sin(n.deg2rad(elev))   #airmass
         m = -2.5*n.log10(flux)               #v_mag, apparent
-        Nfit = len(M)
         
         # Perform fit with sigma-clipping
         param, cov, clipped_index = poly_sigfit(
@@ -392,6 +401,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         )
         c, z = param                          # bestfit coefficient and zeropoint
         c_err, z_err = n.sqrt(cov.diagonal()) # uncertainties
+        Nfit = sum(clipped_index)             # Number of sources used in fit
 
         # Save the list of stars used for calculating the zeropoint
         fmt = ['%7s','%8s','%7.2f','%9.2f','%7.1f','%6.1f','%5.2f','%7.f']
@@ -404,7 +414,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         sy = n.mean(yscale) * 60             #y plate scale ['/pix]
         sa = n.mean(xscale+yscale) * 60      #average plate scale ['/pix]
         
-        fit_entry = [int(s[0]), sum(clipped_index), z, z_err, c, c_err, sx, sy, sa, exp]
+        fit_entry = [int(s[0]), Nfit, z, z_err, c, c_err, sx, sy, sa, exp]
         zeropoint_dnight.append(fit_entry)
                 
         #plot the zeropoint and extinction coefficient fitting result
