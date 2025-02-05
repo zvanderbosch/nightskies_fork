@@ -2,7 +2,7 @@
 #
 # Z Vanderbosch
 
-base = "C:/Users/zvanderbosch/OneDrive - DOI/Documents/NSNSD_CCD/pipeline_orig"
+base = "C:/Users/zvanderbosch/data/CCD"
 lincurve = f"{base}/Images/Linearity Curves/"
 flats = f"{base}/Images/Master/"
 rawdata = f"{base}/Data/FieldData/"
