@@ -177,7 +177,7 @@ def solve(fn):
     astsetp = "%s/astrometry/"%(fn.split("\\")[0])
     m = int(fn_orig[-7:-4])
 
-    # Get header
+    # Get header and image coordinates
     fhdr = fits.getheader(fn,ext=0)
     fc = coord.SkyCoord(
         ra = fhdr['RA'],
@@ -201,8 +201,8 @@ def solve(fn):
         '--upload', f'{fn}',
         '--parity', '1',
         '--scale-est', '96.0',
-        '--ra', f'{fRA:.6f}',
-        '--dec', f'{fDec:.6f}',
+        '--ra', f'{fc.ra.deg:.6f}',
+        '--dec', f'{fc.dec.deg:.6f}',
         '--radius', '12.0',
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
