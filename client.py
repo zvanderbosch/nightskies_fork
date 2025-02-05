@@ -399,10 +399,10 @@ if __name__ == '__main__':
                 success = (stat['status'] == 'success')
                 break
             elif stat.get('status','') in ['failure']:
-                print(f"   (Status = FAILED ) {img_name:11s}", flush=True)
+                print(f"   (Status = FAILED  ) {img_name:11s}", flush=True)
                 sys.exit(-1)
             elif time_solving > opt.solve_time:
-                print(f"   (Status = FAILED ) {img_name:11s}", flush=True)
+                print(f"   (Status = FAILED  ) {img_name:11s}", flush=True)
                 sys.exit(-1)
             time.sleep(5)
             time_solving = time.time() - time_start
