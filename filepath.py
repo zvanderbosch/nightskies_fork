@@ -3,6 +3,7 @@
 # Z Vanderbosch
 
 base = "C:/Users/zvanderbosch/data/CCD"
+processlist = f"{base}/Data/processing/"
 lincurve = f"{base}/Images/Linearity Curves/"
 flats = f"{base}/Images/Master/"
 rawdata = f"{base}/Data/FieldData/"
