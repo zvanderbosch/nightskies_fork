@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2017/02/02
+#Last updated: 2025/02/05
 #
 #This script makes the whole sky mosaic from the median filtered images 
 #according to the location of observed sky. The temporary files generated during

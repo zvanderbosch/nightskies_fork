@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2017/01/25
+#Last updated: 2025/02/05
 #
 #This script makes the whole sky mosaic of the zodiacal model according to the 
 #time and location of the observed sky. The temporary files generated during the 

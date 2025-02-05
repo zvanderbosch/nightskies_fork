@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/12/23
+#Last updated: 2025/02/05
 #
 #This script makes the whole sky mosaic of the galactic model according to the 
 #time and location of the observed sky. The temporary files generated during the 
