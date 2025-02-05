@@ -177,6 +177,14 @@ def solve(fn):
     astsetp = "%s/astrometry/"%(fn.split("\\")[0])
     m = int(fn_orig[-7:-4])
 
+    # Get header
+    fhdr = fits.getheader(fn,ext=0)
+    fc = coord.SkyCoord(
+        ra = fhdr['RA'],
+        dec = fhdr['DEC'],
+        unit = (u.hourangle, u.deg)
+    )
+
     # Masking the area near the horizon in image 0-15
     if m < 16: 
         with fits.open(fn,uint=False) as hdul:
@@ -193,6 +201,9 @@ def solve(fn):
         '--upload', f'{fn}',
         '--parity', '1',
         '--scale-est', '96.0',
+        '--ra', f'{fRA:.6f}',
+        '--dec', f'{fDec:.6f}',
+        '--radius', '12.0',
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
@@ -220,6 +231,9 @@ def solve(fn):
             '--upload', f'{fn}',
             '--parity', '1',
             '--scale-est', '96.0',
+            '--ra', f'{fRA:.6f}',
+            '--dec', f'{fDec:.6f}',
+            '--radius', '12.0',
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
