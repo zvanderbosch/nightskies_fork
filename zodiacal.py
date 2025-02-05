@@ -51,9 +51,15 @@ arcpy.env.pyramid = "NONE"
 zodraster = arcpy.sa.Raster(filepath.rasters+'zodiacal_01')
 zodraster1 = arcpy.sa.Raster(filepath.rasters+'zodiacal_180')
     
-geogcs = "GEOGCS['GCS_Sphere_EMEP',\
-          DATUM['D_Sphere_EMEP',SPHEROID['Sphere_EMEP',6370000.0,0.0]],\
-          PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]]"
+geogcs = (
+    "GEOGCS["
+        "'GCS_Sphere_EMEP',"
+        "DATUM['D_Sphere_EMEP',"
+        "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
+        "PRIMEM['Greenwich',0.0],"
+        "UNIT['Degree',0.0174532925199433]"
+    "]"
+)
           
 #-----------------------------------------------------------------------------#
 def zod_envelope(lon,lat):
@@ -81,11 +87,22 @@ def clip_envelope(AZ, ALT, i):
     
     
 def tc(lon,lat):
-    '''Returns the topocentric coordinate setting'''
-    return "PROJCS['gnomonic',%s,PROJECTION['Gnomonic'],\
-    PARAMETER['False_Easting',0.0],PARAMETER['False_Northing',0.0],\
-    PARAMETER['Longitude_Of_Center',%s],PARAMETER['Latitude_Of_Center',%s],\
-    UNIT['Meter',1.0]]"%(geogcs,str(lon),str(lat))
+    '''
+    Returns the topocentric coordinate setting in WKT format
+    '''
+    topoCoord = (
+        "PROJCS["
+            "'gnomonic',"
+            f"{geogcs},"
+            "PROJECTION['Gnomonic'],"
+            "PARAMETER['False_Easting',0.0],"
+            "PARAMETER['False_Northing',0.0],"
+            f"PARAMETER['Longitude_Of_Center',{str(lon)}],"
+            f"PARAMETER['Latitude_Of_Center',{str(lat)}],"
+            "UNIT['Meter',1.0]"
+        "]"
+    )
+    return topoCoord
     
 
 def get_zodgn(lon,lat):
