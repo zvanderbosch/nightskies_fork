@@ -48,11 +48,6 @@ def FilterImage(arg):
     # Parse input
     fn, mask = arg
 
-    # Print out progress messages
-    m = int(fn[-7:-4])
-    if m in range(0,50,5): 
-        print(f'filtering images {m:d}/45')
-
     # Get FITS header/data
     with fits.open(fn) as hdul:
         fits_data = median_filter(hdul[0].data, footprint=mask)
@@ -103,18 +98,28 @@ def filter(dnight, sets, filter):
     R = n.sqrt((X-r)**2+(Y-r)**2)
     mask = n.zeros_like(R)
     mask[n.where(R<=r)] = 1
-    
-    #multiprocessing the filtering process
-    p = Pool()
-    
-    #loop through all the sets in that night
+
+    # Iterate through each set
     for s in sets:
-        calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
-        arg = zip(glob(calsetp+'ib???.fit'), itertools.repeat(mask))
-        p.map(FilterImage, arg)
         
-    p.close()
-    p.join()
+        # Set up arguments for multiprocessed filtering
+        calsetp = filepath.calibdata+dnight+'/S_0%s/%s' %(s[0],F[filter])
+        images = glob(calsetp+'ib???.fit')
+        arg = zip(images, itertools.repeat(mask))
+        Nimages = len(images)
+
+        # Begin filtering with multiprocessing
+        threads = 5
+        count = 0
+        print(f'medianfilter.py: Processing images for {filter}-band Set {s[0]}...')
+        with Pool(processes=threads) as pool:
+            result = pool.imap_unordered(FilterImage, arg)
+            for _ in result:
+                count += 1
+                if count % 5 == 0:
+                    print(f'medianfilter.py: {filter}-band Set {s[0]}, {count}/{Nimages} images complete')
+        
+    print(f'medianfilter.py: {filter}-band all Sets COMPLETE')
     
 
     

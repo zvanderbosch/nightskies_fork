@@ -37,7 +37,6 @@
 from astropy.io import fits
 from astropy.time import Time
 from glob import glob
-from tqdm import trange
 from scipy.optimize import curve_fit
 
 import astropy.units as u
@@ -190,10 +189,10 @@ def poly_sigfit(x,y,signum=5,niter=10):
         (y-mod_full > -signum*sigma) & 
         (y-mod_full <  signum*sigma)
     )
-    print(
-        f'{nrej} out of {len(x)} stars clipped '
-        f'with signum={signum} and niter={niter}.'
-    )
+    # print(
+    #     f'extinction.py: {nrej} out of {len(x)} stars '
+    #     f'clipped with signum={signum} and niter={niter}.'
+    # )
 
     return param, cov, fit_indices
 
@@ -251,9 +250,9 @@ def extinction(dnight, sets, filter, plot_img=0):
         exp = H['exptime'] #[s]
                 
         # loop through each file in the set
-        print(f'Processing images for Set {s[0]}...')
+        print(f'extinction.py  : Processing images for {filter}-band Set {s[0]}...')
         images = sorted(glob(calsetp+'ib???.fit'))
-        for imnum in trange(len(images)):
+        for imnum in range(len(images)):
 
             # Get header and create WCS object
             fn = images[imnum]
@@ -300,7 +299,7 @@ def extinction(dnight, sets, filter, plot_img=0):
             # w1 = n.where(img_dec & img_ra)[0]   # stars 
             
             # Skip the image w/o standard stars
-            if len(w1)==0:  
+            if len(w1)==0:
                 continue
             
             # Get the XY pixel coordinates of the given RA/Dec locations
@@ -443,6 +442,8 @@ def extinction(dnight, sets, filter, plot_img=0):
                  %(filter,s[0])
         plt.savefig(imgout,dpi=200,bbox_inches='tight')
         plt.close('zeropoint')
+
+        print(f'extinction.py  : {filter}-band Set {s[0]} COMPLETE')
     
     #save the bestfit zeropoint and extinction coefficient     
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter

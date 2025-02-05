@@ -35,9 +35,8 @@
 
 from astropy.time import Time
 from astropy.io import fits
-from glob import glob, iglob
+from glob import iglob
 from scipy.interpolate import UnivariateSpline
-from win32com.client import Dispatch
 
 import numpy as n
 import astropy.units as u
@@ -186,7 +185,9 @@ def pointing_err(dnight, sets):
         solved, notsolved = [],[]
         True_AZ, True_ALT = [],[] 
         Input_AZ, Input_ALT = [],[]
+        print(f'pointing.py    : Calculating pointing error for V-band Set {s[0]}...')
         for fn in iglob(calsetp+'ib???.fit'):
+
             fns = fn[:-4]+'s'+fn[-4:]
             if os.path.exists(fns):
                 H = fits.getheader(fns,ext=0)
@@ -265,6 +266,8 @@ def pointing_err(dnight, sets):
         nformat = ['%4.f','%8.f','%8.1f','%8.2f','%8.2f']
         H = 'file Input_AZ Input_ALT Obs_AZ Obs_ALT' #column names
         n.savetxt(outfile,pterr,fmt=nformat,header=H)
+
+        print(f'pointing.py    : V-band Set {s[0]} COMPLETE')
 
         
 

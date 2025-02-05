@@ -95,6 +95,9 @@ def galactic_ecliptic_coords(dnight, sets):
 
     #loop through all the sets in that night
     for s in sets:
+
+        print(f'coordinates.py : Calculating image coordinates for V-band Set {s[0]}...')
+
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
         outlist = []
         
@@ -114,7 +117,7 @@ def galactic_ecliptic_coords(dnight, sets):
 
         # loop through each file in the set
         file_list = sorted(glob(calsetp+'ib???.fit'))
-        for i,fn in enumerate(file_list):
+        for fn in file_list:
 
             H = fits.getheader(fn,ext=0)
             w = n.where(fnum==int(fn[-7:-4]))
@@ -186,6 +189,8 @@ def galactic_ecliptic_coords(dnight, sets):
         H = 'File  Gal_ang   Gal_l    Gal_b   Ecl_ang   Ecl_l    Ecl_b   RA          Dec      [deg]'
         fileout = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
         n.savetxt(fileout,n.array(outlist),fmt=fmt,header=H)
+
+        print(f'coordinates.py : V-band Set {s[0]} COMPLETE')
 
 
 if __name__ == "__main__":
