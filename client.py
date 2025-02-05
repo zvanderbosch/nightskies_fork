@@ -279,7 +279,7 @@ if __name__ == '__main__':
     parser.add_option('--jobs', '-J', dest='myjobs', action='store_true', help='Get all my jobs')
     parser.add_option('--jobsbyexacttag', '-T', dest='jobs_by_exact_tag', help='Get a list of jobs associated with a given tag--exact match')
     parser.add_option('--jobsbytag', '-t', dest='jobs_by_tag', help='Get a list of jobs associated with a given tag')
-    parser.add_option('--wait-time', '-W', dest='wait_time', default=120., type=float, help='Max wait time for job results.')
+    parser.add_option('--solve-time', '-W', dest='solve_time', default=120., type=float, help='Max time allowed in seconds for image solving.')
     parser.add_option( '--private', '-p',
         dest='public',
         action='store_const',
@@ -377,31 +377,35 @@ if __name__ == '__main__':
 
             while True:
                 stat = c.sub_status(opt.sub_id, justdict=True)
+                if stat['processing_started'] == 'None':
+                    print(f"   (Status = no job  ) {img_name:11s}")
+
                 jobs = stat.get('jobs', [])
                 if len(jobs):
                     for j in jobs:
                         if j is not None:
                             break
                     if j is not None:
-                        #print('Selecting job id', j)
                         opt.solved_id = j
                         break
                 time.sleep(5)
 
-        time_waiting = 0.0
+        time_start = time.time()
+        time_solving = 0.0
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
+            print(f"   (Status = {stat['status']} ) {img_name:11s}  wait time = {time_solving:.0f}s")
             if stat.get('status','') in ['success']:
                 success = (stat['status'] == 'success')
                 break
             elif stat.get('status','') in ['failure']:
-                print(f"  Image solving FAILED for {img_name}", flush=True)
+                print(f"   (Status = FAILED ) {img_name:11s}", flush=True)
                 sys.exit(-1)
-            elif time_waiting > opt.wait_time:
-                print(f"  Image solving FAILED for {img_name}", flush=True)
+            elif time_solving > opt.solve_time:
+                print(f"   (Status = FAILED ) {img_name:11s}", flush=True)
                 sys.exit(-1)
             time.sleep(5)
-            time_waiting += 5.0
+            time_solving = time.time() - time_start
 
     if opt.solved_id:
         # we have a jobId for retrieving results
@@ -476,4 +480,4 @@ if __name__ == '__main__':
         jobs = c.myjobs()
         print(jobs)
 
-    print(f'  {img_name} Finished.')
+    print(f"   (Status = finished) {img_name:11s}")
