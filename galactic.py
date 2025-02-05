@@ -17,7 +17,7 @@
 #   (3) pointerr_%s.txt
 #
 #Output:
-#   (1) layer files galtopmags%s.lyr for galactic mosaic
+#   (1) layer files galtopmags%s.lyrx for galactic mosaic
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py

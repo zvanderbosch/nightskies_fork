@@ -17,7 +17,7 @@
 #   (3) pointerr_%s.txt
 #
 #Output:
-#   (1) layer files zodtopmags%s.lyr for zodiacal mosaic
+#   (1) layer files zodtopmags%s.lyrx for zodiacal mosaic
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
@@ -245,8 +245,8 @@ def mosaic(dnight, sets):
     
         #Create Raster layer, add magnitudes symbology, and save layer to file
         print("Creating layer files for zodiacal mosaic...")
-        layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyr' %s[0]
-        symbologyLayer = filepath.rasters+'magnitudes.lyr'
+        layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyrx' %s[0]
+        symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
         arcpy.management.ApplySymbologyFromLayer('zodtoplyr', symbologyLayer)
         arcpy.management.SaveToLayerFile('zodtoplyr', layerfile, "ABSOLUTE")

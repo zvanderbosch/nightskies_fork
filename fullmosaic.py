@@ -18,7 +18,7 @@
 #   (4) raster files in the filepath.rasters folder
 #
 #Output:
-#   (1) layer files skytopomags%s.lyr for full-resolution mosaic
+#   (1) layer files skytopomags%s.lyrx for full-resolution mosaic
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py

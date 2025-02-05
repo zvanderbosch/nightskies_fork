@@ -18,7 +18,7 @@
 #   (4) raster files in the filepath.rasters folder
 #
 #Output:
-#   (1) layer files skybrightmags%s.lyr for median mosaic
+#   (1) layer files skybrightmags%s.lyrx for median mosaic
 #   (2) mask.tif for making the horizontal mask in the later process
 #
 #History:
@@ -323,8 +323,8 @@ def mosaic(dnight, sets, filter):
     
         print("Creating layer files for median mosaic...")
         layerName = dnight+'_%s_median%s'%(s[0],f[filter])
-        layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyr'%(f[filter],s[0])
-        symbologyLayer = filepath.rasters+'magnitudes.lyr'
+        layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyrx'%(f[filter],s[0])
+        symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'skybrightmags', layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "ABSOLUTE")
