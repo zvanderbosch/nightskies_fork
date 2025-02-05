@@ -22,7 +22,7 @@
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
-#   Zach Vanderbosch -- Updated to Python3 and ArcGIS Pro
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
