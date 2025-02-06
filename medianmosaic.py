@@ -39,7 +39,8 @@ import stat
 import shutil
 
 # Local Source
-import filepath  
+import filepath
+import printcolors as pc
 
 #-----------------------------------------------------------------------------#
 if not os.path.exists(filepath.rasters+'scratch_median/'):
@@ -212,8 +213,13 @@ def mosaic(dnight, sets, filter):
         file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
         zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
         
+        # Status update
+        print(
+            f'{pc.GREEN}medianmosaic.py{pc.END}'
+            f': Generating median-filtered rasters for {filter}-Band Set {s[0]}...'
+        )
+
         #loop through each file in the set
-        print(f'medianmosaic.py: Generating median-filtered rasters for {filter}-Band Set {s[0]}...')
         for w in range(imnum+1):
 
             v = w+1
@@ -270,9 +276,12 @@ def mosaic(dnight, sets, filter):
                 "NO_MAINTAIN_EXTENT"
             )
 
-            # Progress update
+            # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(f'medianmosaic.py: {filter}-Band Set {s[0]}, {v}/{imnum} rasters complete')
+                print(
+                    f'{pc.GREEN}medianmosaic.py{pc.END}'
+                    f': {filter}-Band Set {s[0]}, {v}/{imnum} rasters complete'
+                )
         
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
@@ -290,7 +299,10 @@ def mosaic(dnight, sets, filter):
         R = R1+';'+R2
         
         #mosaic to topocentric coordinate image; save in Griddata\
-        print(f"medianmosaic.py: Mosaicking into all sky median image for {filter}-Band Set {s[0]}...")
+        print(
+            f"{pc.GREEN}medianmosaic.py{pc.END}"
+            f": Mosaicking into all sky median image for {filter}-Band Set {s[0]}..."
+        )
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopom', geogcs, 
             "32_BIT_FLOAT", "0.0266", "1", "BLEND", "FIRST"
@@ -312,7 +324,10 @@ def mosaic(dnight, sets, filter):
         )
         
         #convert to magnitudes per square arc second
-        print(f"medianmosaic.py: Converting the mosaic to mag per squard arcsec for {filter}-Band Set {s[0]}...")
+        print(
+            f"{pc.GREEN}medianmosaic.py{pc.END}"
+            f": Converting the mosaic to mag per squard arcsec for {filter}-Band Set {s[0]}..."
+        )
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skybright')
         stm2 = stm1 / exptime[0]
@@ -320,9 +335,11 @@ def mosaic(dnight, sets, filter):
         skytopomags = zeropoint[int(s[0])-1] + psa - stm3
         
         #save mags mosaic to disk
+        print(
+            f"{pc.GREEN}medianmosaic.py{pc.END}"
+            f": Creating layer files for median mosaic for {filter}-Band Set {s[0]}..."
+        )
         skytopomags.save(gridsetp+'skybrightmags')
-    
-        print(f"medianmosaic.py: Creating layer files for median mosaic for {filter}-Band Set {s[0]}...")
         layerName = dnight+'_%s_median%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyrx'%(f[filter],s[0])
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
@@ -338,7 +355,11 @@ def mosaic(dnight, sets, filter):
         fname = filepath.griddata+dnight+'/skybrightmags%s%s.fits'%(f[filter],s[0])
         fits.writeto(fname, A_small, overwrite=True)
 
-        print(f"medianmosaic.py: {filter}-Band Set {s[0]} median mosaic COMPLETE")
+        # Final status update
+        print(
+            f"{pc.GREEN}medianmosaic.py{pc.END}"
+            f": {filter}-Band Set {s[0]} median mosaic COMPLETE"
+        )
         
     #create mask.tif for horizon masking in the later process
     mask = filepath.griddata+dnight+'/mask.tif'

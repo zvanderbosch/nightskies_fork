@@ -35,7 +35,8 @@ import stat
 import shutil
 
 # Local Source
-import filepath  
+import filepath
+import printcolors as pc
 
 #-----------------------------------------------------------------------------#
 if not os.path.exists(filepath.rasters+'scratch_zodiacal/'):
@@ -172,8 +173,13 @@ def mosaic(dnight, sets):
         Obs_AZ[35] %= 360
         imnum = len(Obs_AZ)
         
+        # Status update
+        print(
+            f'{pc.GREEN}zodiacal.py    {pc.END}'
+            f': Generating zodiacal rasters for Set {s[0]}...'
+        )
+
         #loop through each file in the set
-        print(f'zodiacal.py    : Generating zodiacal rasters for Set {s[0]}...')
         for w in range(imnum+1):
 
             v = w+1
@@ -221,12 +227,18 @@ def mosaic(dnight, sets):
                 "NO_MAINTAIN_EXTENT"
             )
 
-            # Progress update
+            # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(f'zodiacal.py    : Set {s[0]}, {v}/{imnum} rasters complete')
+                print(
+                    f'{pc.GREEN}zodiacal.py    {pc.END}'
+                    f': Set {s[0]}, {v}/{imnum} rasters complete'
+                )
             
         #Mosaic to topocentric coordinate model; save in Griddata\
-        print(f"zodiacal.py    : Mosaicking into all sky zodiacal model for Set {s[0]}...")
+        print(
+            f"{pc.GREEN}zodiacal.py    {pc.END}"
+            f": Mosaicking into all sky zodiacal model for Set {s[0]}..."
+        )
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'zodtopo', geogcs, 
@@ -249,7 +261,10 @@ def mosaic(dnight, sets):
         )
     
         #Create Raster layer, add magnitudes symbology, and save layer to file
-        print(f"zodiacal.py    : Creating layer files for zodiacal mosaic Set {s[0]}...")
+        print(
+            f"{pc.GREEN}zodiacal.py    {pc.END}"
+            f": Creating layer files for zodiacal mosaic Set {s[0]}..."
+        )
         layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyrx' %s[0]
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
@@ -264,7 +279,11 @@ def mosaic(dnight, sets):
         fname = filepath.griddata+dnight+'/zodtopmags%s.fits' %s[0]
         fits.writeto(fname, A_small, overwrite=True)
 
-        print(f"zodiacal.py    : Set {s[0]} zodiacal mosaic COMPLETE")
+        # Final status update
+        print(
+            f"{pc.GREEN}zodiacal.py    {pc.END}"
+            f": Set {s[0]} zodiacal mosaic COMPLETE"
+        )
 
     
 if __name__ == "__main__":
