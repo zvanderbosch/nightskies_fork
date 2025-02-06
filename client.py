@@ -434,7 +434,7 @@ if __name__ == '__main__':
             
             # Try retrieving URL
             delay = 5.0       # Seconds between retry attempts
-            max_retries = 10  # Max number of retries
+            max_retries = 50  # Max number of retries
             for attempts in range(max_retries):
                 try:
                     f = urlopen(url)
