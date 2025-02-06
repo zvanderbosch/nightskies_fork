@@ -39,6 +39,9 @@ import shutil
 import filepath
 import printcolors as pc
 
+# Print status prefix
+PREFIX = f'{pc.GREEN}fullmosaic.py  {pc.END}: '
+
 #-----------------------------------------------------------------------------#
 if not os.path.exists(filepath.rasters+'scratch_fullres/'):
     os.makedirs(filepath.rasters+'scratch_fullres/')
@@ -214,10 +217,7 @@ def mosaic(dnight, sets, filter):
         )
         
         # Status Update
-        print(
-            f'{pc.GREEN}fullmosaic.py  {pc.END}'
-            f': Generating fullres rasters for {filter}-Band Set {s[0]}...'
-        )
+        print(f'{PREFIX}Generating fullres rasters for {filter}-Band Set {s[0]}...')
 
         #loop through each file in the set
         for w in range(imnum+1):
@@ -295,10 +295,7 @@ def mosaic(dnight, sets, filter):
 
             # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(
-                    f'{pc.GREEN}fullmosaic.py  {pc.END}'
-                    f': {filter}-Band Set {s[0]}, {v}/{imnum} rasters complete'
-                )
+                print(f'{PREFIX}{filter}-Band Set {s[0]}, {v}/{imnum} rasters complete')
             
         # Mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
@@ -316,10 +313,7 @@ def mosaic(dnight, sets, filter):
         R = R1+';'+R2
 
         # Mosaic to topocentric coordinate image; save in Griddata\
-        print(
-            f"{pc.GREEN}fullmosaic.py  {pc.END}"
-            f": Mosaicking into all sky full-resolution image for {filter}-Band Set {s[0]}..."
-        )
+        print(f"{PREFIX}Mosaicking fullres rasters for {filter}-Band Set {s[0]}...")
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopo', geogcs, 
             "32_BIT_FLOAT", "0.0261", "1", "BLEND", "FIRST"
@@ -333,10 +327,7 @@ def mosaic(dnight, sets, filter):
         )
         
         # Convert to magnitudes per square arc second
-        print(
-            f"{pc.GREEN}fullmosaic.py  {pc.END}"
-            f": Converting the mosaic to mag per square arcsec for {filter}-Band Set {s[0]}..."
-        )
+        print(f"{PREFIX}Converting mosaic to mag/arcsec^2 for {filter}-Band Set {s[0]}...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopoc')
         stm2 = stm1 / exptime[0]
@@ -345,10 +336,7 @@ def mosaic(dnight, sets, filter):
         skytopomags = zeropoint[int(s[0])-1] + psa - stm4
 
         # Save mags mosaic to disk
-        print(
-            f"{pc.GREEN}fullmosaic.py  {pc.END}"
-            f": Creating layer files for full-resolution mosaic for {filter}-Band Set {s[0]}..."
-        )
+        print(f"{PREFIX}Creating fullres mosaic layer file for {filter}-Band Set {s[0]}...")
         skytopomags.save(gridsetp + os.sep + 'skytopomags')
         layerName = dnight+'_%s_fullres%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyrx' %(f[filter],s[0])
@@ -357,11 +345,8 @@ def mosaic(dnight, sets, filter):
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "RELATIVE")
 
-        # Final status update
-        print(
-            f"{pc.GREEN}fullmosaic.py  {pc.END}"
-            f": {filter}-Band Set {s[0]} fullres mosaic COMPLETE"
-        )
+        # Status update
+        print(f"{PREFIX}{filter}-Band Set {s[0]} fullres mosaic COMPLETE")
 
     
 if __name__ == "__main__":

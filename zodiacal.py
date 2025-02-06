@@ -38,6 +38,9 @@ import shutil
 import filepath
 import printcolors as pc
 
+# Print status prefix
+PREFIX = f'{pc.GREEN}zodiacal.py    {pc.END}: '
+
 #-----------------------------------------------------------------------------#
 if not os.path.exists(filepath.rasters+'scratch_zodiacal/'):
     os.makedirs(filepath.rasters+'scratch_zodiacal/')
@@ -174,10 +177,7 @@ def mosaic(dnight, sets):
         imnum = len(Obs_AZ)
         
         # Status update
-        print(
-            f'{pc.GREEN}zodiacal.py    {pc.END}'
-            f': Generating zodiacal rasters for Set {s[0]}...'
-        )
+        print(f'{PREFIX}Generating zodiacal rasters for Set {s[0]}...')
 
         #loop through each file in the set
         for w in range(imnum+1):
@@ -229,16 +229,10 @@ def mosaic(dnight, sets):
 
             # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(
-                    f'{pc.GREEN}zodiacal.py    {pc.END}'
-                    f': Set {s[0]}, {v}/{imnum} rasters complete'
-                )
+                print(f'{PREFIX}Set {s[0]}, {v}/{imnum} rasters complete')
             
         #Mosaic to topocentric coordinate model; save in Griddata\
-        print(
-            f"{pc.GREEN}zodiacal.py    {pc.END}"
-            f": Mosaicking into all sky zodiacal model for Set {s[0]}..."
-        )
+        print(f"{PREFIX}Mosaicking zodiacal rasters for Set {s[0]}...")
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'zodtopo', geogcs, 
@@ -261,10 +255,7 @@ def mosaic(dnight, sets):
         )
     
         #Create Raster layer, add magnitudes symbology, and save layer to file
-        print(
-            f"{pc.GREEN}zodiacal.py    {pc.END}"
-            f": Creating layer files for zodiacal mosaic Set {s[0]}..."
-        )
+        print(f"{PREFIX}Creating zodiacal mosaic layer file for Set {s[0]}...")
         layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyrx' %s[0]
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')

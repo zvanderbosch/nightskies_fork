@@ -38,6 +38,9 @@ import shutil
 import filepath
 import printcolors as pc
 
+# Print status prefix
+PREFIX = f'{pc.GREEN}galactic.py    {pc.END}: '
+
 #-----------------------------------------------------------------------------#
 if not os.path.exists(f'{filepath.rasters}scratch_galactic/'):
     os.makedirs(f'{filepath.rasters}scratch_galactic/')
@@ -180,10 +183,7 @@ def mosaic(dnight, sets):
         imnum = len(Obs_AZ)
         
         # Status update
-        print(
-            f'{pc.GREEN}galactic.py    {pc.END}'
-            f': Generating galactic rasters for Set {s[0]}...'
-        )
+        print(f'{PREFIX}Generating galactic rasters for Set {s[0]}...')
 
         # Loop through each file in the set
         for w in range(imnum+1):
@@ -235,16 +235,10 @@ def mosaic(dnight, sets):
 
             # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(
-                    f'{pc.GREEN}galactic.py    {pc.END}'
-                    f': Set {s[0]}, {v}/{imnum} rasters complete'
-                )
+                print(f'{PREFIX}Set {s[0]}, {v}/{imnum} rasters complete')
         
         # Mosaic to topocentric coordinate model; save in Griddata\
-        print(
-            f"{pc.GREEN}galactic.py    {pc.END}"
-            f": Mosaicking into all sky galactic model for Set {s[0]}..."
-        )
+        print(f"{PREFIX}Mosaicking galactic rasters for Set {s[0]}...")
         R = ';'.join([f'gali{i:02d}' for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'galtopmags', geogcs, 
@@ -259,10 +253,7 @@ def mosaic(dnight, sets):
         )
 
         # Create Raster layer, add magnitudes symbology, and save layer to file
-        print(
-            f"{pc.GREEN}galactic.py    {pc.END}"
-            f": Creating layer files for galactic mosaic for Set {s[0]}..."
-        )
+        print(f"{PREFIX}Creating galactic mosaic layer file for Set {s[0]}...")
         layerfile = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.lyrx'
         symbologyFile = f'{filepath.rasters}magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'galtopmagsc', 'galtoplyr')
@@ -277,11 +268,8 @@ def mosaic(dnight, sets):
         fname = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.fits'
         fits.writeto(fname, A_small, overwrite=True)
 
-        # Fnial status update
-        print(
-            f"{pc.GREEN}galactic.py    {pc.END}"
-            f": Set {s[0]} galactic mosaic COMPLETE"
-        )
+        # Status update
+        print(f"{PREFIX}Set {s[0]} galactic mosaic COMPLETE")
 
 if __name__ == "__main__":
     mosaic('FCNA160803', ['1st',])
