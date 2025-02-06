@@ -44,6 +44,9 @@ import shutil
 import filepath
 import printcolors as pc
 
+# Define print staus prefix
+PREFIX = f'{pc.GREEN}reduce.py      {pc.END}: '
+
 #-----------------------------------------------------------------------------#
 
 def stretch_to_range(values, new_min, new_max):
@@ -71,9 +74,9 @@ def reducev(dnight, sets, flatname, curve):
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        print(f'{pc.GREEN}reduce.py      {pc.END}: Reducing {dnight} V-band Set {s[0]}...')
+        print(f'{PREFIX}Reducing {dnight} V-band Set {s[0]}...')
         if os.path.isdir(calsetp):
-            print(f'{pc.GREEN}reduce.py      {pc.END}: Replacing old calibrated files...')
+            print(f'{PREFIX}Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
@@ -179,9 +182,9 @@ def reduceb(dnight, sets, flatname, curve):
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/B/'
-        print(f'{pc.GREEN}reduce.py      {pc.END}: Reducing {dnight} B-band Set {s[0]}...')
+        print(f'{PREFIX}Reducing {dnight} B-band Set {s[0]}...')
         if os.path.isdir(calsetp):
-            print(f'{pc.GREEN}reduce.py      {pc.END}: Replacing old calibrated files...')
+            print(f'{PREFIX}Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')

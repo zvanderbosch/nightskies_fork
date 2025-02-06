@@ -55,6 +55,9 @@ from gaussian import Gaussian_2d
 import printcolors as pc
 import filepath
 
+# Print status prefix
+PREFIX = f'{pc.GREEN}extinction.py  {pc.END}: '
+
 #-----------------------------------------------------------------------------#
 
 def plot_fit_result(data, x, y, popt_list):
@@ -251,10 +254,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         exp = H['exptime'] #[s]
                 
         # loop through each file in the set
-        print(
-            f'{pc.GREEN}extinction.py  {pc.END}'
-            f': Processing images for {filter}-band Set {s[0]}...'
-        )
+        print(f'{PREFIX}Processing images for {filter}-band Set {s[0]}...')
         images = sorted(glob(calsetp+'ib???.fit'))
         for imnum in range(len(images)):
 
@@ -448,10 +448,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         plt.close('zeropoint')
 
         # Status update
-        print(
-            f'{pc.GREEN}extinction.py  {pc.END}'
-            f': {filter}-band Set {s[0]} COMPLETE'
-        )
+        print(f'{PREFIX}{filter}-band Set {s[0]} COMPLETE')
     
     #save the bestfit zeropoint and extinction coefficient     
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter

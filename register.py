@@ -45,7 +45,10 @@ import astropy.units as u
 
 # Local Source
 import filepath    
-import printcolors as pc 
+import printcolors as pc
+
+# Define print staus prefix
+PREFIX = f'{pc.GREEN}register.py    {pc.END}: '
 
 #-----------------------------------------------------------------------------#
 
@@ -269,10 +272,7 @@ def matchstars(dnight, sets, filter):
     for s in sets:
 
         # Status update
-        print(
-            f'{pc.GREEN}register.py    {pc.END}'
-            f': Registering images in {filter}-band Set {s[0]}...'
-        )
+        print(f'{PREFIX}Registering images in {filter}-band Set {s[0]}...')
 
         # Get paths to FITS images and astrometry directory
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
@@ -305,14 +305,8 @@ def matchstars(dnight, sets, filter):
         
     # Final status update
     t1 = time.time()
-    print(
-        f'{pc.GREEN}register.py    {pc.END}'
-        f': {filter}-band Set {s[0]} COMPLETE'
-    )
-    print(
-        f'{pc.GREEN}register.py    {pc.END}'
-        f': Total Solving Time = {(t1-t0)/60:.2f} minutes'
-    )
+    print(f'{PREFIX}{filter}-band Set {s[0]} COMPLETE')
+    print(f'{PREFIX}Total Solving Time = {(t1-t0)/60:.2f} minutes')
 
     return(cropped_fn, failed_fn)
     

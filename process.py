@@ -238,10 +238,14 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore",".*GUI is implemented.*")
         
     #------------ Read in the processing list and initialize ---------------------#
+    
     #Local sources
     import filepath
     import progressbars
     import printcolors as pc
+
+    # Define print status prefix
+    PREFIX = f'{pc.GREEN}process.py     {pc.END}: '
 
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
@@ -308,8 +312,7 @@ if __name__ == '__main__':
 
         # Status update
         print(
-            f'{pc.GREEN}process.py     {pc.END}'
-            f': Processing the {pc.BOLD}{pc.CYAN}'
+            f'{PREFIX}Processing the {pc.BOLD}{pc.CYAN}'
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
@@ -353,7 +356,7 @@ if __name__ == '__main__':
         barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime.png')
         
     t2 = time.time()
-    print(f'{pc.GREEN}process.py     {pc.END}:Total processing time: {(t2-t1)/60:.1f} min')
+    print(f'{PREFIX}Total processing time: {(t2-t1)/60:.1f} min')
     loghistory([f'Total processing time: {(t2-t1)/60:.1f} min',])
     history.close()
     

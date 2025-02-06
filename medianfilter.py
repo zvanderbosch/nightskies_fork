@@ -39,6 +39,9 @@ import numpy as n
 import filepath
 import printcolors as pc
 
+# Print status prefix
+PREFIX = f'{pc.GREEN}medianfilter.py{pc.END}: '
+
 #-----------------------------------------------------------------------------#    
 def FilterImage(arg):
     '''
@@ -110,10 +113,7 @@ def filter(dnight, sets, filter):
         Nimages = len(images)
 
         # Status update
-        print(
-            f'{pc.GREEN}medianfilter.py{pc.END}'
-            f': Processing images for {filter}-band Set {s[0]}...'
-        )
+        print(f'{PREFIX}Processing images for {filter}-band Set {s[0]}...')
 
         # Begin filtering with multiprocessing
         threads = 5
@@ -125,12 +125,12 @@ def filter(dnight, sets, filter):
                 # Status update
                 if count % 5 == 0:
                     print(
-                        f'{pc.GREEN}medianfilter.py{pc.END}'
-                        f': {filter}-band Set {s[0]}, {count}/{Nimages} images complete'
+                        f'{PREFIX}{filter}-band Set {s[0]}, '
+                        f'{count}/{Nimages} images complete'
                     )
         
     # Status update
-    print(f'{pc.GREEN}medianfilter.py{pc.END}: {filter}-band all Sets COMPLETE')
+    print(f'{PREFIX}{filter}-band all Sets COMPLETE')
     
 
     

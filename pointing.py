@@ -48,6 +48,9 @@ import os
 import filepath
 import printcolors as pc
 
+# Print status prefix
+PREFIX = f'{pc.GREEN}pointing.py    {pc.END}: '
+
 #-----------------------------------------------------------------------------#
 # def get_last(JD, longitude):
 
@@ -166,10 +169,7 @@ def pointing_err(dnight, sets):
     for s in sets:
 
         # Status update
-        print(
-            f'{pc.GREEN}pointing.py    {pc.END}: '
-            f'Calculating pointing error for V-band Set {s[0]}...'
-        )
+        print(f'{PREFIX}Calculating pointing error for V-band Set {s[0]}...')
 
         # Define directory for calibrated FITS files
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
@@ -276,10 +276,7 @@ def pointing_err(dnight, sets):
         n.savetxt(outfile,pterr,fmt=nformat,header=H)
 
         # Status update
-        print(
-            f'{pc.GREEN}pointing.py    {pc.END}: '
-            f'V-band Set {s[0]} COMPLETE'
-        )
+        print(f'{PREFIX}V-band Set {s[0]} COMPLETE')
 
         
 
