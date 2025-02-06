@@ -28,7 +28,6 @@
 #
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
-from tqdm import trange
 from PIL import Image
 from skimage.transform import downscale_local_mean
 
