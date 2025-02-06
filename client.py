@@ -9,6 +9,7 @@ from __future__ import print_function
 import os
 import sys
 import time
+import json
 import base64
 
 # py3
@@ -21,10 +22,15 @@ from urllib.error import HTTPError, URLError
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.application  import MIMEApplication
-
 from email.encoders import encode_noop
 
-import json
+# local imports
+import printcolors as pc
+
+# Define print status prefix
+PREFIX = f'{pc.GREEN}client.py      {pc.END}: '
+
+
 def json2python(data):
     try:
         return json.loads(data)
@@ -109,7 +115,7 @@ class Client(object):
                 if attempts < max_retries-1:
                     time.sleep(delay)
                 else:
-                    print('  Exceeded max retries while sending request')
+                    print(f'{PREFIX}Exceeded max retries while sending request')
                     sys.exit(-1)
 
 
@@ -170,7 +176,7 @@ class Client(object):
                 f = open(fn, 'rb')
                 file_args = (fn, f.read())
             except IOError:
-                print('File %s does not exist' % fn)
+                print(f'{PREFIX}File {fn} does not exist')
                 raise
         return self.send_request('upload', args, file_args)
 
@@ -190,17 +196,17 @@ class Client(object):
         stat = result.get('status')
         if stat == 'success':
             result = self.send_request('jobs/%s/calibration' % job_id)
-            print('Calibration:', result)
+            print(f'{PREFIX}Calibration:', result)
             result = self.send_request('jobs/%s/tags' % job_id)
-            print('Tags:', result)
+            print(f'{PREFIX}Tags:', result)
             result = self.send_request('jobs/%s/machine_tags' % job_id)
-            print('Machine Tags:', result)
+            print(f'{PREFIX}Machine Tags:', result)
             result = self.send_request('jobs/%s/objects_in_field' % job_id)
-            print('Objects in field:', result)
+            print(f'{PREFIX}Objects in field:', result)
             result = self.send_request('jobs/%s/annotations' % job_id)
-            print('Annotations:', result)
+            print(f'{PREFIX}Annotations:', result)
             result = self.send_request('jobs/%s/info' % job_id)
-            print('Calibration:', result)
+            print(f'{PREFIX}Calibration:', result)
 
         return stat
 
@@ -312,7 +318,7 @@ if __name__ == '__main__':
     if opt.apikey is None:
         parser.print_help()
         print()
-        print('You must either specify --apikey or set AN_API_KEY')
+        print(f'{PREFIX}You must either specify --apikey or set AN_API_KEY')
         sys.exit(-1)
 
     args = {}
@@ -322,7 +328,7 @@ if __name__ == '__main__':
 
     # Print out starting message
     img_name = opt.upload.split("\\")[-1]
-    print(f'  Solving image {img_name}...')
+    print(f'{PREFIX}(Status = starting) {img_name:11s}')
     
     if opt.upload or opt.upload_url:
         if opt.wcs or opt.kmz or opt.newfits or opt.corr or opt.annotate or opt.calibrate:
@@ -363,7 +369,7 @@ if __name__ == '__main__':
 
         stat = upres['status']
         if stat != 'success':
-            print('Upload failed: status', stat)
+            print(f'{PREFIX}Upload failed: status', stat)
             print(upres)
             sys.exit(-1)
 
@@ -372,13 +378,13 @@ if __name__ == '__main__':
     if opt.wait:
         if opt.solved_id is None:
             if opt.sub_id is None:
-                print("Can't --wait without a submission id or job id!")
+                print(f"{PREFIX}Can't --wait without a submission id or job id!")
                 sys.exit(-1)
 
             while True:
                 stat = c.sub_status(opt.sub_id, justdict=True)
                 if stat['processing_started'] == 'None':
-                    print(f"   (Status = no job  ) {img_name:11s}")
+                    print(f"{PREFIX}(Status = no job  ) {img_name:11s}")
 
                 jobs = stat.get('jobs', [])
                 if len(jobs):
@@ -394,15 +400,15 @@ if __name__ == '__main__':
         time_solving = 0.0
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
-            print(f"   (Status = {stat['status']} ) {img_name:11s}  wait time = {time_solving:.0f}s")
+            print(f"{PREFIX}(Status = {stat['status']} ) {img_name:11s}  wait time = {time_solving:.0f}s")
             if stat.get('status','') in ['success']:
                 success = (stat['status'] == 'success')
                 break
             elif stat.get('status','') in ['failure']:
-                print(f"   (Status = FAILED  ) {img_name:11s}", flush=True)
+                print(f"{PREFIX}(Status = FAILED  ) {img_name:11s}")
                 sys.exit(-1)
             elif time_solving > opt.solve_time:
-                print(f"   (Status = FAILED  ) {img_name:11s}", flush=True)
+                print(f"{PREFIX}(Status = FAILED  ) {img_name:11s}")
                 sys.exit(-1)
             time.sleep(5)
             time_solving = time.time() - time_start
@@ -440,7 +446,7 @@ if __name__ == '__main__':
                     if attempts < max_retries-1:
                         time.sleep(delay)
                     else:
-                        print(f'  Exceeded max retries while retrieving results for {img_name}')
+                        print(f'{PREFIX}Exceeded max retries while retrieving results for {img_name}')
             
 
         if opt.annotate:
@@ -480,4 +486,4 @@ if __name__ == '__main__':
         jobs = c.myjobs()
         print(jobs)
 
-    print(f"   (Status = finished) {img_name:11s}")
+    print(f"{PREFIX}(Status = finished) {img_name:11s}")
