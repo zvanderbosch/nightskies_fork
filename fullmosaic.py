@@ -229,7 +229,7 @@ def mosaic(dnight, sets, filter):
 
             # Copy TIFF file to scratch directory
             arcpy.management.CopyRaster(
-                f'{calsetp}/tiff/ib{w+1:03d}.tif', 
+                f'{calsetp}tiff/ib{w+1:03d}.tif', 
                 f'ib{v:03d}.tif',
                 "DEFAULTS",
                 "","","","",
