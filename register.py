@@ -44,7 +44,8 @@ import astropy.coordinates as coord
 import astropy.units as u
 
 # Local Source
-import filepath     
+import filepath    
+import printcolors as pc 
 
 #-----------------------------------------------------------------------------#
 
@@ -267,10 +268,18 @@ def matchstars(dnight, sets, filter):
     t0 = time.time()
     for s in sets:
 
+        # Status update
+        print(
+            f'{pc.GREEN}register.py    {pc.END}'
+            f': Registering images in {filter}-band Set {s[0]}...'
+        )
+
         # Get paths to FITS images and astrometry directory
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        astsetp = f'{calsetp}astrometry/'
-        print('register.py    : Registering images in', dnight + '/S_0' + s[0] + '...')
+        if filter == 'V':
+            astsetp = f'{calsetp}astrometry/'
+        elif filter == 'B':
+            astsetp = f'{calsetp}B/astrometry/'
 
         # Create astrometry directory if needed
         if not os.path.exists(astsetp):
@@ -294,8 +303,16 @@ def matchstars(dnight, sets, filter):
         cropped_fn = sorted(cropped_fn)
         failed_fn = sorted(failed_fn)
         
+    # Final status update
     t1 = time.time()
-    print('register.py    : Total Solving Time = {:.2f} minutes'.format((t1-t0)/60))
+    print(
+        f'{pc.GREEN}register.py    {pc.END}'
+        f': {filter}-band Set {s[0]} COMPLETE'
+    )
+    print(
+        f'{pc.GREEN}register.py    {pc.END}'
+        f': Total Solving Time = {(t1-t0)/60:.2f} minutes'
+    )
 
     return(cropped_fn, failed_fn)
     
