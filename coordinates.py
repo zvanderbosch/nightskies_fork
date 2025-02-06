@@ -33,6 +33,7 @@ import astropy.coordinates as coord
 
 # Local Source
 import filepath
+import printcolors as pc
 
 #-----------------------------------------------------------------------------#
 def bearing_angle(lat1, lon1, lat2, lon2):
@@ -96,7 +97,11 @@ def galactic_ecliptic_coords(dnight, sets):
     #loop through all the sets in that night
     for s in sets:
 
-        print(f'coordinates.py : Calculating image coordinates for V-band Set {s[0]}...')
+        # Status update
+        print(
+            f'{pc.GREEN}coordinates.py {pc.END}'
+            f': Calculating image coordinates for V-band Set {s[0]}...'
+        )
 
         calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
         outlist = []
@@ -190,7 +195,11 @@ def galactic_ecliptic_coords(dnight, sets):
         fileout = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
         n.savetxt(fileout,n.array(outlist),fmt=fmt,header=H)
 
-        print(f'coordinates.py : V-band Set {s[0]} COMPLETE')
+        # Status update
+        print(
+            f'{pc.GREEN}coordinates.py {pc.END}'
+            f': V-band Set {s[0]} COMPLETE'
+        )
 
 
 if __name__ == "__main__":

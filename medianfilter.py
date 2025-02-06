@@ -36,7 +36,8 @@ import itertools
 import numpy as n
 
 # Local Source
-import filepath  
+import filepath
+import printcolors as pc
 
 #-----------------------------------------------------------------------------#    
 def FilterImage(arg):
@@ -108,18 +109,28 @@ def filter(dnight, sets, filter):
         arg = zip(images, itertools.repeat(mask))
         Nimages = len(images)
 
+        # Status update
+        print(
+            f'{pc.GREEN}medianfilter.py{pc.END}'
+            f': Processing images for {filter}-band Set {s[0]}...'
+        )
+
         # Begin filtering with multiprocessing
         threads = 5
         count = 0
-        print(f'medianfilter.py: Processing images for {filter}-band Set {s[0]}...')
         with Pool(processes=threads) as pool:
             result = pool.imap_unordered(FilterImage, arg)
             for _ in result:
                 count += 1
+                # Status update
                 if count % 5 == 0:
-                    print(f'medianfilter.py: {filter}-band Set {s[0]}, {count}/{Nimages} images complete')
+                    print(
+                        f'{pc.GREEN}medianfilter.py{pc.END}'
+                        f': {filter}-band Set {s[0]}, {count}/{Nimages} images complete'
+                    )
         
-    print(f'medianfilter.py: {filter}-band all Sets COMPLETE')
+    # Status update
+    print(f'{pc.GREEN}medianfilter.py{pc.END}: {filter}-band all Sets COMPLETE')
     
 
     

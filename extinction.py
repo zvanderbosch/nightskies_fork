@@ -52,6 +52,7 @@ warnings.simplefilter('ignore', category=wcs.FITSFixedWarning)
 
 # Local Source
 from gaussian import Gaussian_2d
+import printcolors as pc
 import filepath
 
 #-----------------------------------------------------------------------------#
@@ -250,7 +251,10 @@ def extinction(dnight, sets, filter, plot_img=0):
         exp = H['exptime'] #[s]
                 
         # loop through each file in the set
-        print(f'extinction.py  : Processing images for {filter}-band Set {s[0]}...')
+        print(
+            f'{pc.GREEN}extinction.py  {pc.END}'
+            f': Processing images for {filter}-band Set {s[0]}...'
+        )
         images = sorted(glob(calsetp+'ib???.fit'))
         for imnum in range(len(images)):
 
@@ -443,7 +447,11 @@ def extinction(dnight, sets, filter, plot_img=0):
         plt.savefig(imgout,dpi=200,bbox_inches='tight')
         plt.close('zeropoint')
 
-        print(f'extinction.py  : {filter}-band Set {s[0]} COMPLETE')
+        # Status update
+        print(
+            f'{pc.GREEN}extinction.py  {pc.END}'
+            f': {filter}-band Set {s[0]} COMPLETE'
+        )
     
     #save the bestfit zeropoint and extinction coefficient     
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter

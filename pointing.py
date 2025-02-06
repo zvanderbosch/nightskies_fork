@@ -45,7 +45,8 @@ import matplotlib.pyplot as plt
 import os
 
 # Local Source
-import filepath  
+import filepath
+import printcolors as pc
 
 #-----------------------------------------------------------------------------#
 # def get_last(JD, longitude):
@@ -163,6 +164,14 @@ def pointing_err(dnight, sets):
     
     #looping through all the sets in that night
     for s in sets:
+
+        # Status update
+        print(
+            f'{pc.GREEN}pointing.py    {pc.END}: '
+            f'Calculating pointing error for V-band Set {s[0]}...'
+        )
+
+        # Define directory for calibrated FITS files
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
         
         #read in the header to set the site object's parameter
@@ -185,7 +194,6 @@ def pointing_err(dnight, sets):
         solved, notsolved = [],[]
         True_AZ, True_ALT = [],[] 
         Input_AZ, Input_ALT = [],[]
-        print(f'pointing.py    : Calculating pointing error for V-band Set {s[0]}...')
         for fn in iglob(calsetp+'ib???.fit'):
 
             fns = fn[:-4]+'s'+fn[-4:]
@@ -267,7 +275,11 @@ def pointing_err(dnight, sets):
         H = 'file Input_AZ Input_ALT Obs_AZ Obs_ALT' #column names
         n.savetxt(outfile,pterr,fmt=nformat,header=H)
 
-        print(f'pointing.py    : V-band Set {s[0]} COMPLETE')
+        # Status update
+        print(
+            f'{pc.GREEN}pointing.py    {pc.END}: '
+            f'V-band Set {s[0]} COMPLETE'
+        )
 
         
 

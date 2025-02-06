@@ -98,7 +98,6 @@ def reduce_images(*args):
     '''Basic image reduction'''
     update_progressbar(0,i)
     t1 = time.time()
-    print('Reducing images... ')
     import reduce as R
     if 'V' in args[2]:
         R.reducev(args[0],args[1],args[2]['V'],args[3])
@@ -179,7 +178,6 @@ def mosaic_galactic(*args):
     '''Creates the mosaic of the galactic model'''
     t1 = time.time()
     import galactic
-    print('Creating the mosaic of the galactic model')
     galactic.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -189,7 +187,6 @@ def mosaic_zodiacal(*args):
     '''Creates the mosaic of the zodiacal model'''
     t1 = time.time()
     import zodiacal
-    print('Creating the mosaic of the zodiacal model')
     zodiacal.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -200,7 +197,6 @@ def mosaic_full(*args):
     t1 = time.time()
     import fullmosaic
     for filter in args[2]:
-        print('Creating the mosaic from full-resolution %s-band images' %filter)
         fullmosaic.mosaic(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -211,7 +207,6 @@ def mosaic_median(*args):
     t1 = time.time()
     import medianmosaic
     for filter in args[2]:
-        print('Creating the mosaic from median-filtered %s-band images' %filter)
         medianmosaic.mosaic(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -246,7 +241,8 @@ if __name__ == '__main__':
     #Local sources
     import filepath
     import progressbars
-    
+    import printcolors as pc
+
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
     Dataset, V_band, B_band, Flat_V, Flat_B, Curve, Processor = filelist.T
@@ -293,6 +289,7 @@ if __name__ == '__main__':
         
     #Looping through multiple data nights
     for i in range(len(filelist)):
+
         history = open(filepath.calibdata+Dataset[i]+'/processlog.txt', 'w')
         log_inputs(filelist[i])
         
@@ -309,44 +306,51 @@ if __name__ == '__main__':
         K1 = (Dataset[i],sets,Filter) 
         K2 = (Dataset[i],sets)  
 
+        # Status update
+        print(
+            f'{pc.GREEN}process.py     {pc.END}'
+            f': Processing the {pc.BOLD}{pc.CYAN}'
+            f'{Dataset[i]}{pc.END}{pc.END} dataset'
+        )
+
         q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K2+Q2)
         q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
         q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K1+Q4)
         q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K2+Q5)  
-        q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_galactic,args=K2+Q6)
-        q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_zodiacal,args=K2+Q7)
-        q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_full,args=K1+Q8)
-        q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K1+Q9)
+        # q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_galactic,args=K2+Q6)
+        # q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_zodiacal,args=K2+Q7)
+        # q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_full,args=K1+Q8)
+        # q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K1+Q9)
         
-        reduce_images(*K0)                            #image reduction   
-        register_coord(*K1)                           #pointing 
+        # reduce_images(*K0)                            #image reduction   
+        # register_coord(*K1)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
         p4.start(); update_progressbar(4,i)           #median filter
         p2.join() ; update_progressbar(2,i,q2.get())
         p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         p5.join() ; update_progressbar(5,i,q5.get())
-        p8.start(); update_progressbar(8,i)           #full mosaic
-        p8.join() ; update_progressbar(8,i,q8.get())
-        p6.start(); update_progressbar(6,i)           #galactic mosaic
-        p7.start(); update_progressbar(7,i)           #zodiacal mosaic
+        # p8.start(); update_progressbar(8,i)           #full mosaic
+        # p8.join() ; update_progressbar(8,i,q8.get())
+        # p6.start(); update_progressbar(6,i)           #galactic mosaic
+        # p7.start(); update_progressbar(7,i)           #zodiacal mosaic
         p3.join() ; update_progressbar(3,i,q3.get())
         p4.join() ; update_progressbar(4,i,q4.get())
-        p9.start(); update_progressbar(9,i)           #median mosaic
-        p6.join() ; update_progressbar(6,i,q6.get())
-        p7.join() ; update_progressbar(7,i,q7.get())
-        p9.join() ; update_progressbar(9,i,q9.get())
+        # p9.start(); update_progressbar(9,i)           #median mosaic
+        # p6.join() ; update_progressbar(6,i,q6.get())
+        # p7.join() ; update_progressbar(7,i,q7.get())
+        # p9.join() ; update_progressbar(9,i,q9.get())
         
-        #log the processing history
-        q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
-        for q in q_all:
-            while not q.empty():
-                loghistory(q.get())
+        # #log the processing history
+        # q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
+        # for q in q_all:
+        #     while not q.empty():
+        #         loghistory(q.get())
         
     
-        #save the timing records for running the script
-        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime.txt', Z, fmt='%4.1f')
-        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime.png')
+        # #save the timing records for running the script
+        # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime.txt', Z, fmt='%4.1f')
+        # barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime.png')
         
     t2 = time.time()
     print('Total processing time: %.1f min' %((t2-t1)/60))
