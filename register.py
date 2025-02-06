@@ -270,7 +270,7 @@ def matchstars(dnight, sets, filter):
         # Get paths to FITS images and astrometry directory
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
         astsetp = f'{calsetp}astrometry/'
-        print('Registering images in', dnight + '/S_0' + s[0] + '...')
+        print('register.py    : Registering images in', dnight + '/S_0' + s[0] + '...')
 
         # Create astrometry directory if needed
         if not os.path.exists(astsetp):
@@ -295,7 +295,7 @@ def matchstars(dnight, sets, filter):
         failed_fn = sorted(failed_fn)
         
     t1 = time.time()
-    print('  Total Solving Time = {:.2f} minutes'.format((t1-t0)/60))
+    print('register.py    : Total Solving Time = {:.2f} minutes'.format((t1-t0)/60))
 
     return(cropped_fn, failed_fn)
     

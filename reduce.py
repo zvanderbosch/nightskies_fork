@@ -70,9 +70,9 @@ def reducev(dnight, sets, flatname, curve):
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        print(dnight + '/' + s + '...')
+        print(f'reduce.py      : Reducing {dnight} V-band Set {s[0]}...')
         if os.path.isdir(calsetp):
-            print('Replacing old calibrated files...')
+            print('reduce.py      : Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
@@ -178,9 +178,9 @@ def reduceb(dnight, sets, flatname, curve):
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/B/'
-        print(dnight + '/' + s + '...')
+        print(f'reduce.py      : Reducing {dnight} B-band Set {s[0]}...')
         if os.path.isdir(calsetp):
-            print('Replacing old calibrated files...')
+            print('reduce.py      : Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
