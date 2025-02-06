@@ -145,7 +145,7 @@ def fit_zeropoint(*args):
         arg = list(args[:-1])
         arg[2] = filter
         nstar, bestfit_file = EX.extinction(*arg)
-        bestfitp = list(n.loadtxt(bestfit_file, dtype=str, comments='', 
+        bestfitp = list(n.loadtxt(bestfit_file, dtype=str, comments=None, 
                         delimiter='!'))
         logm(m,'%s-band best fit zeropoint and extinction: ' %filter)
         logm(m, bestfitp)
@@ -160,7 +160,7 @@ def apply_filter(*args):
     t1 = time.time()
     import medianfilter
     for filter in args[2]:
-        print('Applying median filter to %s-band images' %filter)
+        # print('Applying median filter to %s-band images' %filter)
         medianfilter.filter(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -235,7 +235,6 @@ if __name__ == '__main__':
     #Standard libraries
     import matplotlib.pyplot as plt
     import os
-    import pdb
     import warnings
     
     from datetime import datetime as Dtime
@@ -291,8 +290,6 @@ if __name__ == '__main__':
     
     
     #------------ Main data processing code --------------------------------------#
-    import filepath
-    import progressbars
         
     #Looping through multiple data nights
     for i in range(len(filelist)):
@@ -329,15 +326,15 @@ if __name__ == '__main__':
         p2.join() ; update_progressbar(2,i,q2.get())
         p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         p5.join() ; update_progressbar(5,i,q5.get())
+        p8.start(); update_progressbar(8,i)           #full mosaic
+        p8.join() ; update_progressbar(8,i,q8.get())
         p6.start(); update_progressbar(6,i)           #galactic mosaic
         p7.start(); update_progressbar(7,i)           #zodiacal mosaic
         p3.join() ; update_progressbar(3,i,q3.get())
-        p8.start(); update_progressbar(8,i)           #full mosaic
         p4.join() ; update_progressbar(4,i,q4.get())
         p9.start(); update_progressbar(9,i)           #median mosaic
         p6.join() ; update_progressbar(6,i,q6.get())
         p7.join() ; update_progressbar(7,i,q7.get())
-        p8.join() ; update_progressbar(8,i,q8.get())
         p9.join() ; update_progressbar(9,i,q9.get())
         
         #log the processing history
