@@ -170,7 +170,7 @@ def reduceb(dnight, sets, flatname, curve):
     dependent from the output from the reducev module.
     '''
     #read in the linearity curve (ADU, multiplying factor)
-    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True)
+    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
     
     #read in the flat
     flat = fits.open(filepath.flats+flatname,unit=False)[0].data
@@ -220,7 +220,7 @@ def reduceb(dnight, sets, flatname, curve):
             }
             tiff_output = Image.fromarray(tiff_data, mode="I;16")
             tiff_output.save(
-                calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',
+                calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif',
                 tiffinfo = tiff_info
             )
         
