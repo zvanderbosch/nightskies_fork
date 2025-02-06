@@ -41,7 +41,8 @@ import os
 import shutil
 
 # Local Source
-import filepath     
+import filepath
+import printcolors as pc
 
 #-----------------------------------------------------------------------------#
 
@@ -70,9 +71,9 @@ def reducev(dnight, sets, flatname, curve):
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
-        print(f'reduce.py      : Reducing {dnight} V-band Set {s[0]}...')
+        print(f'{pc.GREEN}reduce.py      {pc.END}: Reducing {dnight} V-band Set {s[0]}...')
         if os.path.isdir(calsetp):
-            print('reduce.py      : Replacing old calibrated files...')
+            print(f'{pc.GREEN}reduce.py      {pc.END}: Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
@@ -178,9 +179,9 @@ def reduceb(dnight, sets, flatname, curve):
     for s in sets:
         rawsetp = filepath.rawdata + dnight + '/' + s + '/'
         calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/B/'
-        print(f'reduce.py      : Reducing {dnight} B-band Set {s[0]}...')
+        print(f'{pc.GREEN}reduce.py      {pc.END}: Reducing {dnight} B-band Set {s[0]}...')
         if os.path.isdir(calsetp):
-            print('reduce.py      : Replacing old calibrated files...')
+            print(f'{pc.GREEN}reduce.py      {pc.END}: Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
