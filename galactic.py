@@ -27,7 +27,6 @@
 #-----------------------------------------------------------------------------#
 from astropy.io import fits
 from skimage.transform import downscale_local_mean
-from tqdm import trange
 
 import arcpy
 import numpy as n
@@ -177,10 +176,12 @@ def mosaic(dnight, sets):
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
         Obs_AZ[35] %= 360
+        imnum = len(Obs_AZ)
         
         # Loop through each file in the set
-        print(f'Generating galactic images for Set {s[0]}...')
-        for w in trange(len(Obs_AZ)+1):
+        print(f'galactic.py    : Generating galactic rasters for Set {s[0]}...')
+        for w in range(imnum+1):
+            
             v = w+1
             if w == 45:
                 w = 35
@@ -225,9 +226,13 @@ def mosaic(dnight, sets):
                 "ClippingGeometry",
                 "NO_MAINTAIN_EXTENT"
             )
+
+            # Progress update
+            if (v == w+1) & (v % 5 == 0):
+                print(f'galactic.py    : Set {s[0]}, {v}/{imnum} rasters complete')
         
         # Mosaic to topocentric coordinate model; save in Griddata\
-        print("Mosaicking into all sky galactic model...")
+        print(f"galactic.py    : Mosaicking into all sky galactic model for Set {s[0]}...")
         R = ';'.join([f'gali{i:02d}' for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'galtopmags', geogcs, 
@@ -242,7 +247,7 @@ def mosaic(dnight, sets):
         )
 
         # Create Raster layer, add magnitudes symbology, and save layer to file
-        print("Creating layer files for galactic mosaic...")
+        print(f"galactic.py    : Creating layer files for galactic mosaic for Set {s[0]}...")
         layerfile = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.lyrx'
         symbologyFile = f'{filepath.rasters}magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'galtopmagsc', 'galtoplyr')
@@ -256,6 +261,8 @@ def mosaic(dnight, sets):
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
         fname = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.fits'
         fits.writeto(fname, A_small, overwrite=True)
+
+        print(f"galactic.py    : Set {s[0]} galactic mosaic COMPLETE")
 
 if __name__ == "__main__":
     mosaic('FCNA160803', ['1st',])
