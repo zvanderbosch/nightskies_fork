@@ -333,11 +333,11 @@ if __name__ == '__main__':
         p2.join() ; update_progressbar(2,i,q2.get())
         p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         p5.join() ; update_progressbar(5,i,q5.get())
+        p3.join() ; update_progressbar(3,i,q3.get())
         p6.start(); update_progressbar(6,i)           #full mosaic
         p6.join() ; update_progressbar(6,i,q6.get())
         p7.start(); update_progressbar(7,i)           #galactic mosaic
         p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        p3.join() ; update_progressbar(3,i,q3.get())
         p4.join() ; update_progressbar(4,i,q4.get())
         p9.start(); update_progressbar(9,i)           #median mosaic
         p7.join() ; update_progressbar(7,i,q7.get())
