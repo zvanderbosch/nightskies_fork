@@ -400,15 +400,21 @@ if __name__ == '__main__':
         time_solving = 0.0
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
-            print(f"{PREFIX}(Status = {stat['status']} ) {img_name:11s}  wait time = {time_solving:.0f}s")
+            print(f"{PREFIX}(Status = {stat['status']} ) {img_name:11s}")
             if stat.get('status','') in ['success']:
                 success = (stat['status'] == 'success')
                 break
             elif stat.get('status','') in ['failure']:
-                print(f"{PREFIX}(Status = FAILED  ) {img_name:11s}")
+                print(
+                    f"{PREFIX}(Status = {pc.RED}FAILED{pc.END}  ) "
+                    f"{img_name:11s} Image solve failed"
+                )
                 sys.exit(-1)
             elif time_solving > opt.solve_time:
-                print(f"{PREFIX}(Status = FAILED  ) {img_name:11s}")
+                print(
+                    f"{PREFIX}(Status = {pc.RED}FAILED{pc.END}  ) "
+                    f"{img_name:11s} Solve time exceeded {opt.solve_time:.0f}s"
+                )
                 sys.exit(-1)
             time.sleep(5)
             time_solving = time.time() - time_start
@@ -446,7 +452,11 @@ if __name__ == '__main__':
                     if attempts < max_retries-1:
                         time.sleep(delay)
                     else:
-                        print(f'{PREFIX}Exceeded max retries while retrieving results for {img_name}')
+                        print(
+                            f'{PREFIX}(Status = {pc.RED}FAILED{pc.END}  ) '
+                            f'{img_name:11s} Could not retrieve results'
+                        )
+                        sys.exit(-1)
             
 
         if opt.annotate:
@@ -486,4 +496,4 @@ if __name__ == '__main__':
         jobs = c.myjobs()
         print(jobs)
 
-    print(f"{PREFIX}(Status = finished) {img_name:11s}")
+    print(f"{PREFIX}(Status = {pc.CYAN}finished{pc.END}) {img_name:11s}")
