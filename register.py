@@ -302,6 +302,7 @@ def matchstars(dnight, sets, filter):
         if len(files_to_solve) == 0:
             continue
         
+        # Start solving images w/ multiprocessing
         with Pool(processes=threads) as pool:
             result = pool.imap_unordered(solve,files_to_solve)
             for res in result:
