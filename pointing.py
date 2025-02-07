@@ -116,7 +116,6 @@ def interp_coord(filenames, solved_outputs):
             k = min(3, sum(wi)-1)
             A = UnivariateSpline(solved[wi]-15, True_AZ[wi], k=1)
             E = UnivariateSpline(solved[wi]-15, True_ALT[wi]-25, k=k)
-        
         else:
             wi = (solved>w[i]) & (solved<=w[i+1])
             k = min(3, sum(wi)-1)
@@ -203,7 +202,7 @@ def pointing_err(dnight, sets):
                 H = fits.getheader(fn,ext=0)
             
             #calculate the pointing error only if the plate is solved
-            if 'PLTSOLVD' not in H or H['PLTSOLVD']==False: 
+            if ('PLTSOLVD' not in H) | (H['PLTSOLVD'] == False): 
                 notsolved.append(fn)
                 continue
             solved.append(int(fn[-7:-4]))
