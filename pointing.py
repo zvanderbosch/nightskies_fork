@@ -52,43 +52,6 @@ import printcolors as pc
 PREFIX = f'{pc.GREEN}pointing.py    {pc.END}: '
 
 #-----------------------------------------------------------------------------#
-# def get_last(JD, longitude):
-
-#     '''
-#     This function calculates the local apparent sidereal time given 
-#     the Julian Date (JD) and the longitude [deg] of the observing site. 
-#     This calculation is based on the information from:
-#     http://aa.usno.navy.mil/faq/docs/GAST.php 
-#     The maximum error resulting from the use of these formulas for 
-#     sidereal time over the period 2000-2100 is 0.432 seconds.
-
-#     Parameters
-#     ----------
-#     JD: float
-#         The julian day of observation.
-#     longitude: float
-#         Longitude of the observing site (~~which coordinate system??~~)
-
-# 	Returns
-# 	-------
-# 	float
-
-#     '''
-
-#     D = JD - 2451545.0                                   #number of days from 2000 January 1, 12h UT
-#     GMST = 18.697374558 + 24.06570982441908*D            #Greenwich mean sidereal time [hr]
-    
-#     Omega = n.deg2rad(125.04 - 0.052954*D)               #longitude of the ascending node of the Moon [rad]
-#     L = n.deg2rad(280.47 + 0.98565*D)                    #mean Longitude of the Sun [rad]
-#     Del_Phi = -0.000319*n.sin(Omega)-0.000024*n.sin(2*L) #nutation in longitude
-#     eps = n.deg2rad(23.4393 - 0.0000004*D)               #obliquity [rad]
-#     eqeq = Del_Phi*n.cos(eps)                            #equation of the equinoxes
-    
-#     GAST = GMST + eqeq                                   #Greenwich apparent sidereal time [hr]
-#     LAST = (GAST+longitude/360*24)%24                    #local apparent sidereal time [hr]
-    
-#     return LAST
-
     
 def interp_coord(filenames, solved_outputs):
     '''
