@@ -448,7 +448,9 @@ if __name__ == '__main__':
                     w = open(fn, 'wb')
                     w.write(txt)
                     w.close()
-                except:
+                    break
+                except Exception as e:
+                    print(f'{PREFIX}',e)
                     if attempts < max_retries-1:
                         time.sleep(delay)
                     else:
