@@ -400,7 +400,6 @@ if __name__ == '__main__':
         time_solving = 0.0
         while True:
             stat = c.job_status(opt.solved_id, justdict=True)
-            print(f"{PREFIX}(Status = {stat['status']} ) {img_name:11s}")
             if stat.get('status','') in ['success']:
                 success = (stat['status'] == 'success')
                 break
@@ -416,6 +415,8 @@ if __name__ == '__main__':
                     f"{img_name:11s} Solve time exceeded {opt.solve_time:.0f}s"
                 )
                 sys.exit(-1)
+            else:
+                print(f"{PREFIX}(Status = {stat['status']} ) {img_name:11s}")
             time.sleep(5)
             time_solving = time.time() - time_start
 
