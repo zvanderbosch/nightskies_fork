@@ -83,8 +83,8 @@ def update_progressbar(x,y,t=0):
         barax.pcolor([x+4,x+5],[y+5,y+6],[[4],],cmap='gray',vmin=0,vmax=5)
     else:               #update for the completed status
         t/=60           #[min]
-        if t < 1: texty = '%.1f' %t
-        else: texty = '%d' %round(t)
+        if t < 10: texty = '%.1f' %t
+        else: texty = '%.0f' %t
         if t < 6: c = 'k'
         else: c = 'w'
         Z[y+5,x] = t    #record the time [min] in a master array
