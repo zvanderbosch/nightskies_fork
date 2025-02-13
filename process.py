@@ -316,6 +316,7 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
+        # New orering for max parallel prcessing
         q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K2+Q2)
         q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
         q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K1+Q4)
@@ -335,11 +336,11 @@ if __name__ == '__main__':
         p5.join() ; update_progressbar(5,i,q5.get())
         p3.join() ; update_progressbar(3,i,q3.get())
         p6.start(); update_progressbar(6,i)           #full mosaic
-        p6.join() ; update_progressbar(6,i,q6.get())
         p7.start(); update_progressbar(7,i)           #galactic mosaic
         p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        p4.join() ; update_progressbar(4,i,q4.get())
         p9.start(); update_progressbar(9,i)           #median mosaic
+        p4.join() ; update_progressbar(4,i,q4.get())
+        p6.join() ; update_progressbar(6,i,q6.get())
         p7.join() ; update_progressbar(7,i,q7.get())
         p8.join() ; update_progressbar(8,i,q8.get())
         p9.join() ; update_progressbar(9,i,q9.get())
