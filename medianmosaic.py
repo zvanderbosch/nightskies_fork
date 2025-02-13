@@ -34,6 +34,7 @@ from skimage.transform import downscale_local_mean
 import arcpy
 import numpy as n
 import os
+import time
 import stat
 import shutil
 
@@ -226,8 +227,15 @@ def mosaic(dnight, sets, filter):
                 w = 35
                 Obs_AZ[w] -= 360
             
+            # Check that median-filtered TIFF exists
+            tiffFile = f'{calsetp}/tiff/median_ib{w+1:03d}.tif'
+            while True:
+                if (os.path.isfile(tiffFile)) & (os.path.getsize(tiffFile) > 2000000): 
+                    break
+                else: time.sleep(1); continue
+
             arcpy.management.CopyRaster(
-                f'{calsetp}/tiff/median_ib{w+1:03d}.tif', 
+                tiffFile, 
                 f'ib{v:03d}.tif',
                 "DEFAULTS",
                 "","","","",
@@ -264,7 +272,16 @@ def mosaic(dnight, sets, filter):
             # Clip to image boundary
             # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
             # arcpy.management.Clip(f"fwib{v:03d}.tif", rectangle, f"fcib{v:03d}")
+
+            # Check that clipFile exists first
             clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+            while True:
+                if (os.path.isfile(f"{clipFile}.shp")) & (os.path.getsize(f"{clipFile}.shp") > 100000): 
+                    break
+                else:
+                    time.sleep(1)
+                    continue
+
             arcpy.management.Clip(
                 f"fwib{v:03d}.tif", 
                 "", 

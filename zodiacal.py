@@ -31,6 +31,7 @@ from skimage.transform import downscale_local_mean
 import arcpy
 import numpy as n
 import os
+import time
 import stat
 import shutil
 
@@ -216,7 +217,16 @@ def mosaic(dnight, sets):
             #clip to image boundary
             # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
             # arcpy.management.Clip("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
+
+            # Check that clipFile exists
             clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+            while True:
+                if(os.path.isfile(f"{clipFile}.shp")) & (os.path.getsize(f"{clipFile}.shp") > 100000):
+                    break
+                else: 
+                    time.sleep(1); 
+                    continue
+
             arcpy.management.Clip(
                 f"zod{v:02d}.tif", 
                 "", 
