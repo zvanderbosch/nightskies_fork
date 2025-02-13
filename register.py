@@ -290,21 +290,10 @@ def matchstars(dnight, sets, filter):
             files = glob(calsetp+'ib???.fit')
         elif filter == 'B':
             files = glob(calsetp+'B/ib???.fit')
-
-        # Check whether image has already been solved
-        files_to_solve = []
-        for f in files:
-            H = fits.getheader(f)
-            if 'PLTSOLVD' not in H:
-                files_to_solve.append(f)
-            elif H['PLTSOLVD'] == False:
-                files_to_solve.append(f)
-        if len(files_to_solve) == 0:
-            continue
         
         # Start solving images w/ multiprocessing
         with Pool(processes=threads) as pool:
-            result = pool.imap_unordered(solve,files_to_solve)
+            result = pool.imap_unordered(solve,files)
             for res in result:
                 if res[0] == 'cropped':
                     cropped_fn.append(res[1])
