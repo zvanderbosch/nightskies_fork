@@ -174,6 +174,23 @@ def clear_scratch(scratch_dir):
         for name in dirs:
             os.chmod(os.path.join(root, name), stat.S_IWRITE)
             os.rmdir(os.path.join(root, name))
+
+def check_file(filename):
+    ''' 
+    Check that a file exists and is no longer
+    being written to by another program.
+    '''
+    
+    if os.path.isfile(filename):
+        size_check_1 = os.path.getsize(filename)
+        time.sleep(1)
+        size_check_2 = os.path.getsize(filename)
+        if size_check_2 > size_check_1:
+            return False
+        else: 
+            return True
+    else: 
+        return False
     
 
 def mosaic(dnight, sets, filter):
@@ -230,8 +247,7 @@ def mosaic(dnight, sets, filter):
             # Check that median-filtered TIFF exists
             tiffFile = f'{calsetp}/tiff/median_ib{w+1:03d}.tif'
             while True:
-                if (os.path.isfile(tiffFile)) & (os.path.getsize(tiffFile) > 2000000): 
-                    break
+                if check_file(tiffFile): break
                 else: time.sleep(1); continue
 
             arcpy.management.CopyRaster(
@@ -276,11 +292,8 @@ def mosaic(dnight, sets, filter):
             # Check that clipFile exists first
             clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
             while True:
-                if (os.path.isfile(f"{clipFile}.shp")) & (os.path.getsize(f"{clipFile}.shp") > 100000): 
-                    break
-                else:
-                    time.sleep(1)
-                    continue
+                if check_file(f"{clipFile}.shp"): break
+                else: time.sleep(1); continue
 
             arcpy.management.Clip(
                 f"fwib{v:03d}.tif", 
