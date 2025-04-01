@@ -20,7 +20,7 @@
 #	Li-Wei Hung -- Created
 #
 #-----------------------------------------------------------------------------#
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as n
 
@@ -33,27 +33,37 @@ import filepath
 colormap_file = filepath.rasters+'colormap_magnitudeslyr.txt'
 mag_start, mag_end, R, G, B = n.loadtxt(colormap_file).T    #RGB in 0-255 scale 
 
-#color positions in 0-1 scale
-mag_range = mag_start[-1]-mag_start[0]
-mag_percent = (mag_start-mag_start[0])/mag_range
+# #color positions in 0-1 scale
+# mag_range = mag_start[-1]-mag_start[0]
+# mag_percent = (mag_start-mag_start[0])/mag_range
 
 #RGB values in 0-1 scale
 R /= 255.
 G /= 255.
 B /= 255.
 
-#color map lists 
-red = []; green = []; blue = []
-for i in range(len(mag_start)):
-    red.append((mag_percent[i],R[i],R[i]))
-    green.append((mag_percent[i],G[i],G[i]))
-    blue.append((mag_percent[i],B[i],B[i]))
+# #color map lists 
+# red = []; green = []; blue = []
+# for i in range(len(mag_start)):
+#     red.append((mag_percent[i],R[i],R[i]))
+#     green.append((mag_percent[i],G[i],G[i]))
+#     blue.append((mag_percent[i],B[i],B[i]))
 
-#declare color map setting   
-cdict = {'red':red,'green':green,'blue':blue}
+# #declare color map setting   
+# cdict = {'red':red,'green':green,'blue':blue}
+
+# #register the color map
+# plt.register_cmap(name='NPS_mag', data=cdict)
+
+#generate color map RGB list 
+colors = []
+for i in range(len(mag_start)):
+    colors.append((R[i],G[i],B[i]))
 
 #register the color map
-plt.register_cmap(name='NPS_mag', data=cdict)
+cmap_name = 'NPS_mag'
+nps_cm = mpl.colors.LinearSegmentedColormap.from_list(cmap_name, colors)
+mpl.cm.register_cmap(cmap=nps_cm)
 
 if __name__ == '__main__':
     plt.rcParams['image.cmap'] = 'NPS_mag'
