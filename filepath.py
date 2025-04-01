@@ -1,15 +1,55 @@
-# Stand-in file to set up file paths for the CCD pipeline
+#-----------------------------------------------------------------------------#
+#filepath.py
 #
-# Z Vanderbosch
+#NPS Night Skies Program
+#
+#Last updated: 2025/04/01
+#
+#This script defines directory file paths that point towards
+#various data products needed for pipeline execution.
+#
+#
+#Input: 
+#   None
+#
+#Output:
+#   None
+#
+#History:
+#   Zach Vanderbosch -- Created file (2024 December)
+#
+#-----------------------------------------------------------------------------#
 
+
+# Base directory for CCD data products
 base = "C:/Users/zvanderbosch/data/CCD"
+
+# Directory where filelist.txt lives
 processlist = f"{base}/Data/processing/"
+
+# Directory for Linearity Curve calibration files
 lincurve = f"{base}/Images/Linearity Curves/"
+
+# Directory for Flat-field calibration files
 flats = f"{base}/Images/Master/"
+
+# Directory for raw images
 rawdata = f"{base}/Data/FieldData/"
+
+# Directory for calibrated images & data products
 calibdata = f"{base}/Data/Calibdata/"
+
+# Directory for mosaicked images
 griddata = f"{base}/Data/griddata/"
+
+# Directory containing TIFF world files (.tfw)
 tiff = f"{base}/Data/rasters/tiff_tfws/"
+
+# Directory containing standard star catalogs
 standards = f"{base}/Data/Standards/"
+
+# Directory containing galactic/zodiacal model rasters
 rasters = f"{base}/Data/rasters/"
-apikey = 'kdvqtjbqkbkbuyzb'  #Astrometry API key
+
+# Astrometry.net API key
+apikey = 'kdvqtjbqkbkbuyzb'
