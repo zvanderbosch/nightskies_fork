@@ -25,6 +25,7 @@
 #   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
 #
 #-----------------------------------------------------------------------------#
+from glob import glob
 from astropy.io import fits
 from skimage.transform import downscale_local_mean
 
@@ -266,22 +267,22 @@ def mosaic(dnight, sets):
         print(f"{PREFIX}Mosaicking galactic rasters for Set {s[0]}...")
         R = ';'.join([f'gali{i:02d}' for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
-            R, gridsetp, 'galtopmags', geogcs, 
+            R, gridsetp, 'galtopmagsuc', geogcs, 
             "32_BIT_FLOAT", "0.05", "1", "BLEND", "FIRST"
         )
 
         # Crop lower latitude limit to -6.0 degrees
         arcpy.management.Clip(
-            f'{gridsetp}galtopmags', 
+            f'{gridsetp}galtopmagsuc', 
             "-180.000 -6.000 180.000 90.000", 
-            f'{gridsetp}galtopmagsc'
+            f'{gridsetp}galtopmags'
         )
 
         # Create Raster layer, add magnitudes symbology, and save layer to file
         print(f"{PREFIX}Creating galactic mosaic layer file for Set {s[0]}...")
         layerfile = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.lyrx'
         symbologyFile = f'{filepath.rasters}magnitudes.lyrx'
-        arcpy.management.MakeRasterLayer(gridsetp+'galtopmagsc', 'galtoplyr')
+        arcpy.management.MakeRasterLayer(gridsetp+'galtopmags', 'galtoplyr')
         arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
         arcpy.management.SaveToLayerFile('galtoplyr', layerfile, "ABSOLUTE")
         
@@ -292,6 +293,13 @@ def mosaic(dnight, sets):
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
         fname = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.fits'
         fits.writeto(fname, A_small, overwrite=True)
+
+        # Remove intermediate raster directories & files
+        shutil.rmtree(f'{gridsetp}galtopmagsuc', onerror=remove_readonly)
+        os.remove(f'{gridsetp}galtopmagsuc.aux.xml')
+
+        # Clear scratch directory again
+        clear_scratch(scratchsetp)
 
         # Status update
         print(f"{PREFIX}Set {s[0]} galactic mosaic COMPLETE")

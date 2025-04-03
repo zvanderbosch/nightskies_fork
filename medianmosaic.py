@@ -27,6 +27,7 @@
 #   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
 #
 #-----------------------------------------------------------------------------#
+from glob import glob
 from astropy.io import fits
 from PIL import Image
 from skimage.transform import downscale_local_mean
@@ -350,9 +351,9 @@ def mosaic(dnight, sets, filter):
         print(f"{PREFIX}Converting mosaic to mag/arcsec^2 for {filter}-Band Set {s[0]}...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skybright')
-        stm2 = stm1 / exptime[0]
-        stm3 = 2.5 * arcpy.sa.Log10(stm2)
-        skytopomags = zeropoint[int(s[0])-1] + psa - stm3
+        stm2 = 2.5 * arcpy.sa.Log10(stm1 / exptime[0])
+        skytopomags = zeropoint[int(s[0])-1] + psa - stm2
+        skytopomags.save(gridsetp+'skybrightmags')
         
         #save mags mosaic to disk
         print(f"{PREFIX}Creating median mosaic layer file for {filter}-Band Set {s[0]}...")
@@ -371,6 +372,15 @@ def mosaic(dnight, sets, filter):
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
         fname = filepath.griddata+dnight+'/skybrightmags%s%s.fits'%(f[filter],s[0])
         fits.writeto(fname, A_small, overwrite=True)
+
+        # Remove intermediate raster directories & files
+        shutil.rmtree(f'{gridsetp}skytopom', onerror=remove_readonly)
+        shutil.rmtree(f'{gridsetp}skytopomc', onerror=remove_readonly)
+        os.remove(f'{gridsetp}skytopom.aux.xml')
+        os.remove(f'{gridsetp}skytopomc.aux.xml')
+
+        # Clear scratch directory again
+        clear_scratch(scratchsetp)
 
         # Final status update
         print(f"{PREFIX}{filter}-Band Set {s[0]} median mosaic COMPLETE")

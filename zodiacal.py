@@ -25,6 +25,7 @@
 #   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
 #
 #-----------------------------------------------------------------------------#
+from glob import glob
 from astropy.io import fits
 from skimage.transform import downscale_local_mean
 
@@ -293,6 +294,15 @@ def mosaic(dnight, sets):
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
         fname = filepath.griddata+dnight+'/zodtopmags%s.fits' %s[0]
         fits.writeto(fname, A_small, overwrite=True)
+
+        # Remove intermediate raster directories & files
+        shutil.rmtree(f'{gridsetp}zodtopo', onerror=remove_readonly)
+        shutil.rmtree(f'{gridsetp}zodtopoc', onerror=remove_readonly)
+        os.remove(f'{gridsetp}zodtopo.aux.xml')
+        os.remove(f'{gridsetp}zodtopoc.aux.xml')
+
+        # Clear scratch directory again
+        clear_scratch(scratchsetp)
 
         # Final status update
         print(

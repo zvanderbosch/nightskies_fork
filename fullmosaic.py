@@ -27,6 +27,7 @@
 #
 #-----------------------------------------------------------------------------#
 
+from glob import glob
 from PIL import Image
 
 import arcpy
@@ -330,20 +331,28 @@ def mosaic(dnight, sets, filter):
         print(f"{PREFIX}Converting mosaic to mag/arcsec^2 for {filter}-Band Set {s[0]}...")
         psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skytopoc')
-        stm2 = stm1 / exptime[0]
-        stm3 = arcpy.sa.Log10(stm2)
-        stm4 = 2.5 * stm3
-        skytopomags = zeropoint[int(s[0])-1] + psa - stm4
+        stm2 = 2.5 * arcpy.sa.Log10(stm1 / exptime[0])
+        skytopomags = zeropoint[int(s[0])-1] + psa - stm2
+        skytopomags.save(gridsetp + os.sep + 'skytopomags')
 
         # Save mags mosaic to disk
         print(f"{PREFIX}Creating fullres mosaic layer file for {filter}-Band Set {s[0]}...")
-        skytopomags.save(gridsetp + os.sep + 'skytopomags')
         layerName = dnight+'_%s_fullres%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skytopomags%s%s.lyrx' %(f[filter],s[0])
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'skytopomags', layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "RELATIVE")
+
+        # Remove intermediate raster directories & files
+        del stm1, stm2, skytopomags
+        shutil.rmtree(f'{gridsetp}skytopo', onerror=remove_readonly)
+        shutil.rmtree(f'{gridsetp}skytopoc', onerror=remove_readonly)
+        os.remove(f'{gridsetp}skytopo.aux.xml')
+        os.remove(f'{gridsetp}skytopoc.aux.xml')
+
+        # Clear scratch directory again
+        clear_dir(scratchsetp)
 
         # Status update
         print(f"{PREFIX}{filter}-Band Set {s[0]} fullres mosaic COMPLETE")
