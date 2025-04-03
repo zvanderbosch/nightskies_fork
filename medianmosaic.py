@@ -357,7 +357,6 @@ def mosaic(dnight, sets, filter):
         
         #save mags mosaic to disk
         print(f"{PREFIX}Creating median mosaic layer file for {filter}-Band Set {s[0]}...")
-        skytopomags.save(gridsetp+'skybrightmags')
         layerName = dnight+'_%s_median%s'%(s[0],f[filter])
         layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyrx'%(f[filter],s[0])
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
