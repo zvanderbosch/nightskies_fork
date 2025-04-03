@@ -307,7 +307,7 @@ def mosaic(dnight, sets):
         # Final status update
         print(
             f"{pc.GREEN}zodiacal.py    {pc.END}"
-            f": Set {s[0]} zodiacal mosaic COMPLETE"
+            f": Set {s[0]} zodiacal mosaic {pc.CYAN}COMPLETE{pc.END}"
         )
 
     

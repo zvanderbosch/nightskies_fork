@@ -355,7 +355,7 @@ def mosaic(dnight, sets, filter):
         clear_dir(scratchsetp)
 
         # Status update
-        print(f"{PREFIX}{filter}-Band Set {s[0]} fullres mosaic COMPLETE")
+        print(f"{PREFIX}{filter}-Band Set {s[0]} fullres mosaic {pc.CYAN}COMPLETE{pc.END}")
 
     
 if __name__ == "__main__":

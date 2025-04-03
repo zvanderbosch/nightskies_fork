@@ -383,7 +383,7 @@ def mosaic(dnight, sets, filter):
         clear_scratch(scratchsetp)
 
         # Final status update
-        print(f"{PREFIX}{filter}-Band Set {s[0]} median mosaic COMPLETE")
+        print(f"{PREFIX}{filter}-Band Set {s[0]} median mosaic {pc.CYAN}COMPLETE{pc.END}")
         
     #create mask.tif for horizon masking in the later process
     mask = filepath.griddata+dnight+'/mask.tif'

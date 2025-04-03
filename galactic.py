@@ -302,7 +302,7 @@ def mosaic(dnight, sets):
         clear_scratch(scratchsetp)
 
         # Status update
-        print(f"{PREFIX}Set {s[0]} galactic mosaic COMPLETE")
+        print(f"{PREFIX}Set {s[0]} galactic mosaic {pc.CYAN}COMPLETE{pc.END}")
 
 if __name__ == "__main__":
     mosaic('FCNA160803', ['1st',])
