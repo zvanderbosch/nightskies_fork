@@ -660,6 +660,40 @@ class Skybright(_SkyBrightObservedBase):
 
         # Save masked skybright mosaic to class
         self.masked_mosaic = skybrightnlf
+
+    def save_to_jpeg(self,):
+
+        print(f"{PREFIX}Saving observed sky brightness to JPEG...")
+
+        # Get needed paths
+        gridsetp = self.paths['griddata']
+
+        # Load in black-background ArcGIS project
+        blankMap = f"{filepath.maps}blankmap/blankmap.aprx"
+        p = arcpy.mp.ArcGISProject(blankMap)
+
+        # Set map scale
+        mxd = p.listMaps("Layers")[0]
+        lyt = p.listLayouts()[0]
+        mf = lyt.listElements()[0]
+        mf.camera.scale = 120000000
+
+        # Add sky brightness layer to data frame
+        layerFile = f"{gridsetp}/skybrightmags{self.set}.lyrx"
+        natskyLayer = arcpy.mp.LayerFile(layerFile)
+        mxd.addLayer(natskyLayer)
+
+        # Save to JPEG from MapView object.
+        # Mapview is only option with width/height params for exportToJPEG
+        jpegFile = f"{gridsetp}/S_0{self.set}/data.jpg"
+        mv = mxd.defaultView
+        mv.exportToJPEG(
+            jpegFile,         # output file
+            1600,             # width
+            1600,             # height
+            resolution=96,    # Default is 96
+            jpeg_quality=100, # Default is 80, highest quality = 100
+        )
         
 
 #------------------------------------------------------------------------------#
@@ -733,7 +767,7 @@ class Mask(_MaskBase):
 
         
 #------------------------------------------------------------------------------#
-#-------------------             Combine Models             -------------------#
+#-------------------            Combined Models             -------------------#
 #------------------------------------------------------------------------------# 
 
 _AggregateModelBase = Model
@@ -805,6 +839,41 @@ class AggregateModel(_AggregateModelBase):
             return naturalskymags
         else:
             return natskynlfc
+        
+        
+    def save_to_jpeg(self,):
+
+        print(f"{PREFIX}Saving natural sky model to JPEG...")
+
+        # Get needed paths
+        gridsetp = self.paths['griddata']
+
+        # Load in black-background ArcGIS project
+        blankMap = f"{filepath.maps}blankmap/blankmap.aprx"
+        p = arcpy.mp.ArcGISProject(blankMap)
+
+        # Set map scale
+        mxd = p.listMaps("Layers")[0]
+        lyt = p.listLayouts()[0]
+        mf = lyt.listElements()[0]
+        mf.camera.scale = 120000000
+
+        # Add natural sky layer to data frame
+        layerFile = f"{gridsetp}/natskymags{self.set}.lyrx"
+        natskyLayer = arcpy.mp.LayerFile(layerFile)
+        mxd.addLayer(natskyLayer)
+
+        # Save to JPEG from MapView object.
+        # Mapview is only option with width/height params for exportToJPEG
+        jpegFile = f"{gridsetp}/S_0{self.set}/model.jpg"
+        mv = mxd.defaultView
+        mv.exportToJPEG(
+            jpegFile,         # output file
+            1600,             # width
+            1600,             # height
+            resolution=96,    # Default is 96
+            jpeg_quality=100, # Default is 80, highest quality = 100
+        )
 
 
     def show_observed_model(self,):
@@ -867,6 +936,39 @@ class SkyglowModel(_SkyglowModel):
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerFile, "ABSOLUTE")
 
+    def save_to_jpeg(self,):
+
+        print(f"{PREFIX}Saving artificial skyglow model to JPEG...")
+
+        # Get needed paths
+        gridsetp = self.paths['griddata']
+
+        # Load in black-background ArcGIS project
+        blankMap = f"{filepath.maps}blankmap/blankmap.aprx"
+        p = arcpy.mp.ArcGISProject(blankMap)
+
+        # Set map scale
+        mxd = p.listMaps("Layers")[0]
+        lyt = p.listLayouts()[0]
+        mf = lyt.listElements()[0]
+        mf.camera.scale = 120000000
+
+        # Add natural sky layer to data frame
+        layerFile = f"{gridsetp}/anthlightmags{self.set}.lyrx"
+        natskyLayer = arcpy.mp.LayerFile(layerFile)
+        mxd.addLayer(natskyLayer)
+
+        # Save to JPEG from MapView object.
+        # MapView is only option with width/height params for exportToJPEG
+        jpegFile = f"{gridsetp}/S_0{self.set}/artificial.jpg"
+        mv = mxd.defaultView
+        mv.exportToJPEG(
+            jpegFile,         # output file
+            1600,             # width
+            1600,             # height
+            resolution=96,    # Default is 96
+            jpeg_quality=100, # Default is 80, highest quality = 100
+        )
 
     
 #------------------------------------------------------------------------------#
@@ -901,6 +1003,7 @@ Pk = {'pixscale':0.05, #unit?
       'za_min':0., 
       'za_max':90.}
 Paths = {
+    'griddata':gridsetp,
     'mask':masksetp,
     'median':mediansetp,
     'natsky':natskysetp,
@@ -918,14 +1021,15 @@ Pk['mask'] = K.input_model
 # Get observed sky brightness
 S = Skybright(Paths,*Pa,**Pk)
 skybright = S.masked_mosaic
+S.save_to_jpeg()
 
 # Get aggregate natural sky model
 M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
 naturalsky = M.compute_observed_model(unit='nl')
+M.save_to_jpeg()
 
 # Generate anthropogenic skyglow model
 X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
+X.save_to_jpeg()
 
 #-----------------------------------------------------------------------------#
-
-
