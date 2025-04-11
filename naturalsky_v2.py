@@ -200,10 +200,9 @@ class Model(object):
         This function reads in the extinction coefficient associated with the 
         data set. 
         """
-        F = {'V':'/','B':'/B/'}
-        extinctionfile = filepath.calibdata + self.dnight + \
-                         '/extinction_fit_%s.txt' %self.filter
-        self.extinction = abs(n.loadtxt(extinctionfile, ndmin=2)[self.set-1,4])
+        d,s,f = self.dnight, self.set, self.filter
+        extinctionfile = f"{filepath.calibdata}{d}/extinction_fit_{f}.txt"
+        self.extinction = abs(n.loadtxt(extinctionfile, ndmin=2)[s-1,4])
         
         
     def get_1d_za(self,):
@@ -236,18 +235,6 @@ class Model(object):
         assert len(p) == len(parameter_list)
         for k, v in zip(parameter_list, p):
             self.parameters[k] = v
-
-    def get_input_model(self,):
-        """
-        gets the input model with default parameters. 
-        """
-        raise NotImplementedError
-
-    def compute_observed_model(self,):
-        """
-        computes 1D or 2D array of brightness model as a function of zenith angle. 
-        """
-        raise NotImplementedError
         
     def image_template(self, image, title, mask=False, cmapname='NPS_mag', 
                        min=14, max=24, unit='mag'):
@@ -298,18 +285,6 @@ class Model(object):
         plt.tight_layout()
         plt.show(block=True)    
 
-    def show_input_model(self,):
-        """
-        show the input model with default parameters
-        """
-        raise NotImplementedError
-        
-    def show_observed_model(self,):
-        """
-        show the observed model image with current parameters
-        """
-        raise NotImplementedError
-
         
 #airglow model
 _AirglowModelBase = Model
@@ -320,7 +295,7 @@ class Airglow(_AirglowModelBase):
         _AirglowModelBase.__init__(self, *args, **kwargs)
 
         self.parameters.update(
-            {'a':45.,  #zenith airglow (default is 20)
+            {'a':35.,  #zenith airglow (default is 20)
              'h':90.,  #height of the emitting layer above sea
              'e':0.6}  #airglow extinction factor
         )
@@ -332,9 +307,9 @@ class Airglow(_AirglowModelBase):
         """
         This function reads in the elevation of the observing site from the first image in the data set.
         """
+        d,s,f = self.dnight, self.set, self.filter
         F = {'V':'/','B':'/B/'}
-        headerfile = filepath.calibdata + self.dnight + '/S_0' + \
-                     str(self.set) + F[self.filter] + 'ib001.fit'
+        headerfile = f"{filepath.calibdata}{d}/S_0{s}{F[f]}ib001.fit"
         self.elevation = fits.open(headerfile)[0].header['ELEVATIO']/1000. #[km]
         
     def compute_airglow_brightness(self,a,h):
@@ -1002,63 +977,73 @@ class SkyglowModel(_SkyglowModel):
     
 #------------------------------------------------------------------------------#
 
-# Pick night to process
-dnight = 'ROMO241004' #data night
-set = 1               #data set
-filter = 'V'          #filter used
 
-# Set directories
-gridsetp = f"{filepath.griddata}{dnight}"
-Paths = {
-    'griddata': gridsetp,
-    'mask': f"{gridsetp}/",
-    'median': f"{gridsetp}/S_0{set}/median/",
-    'natsky': f"{gridsetp}/S_0{set}/nat/",
-    'skyglow': f"{gridsetp}/S_0{set}/skyglow/",
-    'airglow': f"{gridsetp}/S_0{set}/airglow/",
-    'scratch': f"{filepath.rasters}scratch_natsky/"
-}
+def main():
 
-# Create/clear natsky, skyglow, and airglow directories
-for key in ['natsky','skyglow','airglow']:
-    if os.path.exists(Paths[key]):
-        shutil.rmtree(Paths[key], onerror=remove_readonly)
-    os.makedirs(Paths[key])
+    # Pick night to process
+    dnight = 'ROMO241004' #data night
+    set = 1               #data set
+    filter = 'V'          #filter used
 
-# Set working directories
-arcpy.env.workspace = Paths['scratch']
-arcpy.env.scratchWorkspace = Paths['scratch']
+    # Set directories
+    gridsetp = f"{filepath.griddata}{dnight}"
+    Paths = {
+        'griddata': gridsetp,
+        'mask': f"{gridsetp}/",
+        'median': f"{gridsetp}/S_0{set}/median/",
+        'natsky': f"{gridsetp}/S_0{set}/nat/",
+        'skyglow': f"{gridsetp}/S_0{set}/skyglow/",
+        'airglow': f"{gridsetp}/S_0{set}/airglow/",
+        'scratch': f"{filepath.rasters}scratch_natsky/"
+    }
 
-Pa = [dnight, set, filter]
-Pk = {'pixscale':0.05, #unit?
-      'downscale':25, 
-      'za_min':0., 
-      'za_max':90.}
+    # Create/clear natsky, skyglow, and airglow directories
+    for key in ['natsky','skyglow','airglow']:
+        if os.path.exists(Paths[key]):
+            shutil.rmtree(Paths[key], onerror=remove_readonly)
+        os.makedirs(Paths[key])
 
-# Compute/load component models
-K = Mask(*Pa, **Pk)        # Terrain mask
-A = Airglow(*Pa, **Pk)     # Airglow model
-D = ADL(*Pa, **Pk)         # A.D.L. model
-G = Galactic(*Pa, **Pk)    # Galactic light model
-Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
-Pk['mask'] = K.input_model
+    # Set working directories
+    arcpy.env.workspace = Paths['scratch']
+    arcpy.env.scratchWorkspace = Paths['scratch']
 
-# Save some models to disk
-G.save_observed_model()
-Z.save_observed_model()
+    Pa = [dnight, set, filter]
+    Pk = {'pixscale':0.05, #unit?
+        'downscale':25, 
+        'za_min':0., 
+        'za_max':90.}
 
-# Get observed sky brightness
-S = Skybright(Paths,*Pa,**Pk)
-skybright = S.masked_mosaic
-S.save_to_jpeg()
+    # Compute/load component models
+    K = Mask(*Pa, **Pk)        # Terrain mask
+    A = Airglow(*Pa, **Pk)     # Airglow model
+    D = ADL(*Pa, **Pk)         # A.D.L. model
+    G = Galactic(*Pa, **Pk)    # Galactic light model
+    Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
+    Pk['mask'] = K.input_model
 
-# Get aggregate natural sky model
-M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
-naturalsky = M.compute_observed_model(unit='nl')
-M.save_to_jpeg()
+    # Save some models to disk in [nL] units
+    print(f"{PREFIX}Saving Galactic/Zodiacal/Airglow models to disk in nL units...")
+    A.save_observed_model()
+    G.save_observed_model()
+    Z.save_observed_model()
 
-# Generate anthropogenic skyglow model
-X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
-X.save_to_jpeg()
+    # Get observed sky brightness
+    S = Skybright(Paths,*Pa,**Pk)
+    skybright = S.masked_mosaic
+    S.save_to_jpeg()
+
+    # Get aggregate natural sky model
+    M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
+    naturalsky = M.compute_observed_model(unit='nl')
+    M.save_to_jpeg()
+
+    # Generate anthropogenic skyglow model
+    X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
+    X.save_to_jpeg()
+
+
+# Run main during script execution
+if __name__ == '__main__':
+    main()
 
 #-----------------------------------------------------------------------------#
