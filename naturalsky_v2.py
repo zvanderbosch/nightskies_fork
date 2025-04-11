@@ -40,6 +40,7 @@ import numpy as n
 import os
 import stat
 import shutil
+import argparse
 
 # Local Source
 import filepath  
@@ -182,17 +183,23 @@ class Model(object):
     def __init__(self, dnight, set, filter, **kwargs):
         self.parameters = {}
         self.parameter_list = self.parameters.keys()
-        self.dnight = dnight                           #data night
-        self.set = set                                 #data set
-        self.filter = filter                           #filter used
-        self.pixscale = kwargs.get('pixscale', 0.05)   #pixscale [deg/pix]
-        self.downscale = kwargs.get('downscale', 25)   #downscale factor
-        self.za_min = kwargs.get('za_min', 0.)         #min zenith angle [deg]
-        self.za_max = kwargs.get('za_max', 90.)        #max zenith angle [deg]
-        self.mask = kwargs.get('mask', n.array([0,]))  #terrain mask 
-        self.get_extinction_coefficient()              #extinction        
-        self.get_1d_za()                               #zenith angles 1D [deg]
-        self.compute_airmass()                         #airmass 1D [deg]
+        self.dnight = dnight                                     #data night
+        self.set = set                                           #data set
+        self.filter = filter                                     #filter used
+        self.pixscale = kwargs.get('pixscale', 0.05)             #pixscale [deg/pix]
+        self.downscale = kwargs.get('downscale', 25)             #downscale factor
+        self.za_min = kwargs.get('za_min', 0.)                   #min zenith angle [deg]
+        self.za_max = kwargs.get('za_max', 90.)                  #max zenith angle [deg]
+        self.airglow_zenith = kwargs.get('airglow_zenith', 20.)  #zenight airglow [nL]
+        self.airglow_height = kwargs.get('airglow_height', 90.)  #height of airglow emitting layer [km]
+        self.airglow_ext = kwargs.get('airglow_ext', 0.6)        #airglow extinction factor
+        self.adl_factor = kwargs.get('adl_factor', 1.2)          #A.D.L. factor
+        self.gal_ext = kwargs.get('gal_ext', 0.9)                #galactic light extinction factor
+        self.zod_ext = kwargs.get('zod_ext', 0.6)                #zodiacal light extinction factor
+        self.mask = kwargs.get('mask', n.array([0,]))            #terrain mask 
+        self.get_extinction_coefficient()                        #extinction coeff  
+        self.get_1d_za()                                         #zenith angles 1D [deg]
+        self.compute_airmass()                                   #airmass 1D [deg]
         
 
     def get_extinction_coefficient(self,):
@@ -294,13 +301,7 @@ class Airglow(_AirglowModelBase):
         # call base class constructor
         _AirglowModelBase.__init__(self, *args, **kwargs)
 
-        self.parameters.update(
-            {'a':35.,  #zenith airglow (default is 20)
-             'h':90.,  #height of the emitting layer above sea
-             'e':0.6}  #airglow extinction factor
-        )
         self.parameter_list = self.parameters.keys()
-        
         self.get_site_elevation()
         
     def get_site_elevation(self,):
@@ -344,14 +345,22 @@ class Airglow(_AirglowModelBase):
         This function computes the airglow brightness [nL] with the current
         model parameters. 
         """
+        # Get airglow params
+        a = self.airglow_zenith
+        h = self.airglow_height
+        e = self.airglow_ext
+
+        # Load in airmass raster
         airmass = arcpy.sa.Raster(f"{filepath.rasters}airmass_05")
-        a, h, e = self.parameters['a'],self.parameters['h'],self.parameters['e']
+
+        # Compute observed airglow model
         airglow_nl = self.compute_airglow_brightness(a,h)  #[nL]
         airglow_mag = nl_to_mag(airglow_nl)                #[mag]
         extinction_total = e * self.extinction * airmass   #[mag]
         airglow_obs_mag = extinction_total + airglow_mag   #[mag]
         airglow_obs_nl = mag_to_nl_dan(airglow_obs_mag)    #[nL]
-        return airglow_obs_nl                              #[nL]
+
+        return airglow_obs_nl
     
     def save_observed_model(self,):
         """
@@ -406,7 +415,6 @@ class ADL(_ADLModelBase):
         # call base class constructor
         _ADLModelBase.__init__(self, *args, **kwargs)
 
-        self.parameters.update({'a':1.20})
         self.parameter_list = self.parameters.keys()
         self.get_input_model()
 
@@ -425,7 +433,7 @@ class ADL(_ADLModelBase):
         This function computes the atmospheric diffused light [nL] scaled to the
         factor a at the given zenith angles. 
         """
-        return self.parameters['a'] * self.input_model
+        return self.adl_factor * self.input_model
         
     def show_input_model(self,):
         """
@@ -470,7 +478,6 @@ class Galactic(_GalacticModelBase):
         # call base class constructor
         _GalacticModelBase.__init__(self, *args, **kwargs)
 
-        self.parameters.update({'e':0.9,}) #Galactic light extinction factor 
         self.parameter_list = self.parameters.keys()
         self.get_input_model()
         
@@ -491,7 +498,7 @@ class Galactic(_GalacticModelBase):
         [mag] with the current parameters. 
         """
         airmass = arcpy.sa.Raster(f"{filepath.rasters}airmass_05")
-        extinction_total = self.parameters['e'] * self.extinction * airmass
+        extinction_total = self.gal_ext * self.extinction * airmass
         if unit=='mag':
             return self.input_model + extinction_total
         else:
@@ -544,7 +551,6 @@ class Zodiacal(_ZodiacalModelBase):
         # call base class constructor
         _ZodiacalModelBase.__init__(self, *args, **kwargs)
 
-        self.parameters.update({'e':0.6,}) #Zodiacal light extinction factor 
         self.parameter_list = self.parameters.keys()
         self.get_input_model()
     
@@ -566,7 +572,7 @@ class Zodiacal(_ZodiacalModelBase):
         [mag] with the current parameters. 
         """
         airmass = arcpy.sa.Raster(f"{filepath.rasters}airmass_05")
-        extinction_total = self.parameters['e'] * self.extinction * airmass
+        extinction_total = self.zod_ext * self.extinction * airmass
         if unit=='mag':
             return self.input_model + extinction_total
         else:
@@ -980,10 +986,36 @@ class SkyglowModel(_SkyglowModel):
 
 def main():
 
-    # Pick night to process
-    dnight = 'ROMO241004' #data night
-    set = 1               #data set
-    filter = 'V'          #filter used
+    # Command line arguments
+    parser = argparse.ArgumentParser()
+
+    # Required arguments
+    parser.add_argument('dataNight', type=str, 
+                        help="Name of data collection night (e.g. ROMO241004)")
+    parser.add_argument('dataSet', type=int, 
+                        help="Data set number (e.g. 1)")
+    parser.add_argument('filterName', type=str, 
+                        help="Filter name (e.g. V or B)")
+    
+    # Optional arguments with default values
+    parser.add_argument('-a','--airglowzenith', type=float, default=20.0, 
+                        help='Zenight Airglow [nL] (Default = 20)')
+    parser.add_argument('-t','--airglowheight', type=float, default=90.0, 
+                        help='Height of emitting airglow layer [km] (Default = 90)')
+    parser.add_argument('-e','--airglowext' ,type=float, default=0.6, 
+                        help='Airglow extinction factor (Default = 0.6)')
+    parser.add_argument('-f','--adlfactor', type=float, default=1.2,
+                        help='Atmospheric Diffuse Light factor (Default = 1.2)')
+    parser.add_argument('-g','--galext', type=float, default=0.9, 
+                        help='Galactic light extinction factor (Default = 0.9)')
+    parser.add_argument('-z','--zodext', type=float, default=0.6, 
+                        help='Zodiacal light extinction factor (Default = 0.6)')
+    args = parser.parse_args()
+
+    # Pick dataset to process
+    dnight = args.dataNight  #data night
+    set = args.dataSet       #data set
+    filter = args.filterName #filter used
 
     # Set directories
     gridsetp = f"{filepath.griddata}{dnight}"
@@ -1007,11 +1039,20 @@ def main():
     arcpy.env.workspace = Paths['scratch']
     arcpy.env.scratchWorkspace = Paths['scratch']
 
+    # Setup the input parameters/kwargs
     Pa = [dnight, set, filter]
-    Pk = {'pixscale':0.05, #unit?
+    Pk = {
+        'pixscale':0.05, #unit?
         'downscale':25, 
         'za_min':0., 
-        'za_max':90.}
+        'za_max':90.,
+        'airglow_zenith':args.airglowzenith,
+        'airglow_height':args.airglowheight,
+        'airglow_ext':args.airglowext,
+        'adl_factor':args.adlfactor,
+        'gal_ext': args.galext,
+        'zod_ext': args.zodext
+    }
 
     # Compute/load component models
     K = Mask(*Pa, **Pk)        # Terrain mask
