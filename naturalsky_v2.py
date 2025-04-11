@@ -371,13 +371,22 @@ class Airglow(_AirglowModelBase):
         """
         airmass = arcpy.sa.Raster(f"{filepath.rasters}airmass_05")
         a, h, e = self.parameters['a'],self.parameters['h'],self.parameters['e']
-        airglow_nl = self.compute_airglow_brightness(a,h)           #[nL]
-        airglow_mag = 26.3308 - (2.5 * arcpy.sa.Log10(airglow_nl))  #[mag]
-        extinction_total = e * self.extinction * airmass            #[mag]
-        airglow_obs_mag = extinction_total + airglow_mag            #[mag]
-        airglow_tmp = 20.7233 - (0.92104 * airglow_obs_mag)         #[mag]
-        airglow_obs_nl = 34.08 * (arcpy.sa.Exp(airglow_tmp))        #[nL]
-        return airglow_obs_nl                                       #[nL]
+        airglow_nl = self.compute_airglow_brightness(a,h)  #[nL]
+        airglow_mag = nl_to_mag(airglow_nl)                #[mag]
+        extinction_total = e * self.extinction * airmass   #[mag]
+        airglow_obs_mag = extinction_total + airglow_mag   #[mag]
+        airglow_obs_nl = mag_to_nl_dan(airglow_obs_mag)    #[nL]
+        return airglow_obs_nl                              #[nL]
+    
+    def save_observed_model(self,):
+        """
+        Function to save observed Galactic model in nL units to
+        a raster dataset.
+        """
+        d,s = self.dnight,self.set
+        airglownl = self.compute_observed_model()
+        airglownlPath = f"{filepath.griddata}{d}/S_0{s}/airglow/airglownl"
+        airglownl.save(airglownlPath)
 
     def show_input_model(self,):
         """
@@ -518,9 +527,9 @@ class Galactic(_GalacticModelBase):
         Function to save observed Galactic model in nL units to
         a raster dataset.
         """
-
+        d,s = self.dnight,self.set
         galnl = self.compute_observed_model(unit='nl')
-        galnlPath = f"{filepath.griddata}{self.dnight}/S_0{self.set}/gal/galnl"
+        galnlPath = f"{filepath.griddata}{d}/S_0{s}/gal/galnl"
         galnl.save(galnlPath)
 
             
@@ -593,9 +602,9 @@ class Zodiacal(_ZodiacalModelBase):
         Function to save observed Galactic model in nL units to
         a raster dataset.
         """
-
+        d,s = self.dnight,self.set
         zodnl = self.compute_observed_model(unit='nl')
-        zodnlPath = f"{filepath.griddata}{self.dnight}/S_0{self.set}/zod/zodnl"
+        zodnlPath = f"{filepath.griddata}{d}/S_0{s}/zod/zodnl"
         zodnl.save(zodnlPath)
         
     def show_input_model(self,):
@@ -1036,6 +1045,7 @@ Pk['mask'] = K.input_model
 
 # Save some models to disk
 G.save_observed_model()
+Z.save_observed_model()
 
 # Get observed sky brightness
 S = Skybright(Paths,*Pa,**Pk)
