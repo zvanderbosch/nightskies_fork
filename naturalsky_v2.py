@@ -37,6 +37,7 @@ import arcpy
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as n
+import pandas as pd
 import os
 import stat
 import shutil
@@ -996,6 +997,134 @@ class SkyglowModel(_SkyglowModel):
 
     
 #------------------------------------------------------------------------------#
+#-------------------            Mosaic Analysis             -------------------#
+#------------------------------------------------------------------------------# 
+
+_MosaicAnalysis = Model
+class MosaicAnalysis(_MosaicAnalysis):
+
+    def __init__(self, mosaic_list, paths, *args, **kwargs):
+
+        _MosaicAnalysis.__init__(self, *args, **kwargs)
+        self.mosaic_list = mosaic_list
+        self.paths = paths
+
+    def compute_zonal_stats(self,):
+
+        # Get path names
+        skyglowsetp = self.paths['skyglow']
+
+        # Load zenith shapefile
+        inZoneData = f"{filepath.processlist}shapefiles/zenith_area.shp"
+
+        # Iterate through each mosaic
+        stat_entries = []
+        for i,mosaicName in enumerate(self.mosaic_list):
+
+            print(f"{PREFIX}Performing analysis of {mosaicName} mosaic...")
+
+            # Determine which mosaic to analyze
+            if mosaicName == 'observed_skybright':
+                inRaster = arcpy.sa.Raster(f"skybrightf") # Masked
+            if mosaicName == 'artificial_skyglow':
+                inRaster = arcpy.sa.Raster(f"{skyglowsetp}anthlightnl") # Masked
+
+            # Execute ZonalStatisticsAsTable
+            zoneField = "NAME"
+            outTable = f"{filepath.calibdata}{self.dnight}/S_0{self.set}/airglowave.dbf"
+            _ = arcpy.sa.ZonalStatisticsAsTable(
+                inZoneData, zoneField, inRaster, outTable, "DATA", "ALL"
+            )
+
+            # Get min, max, and mean zonal stats
+            rows = arcpy.SearchCursor(outTable)
+            row = rows.next()
+            skyave = row.getValue("MEAN")
+            if row:
+                del row
+            if rows:
+                del rows
+
+            # Convert mosaic to array and calculate all-sky stats
+            gridArray = arcpy.RasterToNumPyArray(
+                inRaster, 
+                nodata_to_value=-9999
+            )
+
+            # Flatten array and remove NoData values, and sort array
+            maskedArray = n.ma.masked_equal(gridArray.flatten(), -9999)
+            dataArray = maskedArray.compressed()
+            numcells = len(dataArray)
+
+            # Calculate min, max, mean, and median all-sky luminance
+            arrmax = n.max(dataArray)
+            arrmean = n.mean(dataArray)
+            arrmedian = n.median(dataArray)
+
+            # Get all-sky ALR for artificial skyglow mosaic
+            if mosaicName == 'artificial_skyglow':
+                
+                # Replace values < 8.6 nL with zero
+                clippedArray = n.ma.masked_less(dataArray, 8.6)
+                filledArray = n.ma.filled(clippedArray, 0)
+
+                # Calculate luminance ALR values
+                illumConst = 0.00000000242407  # Not sure where this number comes from
+                lumalr = arrmean / 78
+                illref = numcells * 78 * illumConst # Reference condition all-sky luminance
+
+                # calculate sum of clipped array in mlux and illuminance ALR
+                clippedsum = n.ma.sum(filledArray)
+                clippedmlux = illumConst * clippedsum
+                illalr = clippedmlux / illref
+            else:
+                lumalr = n.nan
+                illalr = n.nan
+                clippedmlux = n.nan
+
+
+
+            # calculate number of square degrees, 0.5 and 1.0 degree pixel size percentiles
+            sqdegrees = numcells * 0.05 * 0.05
+            deg1frac = (1 - (1.00 / sqdegrees)) * 1e2
+            deg05frac = (1 - (0.25 / sqdegrees)) * 1e2
+
+            # Calculate percentiles
+            percentiles = [0.05,1,60,70,80,90,95,98,99,deg1frac,deg05frac]
+            pctStats = n.percentile(dataArray, percentiles)
+
+            # Add stats to pandas DataFrame
+            mosaic_entry = pd.DataFrame({
+                'Dataset': self.set,
+                'Mosaic_Name': mosaicName,
+                'Allsky_Average_Luminance': arrmean,
+                'Allsky_Median_Luminance': arrmedian,
+                'Minimum': pctStats[0],
+                'Maximum': arrmax,
+                'Clipped_Illuminance_mlux': clippedmlux,
+                'Lum_ALR': lumalr,
+                'Illum_ALR': illalr,
+                '0.5Deg_Percentile': pctStats[10],
+                '1.0Deg_Percentile': pctStats[9],
+                '99th_Percentile': pctStats[8],
+                '98th_Percentile': pctStats[7],
+                '95th_Percentile': pctStats[6],
+                '90th_Percentile': pctStats[5],
+                '80th_Percentile': pctStats[4],
+                '70th_Percentile': pctStats[3],
+                '60th_Percentile': pctStats[2],
+                '1st_Percentile': pctStats[1],
+                'Zenith_Average_Luminance': skyave
+            }, index = [i])
+            stat_entries.append(mosaic_entry)
+
+        # Combine entries into single dataframe
+        stat_df = pd.concat(stat_entries)
+
+        return stat_df
+
+
+#------------------------------------------------------------------------------#
 
 
 def main():
@@ -1044,10 +1173,10 @@ def main():
     }
 
     # Create/clear natsky, skyglow, and airglow directories
-    for key in ['natsky','skyglow','airglow']:
-        if os.path.exists(Paths[key]):
-            shutil.rmtree(Paths[key], onerror=remove_readonly)
-        os.makedirs(Paths[key])
+    # for key in ['natsky','skyglow','airglow']:
+    #     if os.path.exists(Paths[key]):
+    #         shutil.rmtree(Paths[key], onerror=remove_readonly)
+    #     os.makedirs(Paths[key])
 
     # Set working directories
     arcpy.env.workspace = Paths['scratch']
@@ -1068,33 +1197,38 @@ def main():
         'zod_ext': args.zodext
     }
 
-    # Compute/load component models
-    K = Mask(*Pa, **Pk)        # Terrain mask
-    A = Airglow(*Pa, **Pk)     # Airglow model
-    D = ADL(*Pa, **Pk)         # A.D.L. model
-    G = Galactic(*Pa, **Pk)    # Galactic light model
-    Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
-    Pk['mask'] = K.input_model
+    # # Compute/load component models
+    # K = Mask(*Pa, **Pk)        # Terrain mask
+    # A = Airglow(*Pa, **Pk)     # Airglow model
+    # D = ADL(*Pa, **Pk)         # A.D.L. model
+    # G = Galactic(*Pa, **Pk)    # Galactic light model
+    # Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
+    # Pk['mask'] = K.input_model
 
-    # Save some models to disk in [nL] units
-    print(f"{PREFIX}Saving Galactic/Zodiacal/Airglow models to disk in nL units...")
-    A.save_observed_model()
-    G.save_observed_model()
-    Z.save_observed_model()
+    # # Save some models to disk in [nL] units
+    # print(f"{PREFIX}Saving Galactic/Zodiacal/Airglow models to disk in nL units...")
+    # A.save_observed_model()
+    # G.save_observed_model()
+    # Z.save_observed_model()
 
-    # Get observed sky brightness
-    S = Skybright(Paths,*Pa,**Pk)
-    skybright = S.masked_mosaic
-    S.save_to_jpeg()
+    # # Get observed sky brightness
+    # S = Skybright(Paths,*Pa,**Pk)
+    # skybright = S.masked_mosaic
+    # S.save_to_jpeg()
 
-    # Get aggregate natural sky model
-    M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
-    naturalsky = M.compute_observed_model(unit='nl')
-    M.save_to_jpeg()
+    # # Get aggregate natural sky model
+    # M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
+    # naturalsky = M.compute_observed_model(unit='nl')
+    # M.save_to_jpeg()
 
-    # Generate anthropogenic skyglow model
-    X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
-    X.save_to_jpeg()
+    # # Generate anthropogenic skyglow model
+    # X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
+    # X.save_to_jpeg()
+
+    # Perform analysis of mosaics
+    Q = MosaicAnalysis(['observed_skybright','artificial_skyglow'],Paths,*Pa,**Pk)
+    stats = Q.compute_zonal_stats()
+    stats.to_csv(f"{filepath.calibdata}{dnight}/natsky_model_stats.csv",index=False)
 
 
 # Run main during script execution
