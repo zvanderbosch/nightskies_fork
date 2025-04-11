@@ -937,7 +937,7 @@ class SkyglowModel(_SkyglowModel):
         anthlightmags = nl_to_mag(outCon)
         anthlightmags.save(f"{skyglowsetp}anthlightmags") 
 
-        # Save to layer file
+        # Save magnitude mosaic to layer file
         print(f"{PREFIX}Saving athropogenic skyglow model to layer file...")
         layerName = f"{self.dnight}_{self.set}_skyglow"
         layerFile = f"{masksetp}anthlightmags{self.set}.lyrx"
@@ -947,11 +947,26 @@ class SkyglowModel(_SkyglowModel):
         arcpy.management.SaveToLayerFile(layerName, layerFile, "ABSOLUTE")
 
     def save_to_jpeg(self,):
+        """
+        Save JPEG image of anthropogenic skyglow. This image is saved 
+        in [nL] units rather than mags to help visualize areas of the 
+        sky with negative values.
+        """
 
         print(f"{PREFIX}Saving artificial skyglow model to JPEG...")
 
         # Get needed paths
         gridsetp = self.paths['griddata']
+        skyglowsetp = self.paths['skyglow']
+        scratchsetp = self.paths['scratch']
+
+        # Load in the anthlighnl dataset and make scratch layer file
+        layerFile = f"{scratchsetp}anthlightlyr.lyrx"
+        symbologyLayer = filepath.rasters+'lightsub.lyrx'
+        anthRaster = arcpy.sa.Raster(f"{skyglowsetp}anthlightnl")
+        arcpy.management.MakeRasterLayer(anthRaster, "anthlightlyr")
+        arcpy.management.ApplySymbologyFromLayer("anthlightlyr", symbologyLayer)
+        arcpy.management.SaveToLayerFile("anthlightlyr", layerFile, "ABSOLUTE")
 
         # Load in black-background ArcGIS project
         blankMap = f"{filepath.maps}blankmap/blankmap.aprx"
@@ -964,9 +979,8 @@ class SkyglowModel(_SkyglowModel):
         mf.camera.scale = 120000000
 
         # Add natural sky layer to data frame
-        layerFile = f"{gridsetp}/anthlightmags{self.set}.lyrx"
-        natskyLayer = arcpy.mp.LayerFile(layerFile)
-        mxd.addLayer(natskyLayer)
+        skyglowLayer = arcpy.mp.LayerFile(layerFile)
+        mxd.addLayer(skyglowLayer)
 
         # Save to JPEG from MapView object.
         # MapView is only option with width/height params for exportToJPEG
