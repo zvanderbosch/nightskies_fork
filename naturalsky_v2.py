@@ -3,13 +3,12 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2018/07/17
+#Last updated: 2025/04/10
 #
-#This script...
-#	(1) 
-#	(2)  
-#	(3) 
-#   (4) 
+#This script generates the combined natural sky model composed
+#of galactic, zodiacal, airglow, and atmospheric diffuse light
+#components. The combined model is subtracted from the observed
+#sky brightness to generate the anthrogenic light mosaic.
 #
 #Note: 
 #
@@ -26,6 +25,7 @@
 #History:
 #	Dan Duriscoe -- Created as "natskyv4.py"
 #	Li-Wei Hung -- Made major modification and used object-oriented approach
+#   Zach Vanderbosch -- Updated to Python3 and ArcGIS Pro
 #
 #------------------------------------------------------------------------------#
 
@@ -496,7 +496,6 @@ class Galactic(_GalacticModelBase):
         set of data. 
         """
         d, s = self.dnight, self.set
-        # self.input_model = get_downscaled_image(d, s, f, 'gal')
             
         galPath = f"{filepath.griddata}{d}/S_0{s}/gal/galtopmags"
         galRaster = arcpy.sa.Raster(galPath)
@@ -513,6 +512,17 @@ class Galactic(_GalacticModelBase):
             return self.input_model + extinction_total
         else:
             return mag_to_nl_liwei(self.input_model + extinction_total)
+        
+    def save_observed_model(self,):
+        """
+        Function to save observed Galactic model in nL units to
+        a raster dataset.
+        """
+
+        galnl = self.compute_observed_model(unit='nl')
+        galnlPath = f"{filepath.griddata}{self.dnight}/S_0{self.set}/gal/galnl"
+        galnl.save(galnlPath)
+
             
     def show_input_model(self,):
         """
@@ -577,6 +587,16 @@ class Zodiacal(_ZodiacalModelBase):
             return self.input_model + extinction_total
         else:
             return mag_to_nl_liwei(self.input_model + extinction_total)
+        
+    def save_observed_model(self,):
+        """
+        Function to save observed Galactic model in nL units to
+        a raster dataset.
+        """
+
+        zodnl = self.compute_observed_model(unit='nl')
+        zodnlPath = f"{filepath.griddata}{self.dnight}/S_0{self.set}/zod/zodnl"
+        zodnl.save(zodnlPath)
         
     def show_input_model(self,):
         """
@@ -973,42 +993,38 @@ class SkyglowModel(_SkyglowModel):
     
 #------------------------------------------------------------------------------#
 
+# Pick night to process
 dnight = 'ROMO241004' #data night
 set = 1               #data set
 filter = 'V'          #filter used
 
 # Set directories
 gridsetp = f"{filepath.griddata}{dnight}"
-masksetp = f"{gridsetp}/"
-mediansetp = f"{gridsetp}/S_0{set}/median/"
-natskysetp = f"{gridsetp}/S_0{set}/nat/"
-skyglowsetp = f"{gridsetp}/S_0{set}/skyglow/"
-scratchsetp = f"{filepath.rasters}scratch_natsky/"
+Paths = {
+    'griddata': gridsetp,
+    'mask': f"{gridsetp}/",
+    'median': f"{gridsetp}/S_0{set}/median/",
+    'natsky': f"{gridsetp}/S_0{set}/nat/",
+    'skyglow': f"{gridsetp}/S_0{set}/skyglow/",
+    'airglow': f"{gridsetp}/S_0{set}/airglow/",
+    'scratch': f"{filepath.rasters}scratch_natsky/"
+}
 
-# Create/clear natsky & skyglow directories
-if os.path.exists(natskysetp):
-    shutil.rmtree(natskysetp, onerror=remove_readonly)
-if os.path.exists(skyglowsetp):
-    shutil.rmtree(skyglowsetp, onerror=remove_readonly)
-os.makedirs(natskysetp)
-os.makedirs(skyglowsetp)
+# Create/clear natsky, skyglow, and airglow directories
+for key in ['natsky','skyglow','airglow']:
+    if os.path.exists(Paths[key]):
+        shutil.rmtree(Paths[key], onerror=remove_readonly)
+    os.makedirs(Paths[key])
 
 # Set working directories
-arcpy.env.workspace = scratchsetp
-arcpy.env.scratchWorkspace = scratchsetp
+arcpy.env.workspace = Paths['scratch']
+arcpy.env.scratchWorkspace = Paths['scratch']
 
 Pa = [dnight, set, filter]
 Pk = {'pixscale':0.05, #unit?
       'downscale':25, 
       'za_min':0., 
       'za_max':90.}
-Paths = {
-    'griddata':gridsetp,
-    'mask':masksetp,
-    'median':mediansetp,
-    'natsky':natskysetp,
-    'skyglow':skyglowsetp
-}
 
 # Compute/load component models
 K = Mask(*Pa, **Pk)        # Terrain mask
@@ -1017,6 +1033,9 @@ D = ADL(*Pa, **Pk)         # A.D.L. model
 G = Galactic(*Pa, **Pk)    # Galactic light model
 Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
 Pk['mask'] = K.input_model
+
+# Save some models to disk
+G.save_observed_model()
 
 # Get observed sky brightness
 S = Skybright(Paths,*Pa,**Pk)
