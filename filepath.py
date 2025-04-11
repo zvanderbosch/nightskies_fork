@@ -51,5 +51,8 @@ standards = f"{base}/Data/Standards/"
 # Directory containing galactic/zodiacal model rasters
 rasters = f"{base}/Data/rasters/"
 
+# Directory containing ArcGIS map documents
+maps = f"{base}/Data/maps/"
+
 # Astrometry.net API key
 apikey = 'kdvqtjbqkbkbuyzb'
