@@ -32,6 +32,7 @@
 from astropy.io import fits
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from skimage.transform import downscale_local_mean
+from openpyxl.styles import PatternFill, Border, Side
 
 import arcpy
 import matplotlib
@@ -320,8 +321,6 @@ class Airglow(_AirglowModelBase):
         excel spreadsheet for documentation purposes.
         """
 
-        from openpyxl.styles import PatternFill, Border, Side
-
         # Excel file and sheet names
         excelFile = f"{filepath.calibdata}{self.dnight}/natsky_model_params.xlsx"
         excelSheet = "Model_Parameters"
@@ -360,8 +359,6 @@ class Airglow(_AirglowModelBase):
                 )
                 worksheet.set_column('A:J', 12) # Skinny for columns A:J
                 worksheet.set_column('K:K', 90) # Wide for column H (notes)
-
-                # Write the column headers with the defined format.
                 for i, value in enumerate(excelCols):
                     worksheet.write(0, i, value, headerFormat)
 
@@ -379,10 +376,9 @@ class Airglow(_AirglowModelBase):
             [n.nan],
             [n.nan]
         ]
-        excelData = {k:d for k,d in zip(excelCols,dataList)}
+        df = pd.DataFrame({k:d for k,d in zip(excelCols,dataList)})
 
         # Save parameters to excel sheet
-        df = pd.DataFrame(excelData)
         with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
             
             # Convert DataFrame to openpyxl excel object
@@ -394,8 +390,7 @@ class Airglow(_AirglowModelBase):
                 header=False
             )
 
-            # Format some of the cells
-            workbook = writer.book
+            # Format color and border of "Data Set" column
             worksheet = writer.sheets[excelSheet]
             fillColor = PatternFill(
                 fill_type='solid',
