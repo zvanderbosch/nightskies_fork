@@ -243,7 +243,7 @@ class Model(object):
         assert len(p) == len(parameter_list)
         for k, v in zip(parameter_list, p):
             self.parameters[k] = v
-        
+
     def image_template(self, image, title, mask=False, cmapname='NPS_mag', 
                        min=14, max=24, unit='mag'):
         
@@ -313,6 +313,102 @@ class Airglow(_AirglowModelBase):
         F = {'V':'/','B':'/B/'}
         headerfile = f"{filepath.calibdata}{d}/S_0{s}{F[f]}ib001.fit"
         self.elevation = fits.open(headerfile)[0].header['ELEVATIO']/1000. #[km]
+
+    def save_model_params(self,):
+        """
+        This function saves all input model parameters to an
+        excel spreadsheet for documentation purposes.
+        """
+
+        from openpyxl.styles import PatternFill, Border, Side
+
+        # Excel file and sheet names
+        excelFile = f"{filepath.calibdata}{self.dnight}/natsky_model_params.xlsx"
+        excelSheet = "Model_Parameters"
+
+        # Define columns to write
+        excelCols = [
+            "Data Set",
+            "Emitting Layer Height (km)",
+            "Site Elevation (m)",
+            "Extinction Coefficient",
+            "Zenith Airglow (nL)",
+            "Airglow Extinction Constant",
+            "A.D.L. Multiplier",
+            "Zodiacal Extinction Constant",
+            "Galactic Extinction Constant",
+            "Quality Flag (0-5)",
+            "Notes"
+        ]
+
+        # Create Excel file with column headers if it doesn't exist
+        if not os.path.isfile(excelFile):
+            blank_df = pd.DataFrame(columns=excelCols)
+            with pd.ExcelWriter(excelFile, engine='xlsxwriter') as writer:
+
+                # Convert DataFrame to xlsxwriter excel object
+                blank_df.to_excel(writer,sheet_name=excelSheet,index=False)
+
+                # Apply text wrapping & column widths
+                workbook = writer.book
+                worksheet = writer.sheets[excelSheet]
+                headerFormat = workbook.add_format(
+                    {'text_wrap': True,
+                     'bold': True,
+                     'fg_color': '#CCFFCC',
+                     'border': 1}
+                )
+                worksheet.set_column('A:J', 12) # Skinny for columns A:J
+                worksheet.set_column('K:K', 90) # Wide for column H (notes)
+
+                # Write the column headers with the defined format.
+                for i, value in enumerate(excelCols):
+                    worksheet.write(0, i, value, headerFormat)
+
+        # Generate input data
+        dataList = [
+            [self.set],
+            [self.airglow_height],
+            [self.elevation*1e3],
+            [self.extinction],
+            [self.airglow_zenith],
+            [self.airglow_ext],
+            [self.adl_factor],
+            [self.zod_ext],
+            [self.gal_ext],
+            [n.nan],
+            [n.nan]
+        ]
+        excelData = {k:d for k,d in zip(excelCols,dataList)}
+
+        # Save parameters to excel sheet
+        df = pd.DataFrame(excelData)
+        with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+            df.to_excel(
+                writer,
+                sheet_name=excelSheet,
+                startrow=self.set,
+                index=None,
+                header=False
+            )
+
+            # Format some of the cells
+            workbook = writer.book
+            worksheet = writer.sheets[excelSheet]
+            fillColor = PatternFill(
+                fill_type='solid',
+                start_color='CCFFCC',
+                end_color='CCFFCC'
+            )
+            thinBorder = Border(
+                left=Side(style='thin'), 
+                right=Side(style='thin'), 
+                top=Side(style='thin'), 
+                bottom=Side(style='thin')
+            )
+            worksheet[f'A{self.set+1}'].fill = fillColor
+            worksheet[f'A{self.set+1}'].border = thinBorder
+
         
     def compute_airglow_brightness(self,a,h):
         """
@@ -1024,9 +1120,9 @@ class MosaicAnalysis(_MosaicAnalysis):
             print(f"{PREFIX}Performing analysis of {mosaicName} mosaic...")
 
             # Determine which mosaic to analyze
-            if mosaicName == 'observed_skybright':
+            if mosaicName == 'median':
                 inRaster = arcpy.sa.Raster(f"skybrightf") # Masked
-            if mosaicName == 'artificial_skyglow':
+            if mosaicName == 'skyglow':
                 inRaster = arcpy.sa.Raster(f"{skyglowsetp}anthlightnl") # Masked
 
             # Execute ZonalStatisticsAsTable
@@ -1062,8 +1158,7 @@ class MosaicAnalysis(_MosaicAnalysis):
             arrmedian = n.median(dataArray)
 
             # Get all-sky ALR for artificial skyglow mosaic
-            if mosaicName == 'artificial_skyglow':
-                
+            if mosaicName == 'skyglow':
                 # Replace values < 8.6 nL with zero
                 clippedArray = n.ma.masked_less(dataArray, 8.6)
                 filledArray = n.ma.filled(clippedArray, 0)
@@ -1082,9 +1177,7 @@ class MosaicAnalysis(_MosaicAnalysis):
                 illalr = n.nan
                 clippedmlux = n.nan
 
-
-
-            # calculate number of square degrees, 0.5 and 1.0 degree pixel size percentiles
+            # Calculate number of square degrees, 0.5 and 1.0 degree pixel size percentiles
             sqdegrees = numcells * 0.05 * 0.05
             deg1frac = (1 - (1.00 / sqdegrees)) * 1e2
             deg05frac = (1 - (0.25 / sqdegrees)) * 1e2
@@ -1119,9 +1212,9 @@ class MosaicAnalysis(_MosaicAnalysis):
             stat_entries.append(mosaic_entry)
 
         # Combine entries into single dataframe
-        stat_df = pd.concat(stat_entries)
+        df_combined = pd.concat(stat_entries)
 
-        return stat_df
+        return df_combined
 
 
 #------------------------------------------------------------------------------#
@@ -1199,11 +1292,14 @@ def main():
 
     # # Compute/load component models
     # K = Mask(*Pa, **Pk)        # Terrain mask
-    # A = Airglow(*Pa, **Pk)     # Airglow model
+    A = Airglow(*Pa, **Pk)     # Airglow model
     # D = ADL(*Pa, **Pk)         # A.D.L. model
     # G = Galactic(*Pa, **Pk)    # Galactic light model
     # Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
     # Pk['mask'] = K.input_model
+
+    # Save model input parameters to excel sheet
+    A.save_model_params()
 
     # # Save some models to disk in [nL] units
     # print(f"{PREFIX}Saving Galactic/Zodiacal/Airglow models to disk in nL units...")
@@ -1226,9 +1322,15 @@ def main():
     # X.save_to_jpeg()
 
     # Perform analysis of mosaics
-    Q = MosaicAnalysis(['observed_skybright','artificial_skyglow'],Paths,*Pa,**Pk)
-    stats = Q.compute_zonal_stats()
-    stats.to_csv(f"{filepath.calibdata}{dnight}/natsky_model_stats.csv",index=False)
+    # Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
+    # stats = Q.compute_zonal_stats()
+
+    # # Save to excel spreadsheet
+    # stats.to_excel(
+    #     f"{filepath.calibdata}{dnight}/natsky_model_stats.xlsx",
+    #     sheet_name = "Sky Brightness All Sources",
+    #     index=False
+    # )
 
 
 # Run main during script execution
