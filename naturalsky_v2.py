@@ -384,6 +384,8 @@ class Airglow(_AirglowModelBase):
         # Save parameters to excel sheet
         df = pd.DataFrame(excelData)
         with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+            
+            # Convert DataFrame to openpyxl excel object
             df.to_excel(
                 writer,
                 sheet_name=excelSheet,
