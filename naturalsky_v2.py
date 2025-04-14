@@ -405,8 +405,7 @@ class Airglow(_AirglowModelBase):
             )
             worksheet[f'A{self.set+1}'].fill = fillColor
             worksheet[f'A{self.set+1}'].border = thinBorder
-
-        
+      
     def compute_airglow_brightness(self,a,h):
         """
         This function computes the airglow brightness according to the van Rhijn equation (Leinert et al. 1998).
@@ -1319,15 +1318,8 @@ def main():
     # X.save_to_jpeg()
 
     # Perform analysis of mosaics
-    # Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
-    # stats = Q.compute_zonal_stats()
-
-    # # Save to excel spreadsheet
-    # stats.to_excel(
-    #     f"{filepath.calibdata}{dnight}/natsky_model_stats.xlsx",
-    #     sheet_name = "Sky Brightness All Sources",
-    #     index=False
-    # )
+    Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
+    stats = Q.compute_zonal_stats()
 
 
 # Run main during script execution
