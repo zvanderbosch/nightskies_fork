@@ -662,8 +662,8 @@ class ModelComparator(object):
         chi2img = n.sum(imgerr**2)
         nfree = self.model.nfree()
         chi2aimg = chi2img/(len(imgerr)-nfree)
-        print "Chi^2: %i" %chi2img
-        print "Reduced Chi^2: %.2f" %chi2aimg
+        print("Chi^2: %i" %chi2img)
+        print("Reduced Chi^2: %.2f" %chi2aimg)
 
     def showimg(self, p=None): 
         if p != None:
@@ -692,7 +692,7 @@ class ModelComparator(object):
         #------------ (c)Residual: light pollution only
         ax = fig.add_subplot(313, sharex=ax)
         artificial_light = nl_to_mag(self.compute_difference(return_2D=True))
-        print n.sum(artificial_light**2)
+        print(n.sum(artificial_light**2))
         im = plt.imshow(artificial_light, extent=(-180,180,0,90), vmin=14, vmax=24)
         ax.tick_params(axis='both', labelsize=fsize)
         ax.set_ylabel('Altitude (degree)', fontsize=fsize)
