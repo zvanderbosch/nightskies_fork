@@ -230,19 +230,17 @@ class Model(object):
         cbar = plt.colorbar(im, cax=cax,  ticks=n.arange(min,max+1))
         cbar.ax.invert_yaxis()
         
-        # labels = map(str, n.arange(min,max+1))
-        labels = [str(x) for x in n.arange(min,max+1)]
+        labels = map(str, n.arange(min,max+1))
         labels[0] = '<'+labels[0]
         labels[-1] = '>'+labels[-1]
         
         cbar.ax.set_yticklabels(labels)
         cbar.set_label(r'mag / arcsec$^2$')
         
-        # fig.canvas.set_window_title(title)
-        plt.title(title)
+        fig.canvas.set_window_title(title)
 
         plt.tight_layout()
-        plt.show(block=True)    
+        plt.show(block=False)    
 
     def show_input_model(self,):
         """
@@ -328,9 +326,8 @@ class Airglow(_AirglowModelBase):
         ax.tick_params(axis='both', which='major', labelsize=14)
         ax.set_xlabel('Zenith Angle [Degree]',fontsize=14)
         ax.set_ylabel('Ariglow Brightness [nL]',fontsize=14)
-        # fig.canvas.set_window_title("Airglow_input_model")
-        ax.set_title("Airglow_input_model")
-        plt.show(block=True)
+        fig.canvas.set_window_title("Airglow_input_model")
+        plt.show(block=False)
         
     def show_observed_model(self,):
         """
@@ -341,9 +338,8 @@ class Airglow(_AirglowModelBase):
         ax.tick_params(axis='both', which='major', labelsize=14)
         ax.set_xlabel('Zenith Angle [Degree]',fontsize=14)
         ax.set_ylabel('Ariglow Brightness [nL]',fontsize=14)
-        # fig.canvas.set_window_title("Airglow_observed_model")
-        ax.set_title("Airglow_observed_model")
-        plt.show(block=True)
+        fig.canvas.set_window_title("Airglow_observed_model")
+        plt.show(block=False)
                 
 
 #atmospheric diffused light model
@@ -397,8 +393,8 @@ class ADL(_ADLModelBase):
         ax.tick_params(axis='both', which='major', labelsize=14)
         ax.set_xlabel('Zenith Angle [Degree]',fontsize=14)
         ax.set_ylabel('ADL Brightness [nL]',fontsize=14)
-        ax.set_title("ADL_input_model")
-        plt.show(block=True)
+        fig.canvas.set_window_title("ADL_input_model")
+        plt.show(block=False)
         
     def show_observed_model(self,):
         """
@@ -410,8 +406,8 @@ class ADL(_ADLModelBase):
         ax.tick_params(axis='both', which='major', labelsize=14)
         ax.set_xlabel('Zenith Angle [Degree]',fontsize=14)
         ax.set_ylabel('ADL Brightness [nL]',fontsize=14)
-        ax.set_title("ADL_observed_model")
-        plt.show(block=True)
+        fig.canvas.set_window_title("ADL_observed_model")
+        plt.show(block=False)
         
 
 #galactic model
@@ -666,8 +662,8 @@ class ModelComparator(object):
         chi2img = n.sum(imgerr**2)
         nfree = self.model.nfree()
         chi2aimg = chi2img/(len(imgerr)-nfree)
-        print("Chi^2: %i" %chi2img)
-        print("Reduced Chi^2: %.2f" %chi2aimg)
+        print "Chi^2: %i" %chi2img
+        print "Reduced Chi^2: %.2f" %chi2aimg
 
     def showimg(self, p=None): 
         if p != None:
@@ -696,6 +692,7 @@ class ModelComparator(object):
         #------------ (c)Residual: light pollution only
         ax = fig.add_subplot(313, sharex=ax)
         artificial_light = nl_to_mag(self.compute_difference(return_2D=True))
+        print n.sum(artificial_light**2)
         im = plt.imshow(artificial_light, extent=(-180,180,0,90), vmin=14, vmax=24)
         ax.tick_params(axis='both', labelsize=fsize)
         ax.set_ylabel('Altitude (degree)', fontsize=fsize)
@@ -737,7 +734,7 @@ class ModelComparator(object):
 
        
 #------------------------------------------------------------------------------#
-dnight = 'ROMO241004' #data night
+dnight = 'FCNA160803' #data night
 set = 1               #data set
 filter = 'V'          #filter used
 
@@ -748,20 +745,21 @@ Pk = {'pixscale':0.05, #unit?
       'za_max':90.}
 
 K = Mask(*Pa, **Pk)
-print(K.parameters)
-# K.show_input_model()
+#print(K.parameters)
+#K.show_input_model()
+
 Pk['mask'] = K.input_model
 
 A = Airglow(*Pa, **Pk)
 #A.parameters['a'] = 30.
 print('Airglow: ', A.parameters)
-# A.show_input_model()
-# A.show_observed_model()
+#A.show_input_model()
+#A.show_observed_model()
 
 D = ADL(*Pa, **Pk)
 print('ADL: ', D.parameters)
-# D.show_input_model()
-# D.show_observed_model()
+#D.show_input_model()
+#D.show_observed_model()
 
 G = Galactic(*Pa, **Pk)
 #G.parameters['e'] = 1.
@@ -776,20 +774,20 @@ Z.show_input_model()
 Z.show_observed_model()
 
 M = AggregateModel([G,Z,A,D],*Pa,**Pk)
-M.show_observed_model()
+#M.show_observed_model()
 
 
-# S = get_downscaled_image(K.dnight, K.set, K.filter, 'median')
+S = get_downscaled_image(K.dnight, K.set, K.filter, 'median')
 
-# C = ModelComparator(M, image=S)
-# C.showimg()
-# #K.image_template(S, "Median Filtered Data")
-# '''
-# D_nl = mag_to_nl_liwei(S) - M.compute_observed_model()
-# D_mag = nl_to_mag(D_nl)
-# D_mag[n.isnan(D_mag)] = 30
-# M.image_template(D_mag, "Difference")
-# '''
+C = ModelComparator(M, image=S)
+C.showimg()
+#K.image_template(S, "Median Filtered Data")
+'''
+D_nl = mag_to_nl_liwei(S) - M.compute_observed_model()
+D_mag = nl_to_mag(D_nl)
+D_mag[n.isnan(D_mag)] = 30
+M.image_template(D_mag, "Difference")
+'''
 
 #small_mask = downscale_local_mean(M.input_model,(25,25))
 #small_img = downscale_local_mean(S-M.compute_observed_model(),(25,25))
