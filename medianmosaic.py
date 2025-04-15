@@ -385,11 +385,14 @@ def mosaic(dnight, sets, filter):
         print(f"{PREFIX}{filter}-Band Set {s[0]} median mosaic {pc.CYAN}COMPLETE{pc.END}")
         
     #create mask.tif for horizon masking in the later process
-    mask = filepath.griddata+dnight+'/mask.tif'
-    if not os.path.isfile(mask):
+    maskDir = f"{filepath.griddata}{dnight}/mask"
+    maskFile = f"{maskDir}/mask.tif"
+    if not os.path.exists(maskDir):
+        os.makedirs(maskDir)
+    if not os.path.isfile(maskFile):
         arcpy.management.CopyRaster(
             gridsetp+'skybright',
-            mask,
+            maskFile,
             "DEFAULTS",
             "0","0","","",
             "16_BIT_UNSIGNED"
