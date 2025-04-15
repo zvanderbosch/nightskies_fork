@@ -32,7 +32,8 @@
 from astropy.io import fits
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from skimage.transform import downscale_local_mean
-from openpyxl.styles import PatternFill, Border, Side
+from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
+from openpyxl.utils import get_column_letter
 
 import arcpy
 import matplotlib
@@ -342,25 +343,48 @@ class Airglow(_AirglowModelBase):
 
         # Create Excel file with column headers if it doesn't exist
         if not os.path.isfile(excelFile):
-            blank_df = pd.DataFrame(columns=excelCols)
-            with pd.ExcelWriter(excelFile, engine='xlsxwriter') as writer:
+            with pd.ExcelWriter(excelFile, engine='openpyxl') as writer:
 
-                # Convert DataFrame to xlsxwriter excel object
-                blank_df.to_excel(writer,sheet_name=excelSheet,index=False)
-
-                # Apply text wrapping & column widths
+                # Define styles for worksheet header row
                 workbook = writer.book
-                worksheet = writer.sheets[excelSheet]
-                headerFormat = workbook.add_format(
-                    {'text_wrap': True,
-                     'bold': True,
-                     'fg_color': '#CCFFCC',
-                     'border': 1}
+                headerFont = Font(
+                    name="Calibri", 
+                    size=11, 
+                    bold=True, 
+                    color="000000"
                 )
-                worksheet.set_column('A:J', 12) # Skinny for columns A:J
-                worksheet.set_column('K:K', 90) # Wide for column H (notes)
-                for i, value in enumerate(excelCols):
-                    worksheet.write(0, i, value, headerFormat)
+                headerColor = PatternFill(
+                    fill_type='solid',
+                    start_color='CCFFCC',
+                    end_color='CCFFCC'
+                )
+                headerBorder = Border(
+                    left=Side(style='thin'), 
+                    right=Side(style='thin'), 
+                    top=Side(style='thin'), 
+                    bottom=Side(style='thin')
+                )
+                headerAlignment = Alignment(
+                    horizontal="center", 
+                    vertical="center",
+                    wrap_text=True
+                )
+
+                # Enter column headers and formatting
+                workbook.create_sheet(excelSheet)
+                worksheet = writer.sheets[excelSheet]
+                for i, value in enumerate(excelCols,1):
+                    cell = worksheet.cell(row=1, column=i)
+                    cell.value = value
+                    cell.font = headerFont
+                    cell.border = headerBorder
+                    cell.fill = headerColor
+                    cell.alignment = headerAlignment
+                    colLetter = get_column_letter(i)
+                    if colLetter == "K":
+                        worksheet.column_dimensions[colLetter].width = 90
+                    else:
+                        worksheet.column_dimensions[colLetter].width = 12
 
         # Generate input data
         dataList = [
@@ -1184,26 +1208,26 @@ class MosaicAnalysis(_MosaicAnalysis):
 
             # Add stats to pandas DataFrame
             mosaic_entry = pd.DataFrame({
-                'Dataset': self.set,
+                'Data Set': self.set,
                 'Mosaic_Name': mosaicName,
-                'Allsky_Average_Luminance': arrmean,
-                'Allsky_Median_Luminance': arrmedian,
-                'Minimum': pctStats[0],
+                'Allsky Average Luminance': arrmean,
+                'Median': arrmedian,
+                'Minimum (0.05 Percentile)': pctStats[0],
                 'Maximum': arrmax,
-                'Clipped_Illuminance_mlux': clippedmlux,
+                'Clipped at 8.6 nL Sum (mlux)': clippedmlux,
                 'Lum_ALR': lumalr,
                 'Illum_ALR': illalr,
-                '0.5Deg_Percentile': pctStats[10],
-                '1.0Deg_Percentile': pctStats[9],
-                '99th_Percentile': pctStats[8],
-                '98th_Percentile': pctStats[7],
-                '95th_Percentile': pctStats[6],
-                '90th_Percentile': pctStats[5],
-                '80th_Percentile': pctStats[4],
-                '70th_Percentile': pctStats[3],
-                '60th_Percentile': pctStats[2],
-                '1st_Percentile': pctStats[1],
-                'Zenith_Average_Luminance': skyave
+                '0.5 Degree Percentile': pctStats[10],
+                '1.0 Degree Percentile': pctStats[9],
+                '99th Percentile': pctStats[8],
+                '98th Percentile': pctStats[7],
+                '95th Percentile': pctStats[6],
+                '90th Percentile': pctStats[5],
+                '80th Percentile': pctStats[4],
+                '70th Percentile': pctStats[3],
+                '60th Percentile': pctStats[2],
+                '1st Percentile': pctStats[1],
+                'Zenith': skyave
             }, index = [i])
             stat_entries.append(mosaic_entry)
 
@@ -1211,6 +1235,149 @@ class MosaicAnalysis(_MosaicAnalysis):
         df_combined = pd.concat(stat_entries)
 
         return df_combined
+    
+    def save_model_stats(self,):
+        """
+        This function saves all computed sky brightness statistics
+        to an Excel spreadsheet.
+        """
+
+        # Compute statistics
+        stats = self.compute_zonal_stats()
+
+        # Excel file and sheet names
+        excelFile = f"{filepath.calibdata}{self.dnight}/natsky_model_params.xlsx"
+        excelSheetMedian = "Sky_Brightness_All_Sources"
+        excelSheetSkyglow = "Sky_Brightness_Artificial_Only"
+
+        # Define columns to write
+        excelColsMedian = [
+            "Data Set",
+            "Allsky Average Luminance",
+            "Minimum (0.05 Percentile)",
+            "Maximum",
+            "0.5 Degree Percentile",
+            "1.0 Degree Percentile",
+            "99th Percentile",
+            "98th Percentile",
+            "95th Percentile",
+            "90th Percentile",
+            "80th Percentile",
+            "70th Percentile",
+            "60th Percentile",
+            "Median",
+            "1st Percentile",
+            "Zenith"
+        ]
+        excelColsSkyGlow = [
+            "Data Set",
+            "Allsky Average Luminance",
+            "Clipped at 8.6 nL Sum (mlux)",
+            "Maximum",
+            "0.5 Degree Percentile",
+            "1.0 Degree Percentile",
+            "99th Percentile",
+            "98th Percentile",
+            "95th Percentile",
+            "90th Percentile",
+            "80th Percentile",
+            "70th Percentile",
+            "60th Percentile",
+            "Median",
+            "1st Percentile",
+            "Zenith"
+        ]
+
+        # Define some cell styles
+        headerFont = Font(
+            name="Calibri", 
+            size=11, 
+            bold=True, 
+            color="000000"
+        )
+        headerColor = PatternFill(
+            fill_type='solid',
+            start_color='CCFFCC',
+            end_color='CCFFCC'
+        )
+        headerBorder = Border(
+            left=Side(style='thin'), 
+            right=Side(style='thin'), 
+            top=Side(style='thin'), 
+            bottom=Side(style='thin')
+        )
+        headerAlignment = Alignment(
+            horizontal="center", 
+            vertical="center",
+            wrap_text=True
+        )
+
+        # Add Excel sheets with column headers if it doesn't exist
+        with pd.ExcelWriter(excelFile, engine='openpyxl', mode='a') as writer:
+
+            # Create an openpyxl workbook object
+            workbook = writer.book
+
+            # Add sheets and set column formats
+            if excelSheetMedian not in workbook.sheetnames:
+                workbook.create_sheet(excelSheetMedian)
+                worksheet = writer.sheets[excelSheetMedian]
+                for i, value in enumerate(excelColsMedian,1):
+                    cell = worksheet.cell(row=1, column=i)
+                    cell.value = value
+                    cell.font = headerFont
+                    cell.border = headerBorder
+                    cell.fill = headerColor
+                    cell.alignment = headerAlignment
+                    colLetter = get_column_letter(i)
+                    worksheet.column_dimensions[colLetter].width = 12
+            if excelSheetSkyglow not in workbook.sheetnames:
+                workbook.create_sheet(excelSheetSkyglow)
+                worksheet = writer.sheets[excelSheetSkyglow]
+                for i, value in enumerate(excelColsSkyGlow,1):
+                    cell = worksheet.cell(row=1, column=i)
+                    cell.value = value
+                    cell.font = headerFont
+                    cell.border = headerBorder
+                    cell.fill = headerColor
+                    cell.alignment = headerAlignment
+                    colLetter = get_column_letter(i)
+                    worksheet.column_dimensions[colLetter].width = 12
+
+        # Save statistics to excel sheets
+        for mosaicName in self.mosaic_list:
+
+            if mosaicName == 'median':
+                subsetStats = stats.loc[stats['Mosaic_Name'] == mosaicName][excelColsMedian]
+                subsetSheet = excelSheetMedian
+            elif mosaicName == 'skyglow':
+                subsetStats = stats.loc[stats['Mosaic_Name'] == mosaicName][excelColsSkyGlow]
+                subsetSheet = excelSheetSkyglow
+
+            # Save parameters to excel sheet
+            with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+                
+                # Convert DataFrame to openpyxl excel object
+                subsetStats.to_excel(
+                    writer,
+                    sheet_name=subsetSheet,
+                    startrow=self.set,
+                    index=None,
+                    header=False
+                )
+                Ncol = len(subsetStats.columns.values)
+
+                # Format color and border of "Data Set" column
+                worksheet = writer.sheets[subsetSheet]
+                worksheet[f'A{self.set+1}'].fill = headerColor
+                worksheet[f'A{self.set+1}'].border = headerBorder
+
+                # Format number decimal places
+                for i in range(2,Ncol+1):
+                    colLetter = get_column_letter(i)
+                    cellID = f'{colLetter}{self.set+1}'
+                    worksheet[cellID].number_format = "0.00"
+
 
 
 #------------------------------------------------------------------------------#
@@ -1319,7 +1486,8 @@ def main():
 
     # Perform analysis of mosaics
     Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
-    stats = Q.compute_zonal_stats()
+    Q.save_model_stats()
+    # stats = Q.compute_zonal_stats()
 
 
 # Run main during script execution
