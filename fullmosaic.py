@@ -198,8 +198,6 @@ def mosaic(dnight, sets, filter):
         # Create domainsetp if non-existent, else clear out directory
         if not os.path.exists(domainsetp):
             os.makedirs(domainsetp)
-        else:
-            clear_dir(domainsetp)
 
         # Clear out the scratch directory
         clear_dir(scratchsetp)
