@@ -1487,7 +1487,6 @@ def main():
     # Perform analysis of mosaics
     Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
     Q.save_model_stats()
-    # stats = Q.compute_zonal_stats()
 
 
 # Run main during script execution
