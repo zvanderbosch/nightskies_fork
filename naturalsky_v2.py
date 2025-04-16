@@ -53,8 +53,8 @@ import printcolors as pc
 PREFIX = f'{pc.GREEN}naturalsky_v2.py{pc.END}: '
 
 #set arcpy environment variables
-arcpy.env.rasterStatistics = "STATISTICS 2 2 (-999)"
 arcpy.env.overwriteOutput = True
+arcpy.env.rasterStatistics = "NONE"
 arcpy.env.pyramid = "NONE"
 arcpy.env.compression = "NONE"
 arcpy.CheckOutExtension("Spatial")
@@ -755,12 +755,7 @@ class Skybright(_SkyBrightObservedBase):
         mediansetp = self.paths['median']
 
         # Load terrain mask and compute stats for arcpy.sa.Con operations
-        print(f"{PREFIX}Computing statistics for terrain mask...")
-        maskDataset = f"{masksetp}maskd"
-        arcpy.management.CalculateStatistics(
-            maskDataset,
-            "1","1","","SKIP_EXISTING",""
-        )
+        maskDataset = f"{masksetp}maskd.tif"
         mask = arcpy.sa.Raster(maskDataset)
 
          # Load and re-project the median mosaic
@@ -844,8 +839,8 @@ class Mask(_MaskBase):
         """
 
         # Set non-zero values of mask to Null and save to new raster
-        maskTiffFile = f"{filepath.griddata}{self.dnight}/mask.tif"
-        maskDataset = f"{filepath.griddata}{self.dnight}/maskd"
+        maskTiffFile = f"{filepath.griddata}{self.dnight}/mask/mask.tif"
+        maskDataset = f"{filepath.griddata}{self.dnight}/mask/maskd.tif"
         if arcpy.Exists(maskDataset):
             print(f'{PREFIX}Loading terrain mask at {maskDataset}')
             self.input_model = arcpy.sa.Raster(maskDataset)
@@ -866,14 +861,20 @@ class Mask(_MaskBase):
                 "VALUE = 0" # Condition. If TRUE, value set to Null
             )
 
-            # Project mask into Fiheye equal area
+            # Project mask into Fisheye equal area
             arcpy.management.ProjectRaster(
-                outRaster, 
+                outRaster,
                 maskDataset, 
                 coordinateSystem, 
                 "BILINEAR",
                 "5558.8"
             )
+
+            # Compute raster statistics
+            print(f"{PREFIX}Computing statistics for terrain mask...")
+            arcpy.management.CalculateStatistics(maskDataset,"1","1","","","")
+
+            # Save mask to self.input_model
             self.input_model = arcpy.sa.Raster(maskDataset)
         
     def show_input_model(self,):
@@ -919,6 +920,7 @@ class AggregateModel(_AggregateModelBase):
         """
 
         # Get needed paths
+        gridsetp = self.paths['griddata']
         masksetp = self.paths['mask']
         natskysetp = self.paths['natsky']
         
@@ -931,7 +933,7 @@ class AggregateModel(_AggregateModelBase):
                 combinedModel += modelRaster
 
         # Load terrain mask
-        maskDataset = f"{masksetp}maskd"
+        maskDataset = f"{masksetp}maskd.tif"
         mask = arcpy.sa.Raster(maskDataset)
 
         # Project natural sky model into equal area fisheye
@@ -955,7 +957,7 @@ class AggregateModel(_AggregateModelBase):
         # Save layer file
         print(f"{PREFIX}Creating natural sky model layer file...")
         layerName = f"{self.dnight}_{self.set}_natsky"
-        layerFile = f"{masksetp}natskymags{self.set}.lyrx"
+        layerFile = f"{gridsetp}/natskymags{self.set}.lyrx"
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(f"{natskysetp}natskymags", layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
@@ -1038,7 +1040,7 @@ class SkyglowModel(_SkyglowModel):
     def compute_skyglow_model(self,):
 
         # Get the necessary paths
-        masksetp = self.paths['mask']
+        gridsetp = self.paths['griddata']
         skyglowsetp = self.paths['skyglow']
 
         # Subtract natsky model from median sky brightness mosaic
@@ -1057,7 +1059,7 @@ class SkyglowModel(_SkyglowModel):
         # Save magnitude mosaic to layer file
         print(f"{PREFIX}Saving athropogenic skyglow model to layer file...")
         layerName = f"{self.dnight}_{self.set}_skyglow"
-        layerFile = f"{masksetp}anthlightmags{self.set}.lyrx"
+        layerFile = f"{gridsetp}/anthlightmags{self.set}.lyrx"
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(f"{skyglowsetp}anthlightmags", layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
@@ -1124,6 +1126,9 @@ class MosaicAnalysis(_MosaicAnalysis):
         _MosaicAnalysis.__init__(self, *args, **kwargs)
         self.mosaic_list = mosaic_list
         self.paths = paths
+        stats,histarray = self.compute_zonal_stats()
+        self.stats = stats
+        self.histarray = histarray
 
     def compute_zonal_stats(self,):
 
@@ -1171,6 +1176,10 @@ class MosaicAnalysis(_MosaicAnalysis):
             maskedArray = n.ma.masked_equal(gridArray.flatten(), -9999)
             dataArray = maskedArray.compressed()
             numcells = len(dataArray)
+
+            # Get array to return for histogram plot
+            if mosaicName == 'skyglow':
+                histArray = dataArray
 
             # Calculate min, max, mean, and median all-sky luminance
             arrmax = n.max(dataArray)
@@ -1234,7 +1243,7 @@ class MosaicAnalysis(_MosaicAnalysis):
         # Combine entries into single dataframe
         df_combined = pd.concat(stat_entries)
 
-        return df_combined
+        return df_combined, histArray
     
     def save_model_stats(self,):
         """
@@ -1242,15 +1251,15 @@ class MosaicAnalysis(_MosaicAnalysis):
         to an Excel spreadsheet.
         """
 
-        # Compute statistics
-        stats = self.compute_zonal_stats()
+        # Get the statistics
+        stats = self.stats
 
         # Excel file and sheet names
         excelFile = f"{filepath.calibdata}{self.dnight}/natsky_model_params.xlsx"
         excelSheetMedian = "Sky_Brightness_All_Sources"
         excelSheetSkyglow = "Sky_Brightness_Artificial_Only"
 
-        # Define columns to write
+        # Define columns to write to each Excel sheet
         excelColsMedian = [
             "Data Set",
             "Allsky Average Luminance",
@@ -1288,7 +1297,7 @@ class MosaicAnalysis(_MosaicAnalysis):
             "Zenith"
         ]
 
-        # Define some cell styles
+        # Define some cell formatting styles
         headerFont = Font(
             name="Calibri", 
             size=11, 
@@ -1378,6 +1387,34 @@ class MosaicAnalysis(_MosaicAnalysis):
                     cellID = f'{colLetter}{self.set+1}'
                     worksheet[cellID].number_format = "0.00"
 
+    def save_summary_figure(self,):
+        """
+        Function that saves a summary figure displaying the images
+        of the observed data, the natural sky model, and the 
+        artifical sky brightness, along with a histogram of 
+        luminance values in nL from the artificial sky brightness
+        mosaic and some of the statistical brightness metrics.
+        """
+
+        # Get the statistics
+        stats = self.stats
+        histarray = self.histarray
+
+        # Generate the histogram figure
+        fig = plt.figure(figsize=(24,6))
+        ax = fig.add_subplot(111)
+
+        ax.hist(histarray, bins=249, range=(-49.5,199.5))
+
+        # Axis labels and figure title
+        ax.set_xlabel('Artificial sky luminance (nL)')
+        ax.set_ylabel('Pixel count')
+        title = f'{self.dnight}{self.set}  DERIVED ARTIFICIAL SKY GLOW IN NANO-LAMBERTS ITERATION #' + str(ctr3)
+        plt.title(title, fontsize=18, fontweight='bold')
+
+        
+
+
 
 
 #------------------------------------------------------------------------------#
@@ -1420,7 +1457,7 @@ def main():
     gridsetp = f"{filepath.griddata}{dnight}"
     Paths = {
         'griddata': gridsetp,
-        'mask': f"{gridsetp}/",
+        'mask': f"{gridsetp}/mask/",
         'median': f"{gridsetp}/S_0{set}/median/",
         'natsky': f"{gridsetp}/S_0{set}/nat/",
         'skyglow': f"{gridsetp}/S_0{set}/skyglow/",
@@ -1429,10 +1466,10 @@ def main():
     }
 
     # Create/clear natsky, skyglow, and airglow directories
-    # for key in ['natsky','skyglow','airglow']:
-    #     if os.path.exists(Paths[key]):
-    #         shutil.rmtree(Paths[key], onerror=remove_readonly)
-    #     os.makedirs(Paths[key])
+    for key in ['natsky','skyglow','airglow']:
+        if os.path.exists(Paths[key]):
+            shutil.rmtree(Paths[key], onerror=remove_readonly)
+        os.makedirs(Paths[key])
 
     # Set working directories
     arcpy.env.workspace = Paths['scratch']
@@ -1454,35 +1491,35 @@ def main():
     }
 
     # # Compute/load component models
-    # K = Mask(*Pa, **Pk)        # Terrain mask
+    K = Mask(*Pa, **Pk)        # Terrain mask
     A = Airglow(*Pa, **Pk)     # Airglow model
-    # D = ADL(*Pa, **Pk)         # A.D.L. model
-    # G = Galactic(*Pa, **Pk)    # Galactic light model
-    # Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
-    # Pk['mask'] = K.input_model
+    D = ADL(*Pa, **Pk)         # A.D.L. model
+    G = Galactic(*Pa, **Pk)    # Galactic light model
+    Z = Zodiacal(*Pa, **Pk)    # Zodiacal light model
+    Pk['mask'] = K.input_model
 
     # Save model input parameters to excel sheet
     A.save_model_params()
 
-    # # Save some models to disk in [nL] units
-    # print(f"{PREFIX}Saving Galactic/Zodiacal/Airglow models to disk in nL units...")
-    # A.save_observed_model()
-    # G.save_observed_model()
-    # Z.save_observed_model()
+    # Save some models to disk in [nL] units
+    print(f"{PREFIX}Saving Galactic/Zodiacal/Airglow models to disk in nL units...")
+    A.save_observed_model()
+    G.save_observed_model()
+    Z.save_observed_model()
 
-    # # Get observed sky brightness
-    # S = Skybright(Paths,*Pa,**Pk)
-    # skybright = S.masked_mosaic
-    # S.save_to_jpeg()
+    # Get observed sky brightness
+    S = Skybright(Paths,*Pa,**Pk)
+    skybright = S.masked_mosaic
+    S.save_to_jpeg()
 
-    # # Get aggregate natural sky model
-    # M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
-    # naturalsky = M.compute_observed_model(unit='nl')
-    # M.save_to_jpeg()
+    # Get aggregate natural sky model
+    M = AggregateModel([G,Z,A,D],Paths,*Pa,**Pk)
+    naturalsky = M.compute_observed_model(unit='nl')
+    M.save_to_jpeg()
 
-    # # Generate anthropogenic skyglow model
-    # X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
-    # X.save_to_jpeg()
+    # Generate anthropogenic skyglow model
+    X = SkyglowModel(skybright, naturalsky, Paths, *Pa, **Pk)
+    X.save_to_jpeg()
 
     # Perform analysis of mosaics
     Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
