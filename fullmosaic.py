@@ -195,9 +195,10 @@ def mosaic(dnight, sets, filter):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
 
-        # Create domainsetp if non-existent, else clear out directory
-        if not os.path.exists(domainsetp):
-            os.makedirs(domainsetp)
+        # Remove and/or create domainsetp directory
+        if os.path.exists(domainsetp):
+            shutil.rmtree(domainsetp, onerror=remove_readonly)
+        os.makedirs(domainsetp)
 
         # Clear out the scratch directory
         clear_dir(scratchsetp)
@@ -263,8 +264,7 @@ def mosaic(dnight, sets, filter):
             set_null_values(f'fwib{v:03d}.tif')
 
             # Create a raster border for clipping
-            if not os.path.exists(f'{domainsetp}ib{v:03d}/'):
-                os.makedirs(f'{domainsetp}ib{v:03d}/')
+            os.makedirs(f'{domainsetp}ib{v:03d}/')
             arcpy.ddd.RasterDomain(
                 f'fwib{v:03d}.tif',
                 f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
