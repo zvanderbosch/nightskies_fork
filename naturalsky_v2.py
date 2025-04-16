@@ -121,6 +121,24 @@ def remove_readonly(func, path):
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            try:
+                os.remove(os.path.join(root, name))
+            except:
+                continue
+        for name in dirs:
+            try:
+                os.chmod(os.path.join(root, name), stat.S_IWRITE)
+                os.rmdir(os.path.join(root, name))
+            except:
+                continue
+
 #read in galactic model, zodiacal model, and median_filtered images
 def get_panoramic_raster(dnight, set, band, raster, k=25):
     """    
@@ -783,6 +801,9 @@ class Skybright(_SkyBrightObservedBase):
         # Save masked skybright mosaic to class
         self.masked_mosaic = skybrightnlf
 
+        # Clear some memory
+        del mask,skybright,skybrightnl,skybrightnlf
+
     def save_to_jpeg(self,):
 
         print(f"{PREFIX}Saving observed sky brightness to JPEG...")
@@ -963,13 +984,15 @@ class AggregateModel(_AggregateModelBase):
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerFile, "ABSOLUTE")
 
+        # Clear some memory
+        del mask,combinedModel
+
         # Return un-masked combined model for plotting purposes
         if unit == 'mag':
             return naturalskymags
         else:
             return natskynlfc
-        
-        
+               
     def save_to_jpeg(self,):
 
         print(f"{PREFIX}Saving natural sky model to JPEG...")
@@ -1003,7 +1026,6 @@ class AggregateModel(_AggregateModelBase):
             resolution=96,    # Default is 96
             jpeg_quality=100, # Default is 80, highest quality = 100
         )
-
 
     def show_observed_model(self,):
         """
@@ -1064,6 +1086,9 @@ class SkyglowModel(_SkyglowModel):
         arcpy.management.MakeRasterLayer(f"{skyglowsetp}anthlightmags", layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerFile, "ABSOLUTE")
+
+        # Clear some memory
+        del anthlightf,outCon,anthlightmags
 
     def save_to_jpeg(self,):
         """
@@ -1396,6 +1421,9 @@ class MosaicAnalysis(_MosaicAnalysis):
         mosaic and some of the statistical brightness metrics.
         """
 
+        # Get needed paths
+        gridsetp = self.paths['griddata']
+
         # Get the statistics
         stats = self.stats
         histarray = self.histarray
@@ -1409,18 +1437,20 @@ class MosaicAnalysis(_MosaicAnalysis):
         # Axis labels and figure title
         ax.set_xlabel('Artificial sky luminance (nL)')
         ax.set_ylabel('Pixel count')
-        title = f'{self.dnight}{self.set}  DERIVED ARTIFICIAL SKY GLOW IN NANO-LAMBERTS ITERATION #' + str(ctr3)
+        title = f"{self.dnight}_{self.set} DERIVED ARTIFICIAL SKY GLOW IN NANO-LAMBERTS"
         plt.title(title, fontsize=18, fontweight='bold')
 
-        
-
-
-
+        # Save histogram figure
+        figFile = f"{gridsetp}/S_0{self.set}/hist.jpg"
+        plt.savefig(figFile, dpi=200)
 
 #------------------------------------------------------------------------------#
 
 
 def main():
+    """
+    The main execution function.
+    """
 
     # Command line arguments
     parser = argparse.ArgumentParser()
@@ -1465,11 +1495,12 @@ def main():
         'scratch': f"{filepath.rasters}scratch_natsky/"
     }
 
-    # Create/clear natsky, skyglow, and airglow directories
+    # Create/clear natsky, skyglow, airglow, and scratch directories
     for key in ['natsky','skyglow','airglow']:
         if os.path.exists(Paths[key]):
             shutil.rmtree(Paths[key], onerror=remove_readonly)
         os.makedirs(Paths[key])
+    clear_scratch(Paths['scratch'])
 
     # Set working directories
     arcpy.env.workspace = Paths['scratch']
@@ -1490,7 +1521,7 @@ def main():
         'zod_ext': args.zodext
     }
 
-    # # Compute/load component models
+    # Compute/load component models
     K = Mask(*Pa, **Pk)        # Terrain mask
     A = Airglow(*Pa, **Pk)     # Airglow model
     D = ADL(*Pa, **Pk)         # A.D.L. model
@@ -1524,6 +1555,10 @@ def main():
     # Perform analysis of mosaics
     Q = MosaicAnalysis(['median','skyglow'],Paths,*Pa,**Pk)
     Q.save_model_stats()
+    Q.save_summary_figure()
+
+    # Clear out scratch directory
+    clear_scratch(Paths['scratch'])
 
 
 # Run main during script execution
