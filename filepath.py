@@ -54,5 +54,8 @@ rasters = f"{base}/Data/rasters/"
 # Directory containing ArcGIS map documents
 maps = f"{base}/Data/maps/"
 
+# Directory for scripts
+scripts = f"{base}/Scripts/"
+
 # Astrometry.net API key
 apikey = 'kdvqtjbqkbkbuyzb'
