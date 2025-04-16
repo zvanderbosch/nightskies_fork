@@ -34,6 +34,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 from skimage.transform import downscale_local_mean
 from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
 from openpyxl.utils import get_column_letter
+from PIL import Image
 
 import arcpy
 import matplotlib
@@ -1423,26 +1424,111 @@ class MosaicAnalysis(_MosaicAnalysis):
 
         # Get needed paths
         gridsetp = self.paths['griddata']
+        sheetssetp = self.paths['sheets']
 
         # Get the statistics
         stats = self.stats
         histarray = self.histarray
 
+        #########################################################
+        ## Generate the histogram
+
         # Generate the histogram figure
         fig = plt.figure(figsize=(24,6))
         ax = fig.add_subplot(111)
 
-        ax.hist(histarray, bins=249, range=(-49.5,199.5))
+        # Plot histogram
+        ax.hist(
+            histarray, bins=249, range=(-49.5,199.5),
+            histtype='bar',facecolor='b',edgecolor='k'
+        )
+
+        # Add grid lines along X-axis
+        ax.grid(visible=True, which='major', axis='x', color='r', lw=3, ls='--')
+
+        # Define some font styles for text
+        font1 = {'family':'monospace', 'weight':'bold'   ,'size': 12}
+        font2 = {'family':'monospace', 'weight':'normal' ,'size': 11}
+        font3 = {'family':'monospace', 'weight':'bold'   ,'size': 15}
+
+        # Add stats as text
+        xloc = -49
+        ymax = ax.get_ylim()[1]
+        skyglowIdx = (stats.Mosaic_Name == 'skyglow')
+        ax.text(xloc, 0.95*ymax, 
+            f"{'Mean allsky (nL)':19s}{stats['Allsky Average Luminance'][skyglowIdx].iloc[0]:>7.2f}", fontdict=font1)
+        ax.text(xloc, 0.90*ymax, 
+            f"{'Median allsky (nL)':19s}{stats['Median'][skyglowIdx].iloc[0]:>7.2f}", fontdict=font1)
+        ax.text(xloc, 0.85*ymax, 
+            f"{'Mean zenith (nL)':19s}{stats['Zenith'][skyglowIdx].iloc[0]:>7.2f}", fontdict=font1)
+        ax.text(xloc, 0.78*ymax, 
+            "Parameters:", fontdict=font1)
+        ax.text(xloc, 0.72*ymax, 
+            f"{'Emit Lyr Ht (km)':19s}{self.airglow_height:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.67*ymax, 
+            f"{'Ext Coeff':19s}{self.extinction:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.62*ymax, 
+            f"{'Zenith Airglow (nL)':19s}{self.airglow_zenith:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.57*ymax, 
+            f"{'A.G. Const':19s}{self.airglow_ext:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.52*ymax, 
+            f"{'Zod Const':19s}{self.zod_ext:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.47*ymax, 
+            f"{'Gal Const':19s}{self.gal_ext:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.42*ymax, 
+            f"{'A.D.L. Mult':19s}{self.adl_factor:>7.2f}", fontdict=font2)
+        ax.text(xloc, 0.32*ymax, 
+            f"{'LUM ALR':14s}{stats['Lum_ALR'][skyglowIdx].iloc[0]:>5.2f}", fontdict=font3)
+        ax.text(xloc, 0.25*ymax, 
+            f"{'CLIP ILL ALR':14s}{stats['Illum_ALR'][skyglowIdx].iloc[0]:>5.2f}", fontdict=font3)
+        
+        # Add lines indicating clipping limits
+        ax.axvline( 8.6, linewidth=1.5, color='r', ls = ':')
+        ax.axvline(-8.6, linewidth=1.5, color='r', ls = ':')
+        
+        # Configure tick params
+        ax.tick_params(which='major',direction='out',length=6,labelsize=13)
 
         # Axis labels and figure title
-        ax.set_xlabel('Artificial sky luminance (nL)')
-        ax.set_ylabel('Pixel count')
-        title = f"{self.dnight}_{self.set} DERIVED ARTIFICIAL SKY GLOW IN NANO-LAMBERTS"
+        ax.set_xlabel('Artificial sky luminance (nL)',fontsize=16)
+        ax.set_ylabel('Pixel count',fontsize=16)
+        title = f"{self.dnight}/S_0{self.set} DERIVED ARTIFICIAL SKY GLOW IN NANO-LAMBERTS"
         plt.title(title, fontsize=18, fontweight='bold')
 
+        # Axis limits
+        ax.set_xlim(-50,200)
+
         # Save histogram figure
-        figFile = f"{gridsetp}/S_0{self.set}/hist.jpg"
+        figFile = f"{gridsetp}/S_0{self.set}/hist.png"
         plt.savefig(figFile, dpi=200)
+
+
+        #########################################################
+        ## Combine histogram and data, model, artificial images
+
+        # Load image descriptions
+        imdata = Image.open(f"{sheetssetp}data.png")
+        immodel = Image.open(f"{sheetssetp}model.png")
+        imskyglow = Image.open(f"{sheetssetp}skyglow.png")
+
+        # combine all figures into one with PIL.Image
+        imgPath = f"{gridsetp}/S_0{self.set}"
+        im1 = Image.open(f"{imgPath}/data.jpg")
+        im2 = Image.open(f"{imgPath}/model.jpg")
+        im3 = Image.open(f"{imgPath}/artificial.jpg")
+        im4 = Image.open(f"{imgPath}/hist.png")
+        blank_image = Image.new("RGB",(4800,2800))
+        blank_image.paste(im1, (0,0))
+        blank_image.paste(im2, (1600,0))
+        blank_image.paste(im3, (3200,0))
+        blank_image.paste(im4, (0,1600))
+        blank_image.paste(imdata, (1200,1500))
+        blank_image.paste(immodel, (2800,1500))
+        blank_image.paste(imskyglow, (4300,1500))
+
+        # Save to griddata and graphics directories
+        blank_image.save(f"{imgPath}/natsky_model_fit.png")
+        blank_image.save(f"{filepath.graphics}{self.dnight}_{self.set}_natsky_model_fit.png")
 
 #------------------------------------------------------------------------------#
 
@@ -1492,7 +1578,8 @@ def main():
         'natsky': f"{gridsetp}/S_0{set}/nat/",
         'skyglow': f"{gridsetp}/S_0{set}/skyglow/",
         'airglow': f"{gridsetp}/S_0{set}/airglow/",
-        'scratch': f"{filepath.rasters}scratch_natsky/"
+        'scratch': f"{filepath.rasters}scratch_natsky/",
+        'sheets': f"{filepath.scripts}/ACP/spreadsheets/"
     }
 
     # Create/clear natsky, skyglow, airglow, and scratch directories
