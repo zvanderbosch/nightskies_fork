@@ -54,6 +54,9 @@ rasters = f"{base}/Data/rasters/"
 # Directory containing ArcGIS map documents
 maps = f"{base}/Data/maps/"
 
+# Directory containing saved graphics
+graphics = f"{base}/Data/graphics/"
+
 # Directory for scripts
 scripts = f"{base}/Scripts/"
 
