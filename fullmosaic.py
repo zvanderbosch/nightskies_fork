@@ -263,7 +263,8 @@ def mosaic(dnight, sets, filter):
             set_null_values(f'fwib{v:03d}.tif')
 
             # Create a raster border for clipping
-            os.makedirs(f'{domainsetp}ib{v:03d}/')
+            if not os.path.exists(f'{domainsetp}ib{v:03d}/'):
+                os.makedirs(f'{domainsetp}ib{v:03d}/')
             arcpy.ddd.RasterDomain(
                 f'fwib{v:03d}.tif',
                 f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
