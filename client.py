@@ -99,8 +99,8 @@ class Client(object):
         request = Request(url=url, headers=headers, data=data)
         
         # Try sending the request
-        delay = 5.0      # Seconds between retry attempts
-        max_retries = 10 # Max number of retries
+        delay = 1.0      # Seconds between retry attempts
+        max_retries = 20 # Max number of retries
         for attempts in range(max_retries):
             try:
                 f = urlopen(request)
@@ -114,8 +114,12 @@ class Client(object):
             except:
                 if attempts < max_retries-1:
                     time.sleep(delay)
+                    delay += 0.5
                 else:
-                    print(f'{PREFIX}Exceeded max retries while sending request')
+                    print(
+                        f'{PREFIX}(Status = {pc.RED}FAILED{pc.END}  ) '
+                        f'Exceeded max retries while sending {service} request'
+                    )
                     sys.exit(-1)
 
 
