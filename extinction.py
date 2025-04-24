@@ -398,7 +398,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         # airmass = 1/n.sin(n.deg2rad(elev))   #airmass
         m = -2.5*n.log10(flux)               #v_mag, apparent
 
-        # Use Hardie equation for airmass
+        # Use Hardie (1962) equation for airmass
         za = 90. - elev
         secantZ = 1./n.cos(n.deg2rad(za))
         am1 = 0.0018167 * (secantZ - 1.0)
