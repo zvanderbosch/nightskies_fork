@@ -344,7 +344,7 @@ def extinction(dnight, sets, filter, plot_img=0):
                 f = data[w].ravel() - bg
 
                 # Skip over objects near to saturation limit
-                if max(f + bg) > 60000:
+                if max(f + bg) > 55000:
                     continue
                 
                 #fit
@@ -395,8 +395,16 @@ def extinction(dnight, sets, filter, plot_img=0):
         M = n.float64(stars[:,2])            #V_mag, absolute
         elev = n.float64(stars[:,3])         #elevation[deg]
         flux = n.float64(stars[:,7])         #flux, background subtracted [DN]
-        airmass = 1/n.sin(n.deg2rad(elev))   #airmass
+        # airmass = 1/n.sin(n.deg2rad(elev))   #airmass
         m = -2.5*n.log10(flux)               #v_mag, apparent
+
+        # Use Hardie equation for airmass
+        za = 90. - elev
+        secantZ = 1./n.cos(n.deg2rad(za))
+        am1 = 0.0018167 * (secantZ - 1.0)
+        am2 = 0.0028750 * (secantZ - 1.0)**2
+        am3 = 0.0008083 * (secantZ - 1.0)**3
+        airmass = secantZ - am1 - am2 - am3
         
         # Perform fit with sigma-clipping
         param, cov, clipped_index = poly_sigfit(
