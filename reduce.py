@@ -140,6 +140,7 @@ def reducev(dnight, sets, flatname, curve):
                 f.data -= corthermal                  # subtract dark
                 f.data /= flat                        # divide by flat
                 f.data = f.data.clip(min=1.0)         # Set minimum value to 1
+                f.data = f.data.clip(max=65535.)      # Set maximum value to saturation limit
                 f.data = f.data.astype(n.uint16)      # Convert to uint16 values
                 f.header['IMAGETYP'] = 'CALIB_M'      # Update header
                 f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
