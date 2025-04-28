@@ -223,7 +223,6 @@ class Model(object):
         self.get_1d_za()                                         #zenith angles 1D [deg]
         self.compute_airmass()                                   #airmass 1D [deg]
         
-
     def get_extinction_coefficient(self,):
         """
         This function reads in the extinction coefficient associated with the 
@@ -232,7 +231,6 @@ class Model(object):
         d,s,f = self.dnight, self.set, self.filter
         extinctionfile = f"{filepath.calibdata}{d}/extinction_fit_{f}.txt"
         self.extinction = abs(n.loadtxt(extinctionfile, ndmin=2)[s-1,4])
-        
         
     def get_1d_za(self,):
         """
@@ -638,7 +636,7 @@ class Galactic(_GalacticModelBase):
         if unit=='mag':
             return self.input_model + extinction_total
         else:
-            return mag_to_nl_liwei(self.input_model + extinction_total)
+            return mag_to_nl_dan(self.input_model + extinction_total)
         
     def save_observed_model(self,):
         """
@@ -649,8 +647,7 @@ class Galactic(_GalacticModelBase):
         galnl = self.compute_observed_model(unit='nl')
         galnlPath = f"{filepath.griddata}{d}/S_0{s}/gal/galnl"
         galnl.save(galnlPath)
-
-            
+          
     def show_input_model(self,):
         """
         show the input model with default parameters
@@ -712,7 +709,7 @@ class Zodiacal(_ZodiacalModelBase):
         if unit=='mag':
             return self.input_model + extinction_total
         else:
-            return mag_to_nl_liwei(self.input_model + extinction_total)
+            return mag_to_nl_dan(self.input_model + extinction_total)
         
     def save_observed_model(self,):
         """
@@ -1422,6 +1419,8 @@ class MosaicAnalysis(_MosaicAnalysis):
         mosaic and some of the statistical brightness metrics.
         """
 
+        print(f"{PREFIX}Generating summary figures...")
+
         # Get needed paths
         gridsetp = self.paths['griddata']
         sheetssetp = self.paths['sheets']
@@ -1466,7 +1465,7 @@ class MosaicAnalysis(_MosaicAnalysis):
         ax.text(xloc, 0.72*ymax, 
             f"{'Emit Lyr Ht (km)':19s}{self.airglow_height:>7.2f}", fontdict=font2)
         ax.text(xloc, 0.67*ymax, 
-            f"{'Ext Coeff':19s}{self.extinction:>7.2f}", fontdict=font2)
+            f"{'Ext Coeff':19s}{self.extinction:>7.3f}", fontdict=font2)
         ax.text(xloc, 0.62*ymax, 
             f"{'Zenith Airglow (nL)':19s}{self.airglow_zenith:>7.2f}", fontdict=font2)
         ax.text(xloc, 0.57*ymax, 
@@ -1511,7 +1510,7 @@ class MosaicAnalysis(_MosaicAnalysis):
         immodel = Image.open(f"{sheetssetp}model.png")
         imskyglow = Image.open(f"{sheetssetp}skyglow.png")
 
-        # combine all figures into one with PIL.Image
+        # Combine all figures into one with PIL.Image
         imgPath = f"{gridsetp}/S_0{self.set}"
         im1 = Image.open(f"{imgPath}/data.jpg")
         im2 = Image.open(f"{imgPath}/model.jpg")
@@ -1527,8 +1526,10 @@ class MosaicAnalysis(_MosaicAnalysis):
         blank_image.paste(imskyglow, (4300,1500))
 
         # Save to griddata and graphics directories
-        blank_image.save(f"{imgPath}/natsky_model_fit.png")
-        blank_image.save(f"{filepath.graphics}{self.dnight}_{self.set}_natsky_model_fit.png")
+        imgFile1 = f"{imgPath}/natsky_model_fit.png"
+        imgFile2 = f"{filepath.graphics}{self.dnight}_{self.set}_natsky_model_fit.png"
+        blank_image.save(imgFile1)
+        blank_image.save(imgFile2)
 
 #------------------------------------------------------------------------------#
 
