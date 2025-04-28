@@ -38,14 +38,23 @@ from astropy.io import fits
 from astropy.time import Time
 from glob import glob
 from scipy.optimize import curve_fit
+from photutils.aperture import aperture_photometry
+from photutils.aperture import CircularAperture
+from photutils.aperture import CircularAnnulus
+from photutils.aperture import ApertureStats
+from astropy.stats import SigmaClip
+from matplotlib.gridspec import GridSpec
+from astropy.visualization import ZScaleInterval
 
 import astropy.units as u
 import astropy.wcs as wcs
 import astropy.coordinates as coord
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as n
 import pandas as pd
 import warnings
+
 
 # Ignore certain Astropy warnings
 warnings.simplefilter('ignore', category=wcs.FITSFixedWarning)
@@ -57,6 +66,20 @@ import filepath
 
 # Print status prefix
 PREFIX = f'{pc.GREEN}extinction.py  {pc.END}: '
+
+ZS = ZScaleInterval(
+    n_samples=10000, contrast=0.15, max_reject=0.5, 
+    min_npixels=5, krej=2.5, max_iterations=5
+)
+mpl.rcParams.update(
+    {# Use mathtext, not LaTeX
+    'text.usetex': False,
+    'axes.formatter.use_mathtext': True,
+    'font.family': 'STIXGeneral',
+    'mathtext.fontset': 'cm',
+    'axes.unicode_minus': False
+    }
+)
 
 #-----------------------------------------------------------------------------#
 
@@ -211,23 +234,43 @@ def extinction(dnight, sets, filter, plot_img=0):
 
     zeropoint_dnight = []
     
-    # #read in the standard star catalog
-    # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
-    # starn = hips[:,0]                                             #star names
-    # ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
-    # Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
+    #read in the standard star catalog
+    hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
+    starn = hips[:,0]                                             #star names
+    ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
+    Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
 
-    # # Convert the RA from hours to degress
-    # ras = ras * 360/24
+    # Convert the RA from hours to degress
+    ras = ras * 360/24
+
+    # List of Hipparcos IDs used by original pipeline
+    origStars = [
+        'h27386', 'h104019', 'h51808', 'h52425', 'h69112', 'h76008',
+        'h45333', 'h34752', 'h37701', 'h24822', 'h25539', 'h28691',
+        'h20261', 'h20901', 'h21036', 'h21589', 'h22044', 'h22509',
+        'h23835', 'h23871', 'h25813', 'h27364', 'h14954', 'h16341',
+        'h17457', 'h17771', 'h18255', 'h19719', 'h19849', 'h12843',
+        'h13288', 'h13717', 'h13874', 'h14146', 'h14168', 'h14293',
+        'h3909', 'h6670', 'h6960', 'h114375', 'h115438', 'h116247',
+        'h116758', 'h108036', 'h110003', 'h111497', 'h101692', 'h101936',
+        'h103045', 'h104459', 'h105570', 'h99080', 'h101868', 'h104858',
+        'h96275', 'h87212', 'h90191', 'h92512', 'h93299', 'h98055',
+        'h77277', 'h78527', 'h81660', 'h82020', 'h5372', 'h5518', 'h17587',
+        'h23040', 'h14817', 'h20704', 'h21928', 'h15737', 'h7884',
+        'h10306', 'h12093', 'h12832', 'h1645', 'h2762', 'h3786', 'h4147',
+        'h4914', 'h6061', 'h112447', 'h115830', 'h115919', 'h116928',
+        'h107354', 'h107788', 'h108535', 'h109592', 'h2225', 'h6813',
+        'h9977', 'h10559', 'h4463', 'h5571', 'h6193', 'h9836', 'h2568', 'h841'
+    ]
 
     #read inamd parse the standard star catalog
-    hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards.csv')
-    starn = hips['hip'].values.astype(str) # Hipparcos IDs
-    ras = hips['ra'].values          # Right Ascension coords [deg]
-    decs = hips['de'].values         # Declination coords [deg]
-    v_mag = hips['vmag'].values      # Hipparcos V-band magnitudes [mag]
-    bv = hips['b_v'].values          # Hipparcos B-V color [mag]
-    Mag = {'V':v_mag, 'B':v_mag+bv}  # V and B magnitudes
+    # hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards.csv')
+    # starn = hips['hip'].values.astype(str) # Hipparcos IDs
+    # ras = hips['ra'].values          # Right Ascension coords [deg]
+    # decs = hips['de'].values         # Declination coords [deg]
+    # v_mag = hips['vmag'].values      # Hipparcos V-band magnitudes [mag]
+    # bv = hips['b_v'].values          # Hipparcos B-V color [mag]
+    # Mag = {'V':v_mag, 'B':v_mag+bv}  # V and B magnitudes
     
     #define image xy coordinates
     x = n.arange(0, 1024)
@@ -252,10 +295,18 @@ def extinction(dnight, sets, filter, plot_img=0):
             height = H['ELEVATIO']*u.m
         )
         exp = H['exptime'] #[s]
+
+        # Some parameters to track object cuts
+        nstarCatalog = len(starn)
+        nstarOnImage = 0
+        nstarAboveHorizon = 0
+        nstarFluxLimits = 0
+        nstarFinal = 0
                 
         # loop through each file in the set
         print(f'{PREFIX}Processing images for {filter}-band Set {s[0]}...')
         images = sorted(glob(calsetp+'ib???.fit'))
+        pcount = 0
         for imnum in range(len(images)):
 
             # Get header and create WCS object
@@ -298,8 +349,8 @@ def extinction(dnight, sets, filter, plot_img=0):
             w1 = w0[0][w1]
 
             # PREVIOUS DISTANCE CONSTRAINTS
-            # img_dec = abs(decs-H['CRVAL2']) < 12
-            # img_ra = abs(ras-H['CRVAL1']) < (12/n.cos(n.deg2rad(decs)))
+            # img_dec = abs(decs-H['CRVAL2']) < 17
+            # img_ra = abs(ras-H['CRVAL1']) < (17/n.cos(n.deg2rad(decs)))
             # w1 = n.where(img_dec & img_ra)[0]   # stars 
             
             # Skip the image w/o standard stars
@@ -313,41 +364,57 @@ def extinction(dnight, sets, filter, plot_img=0):
             py1 = xypix[:,1]
             
             # Find the standard stars within 490 pixels of the image center
-            # w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
+            w2 = n.where(n.sqrt((px1-512)**2 + (py1-512)**2) < 490)
 
-            # Find standard stars > buffer value from image edge
-            buffer = 25  # edge buffer in pixels
-            w2 = n.where(
-                (px1 > 0 + buffer) &
-                (px1 < 1024 - buffer) &
-                (py1 > 0 + buffer) &
-                (py1 < 1024 - buffer)
-            )
+            # Get final selection of stars
             w3 = w1[w2]
             px, py = px1[w2], py1[w2]
-            hip, ra, dec, M = starn[w3], ras[w3], decs[w3], Mag[filter][w3] 
-
+            hip, ra, dec, M, bvcol = starn[w3], ras[w3], decs[w3], Mag[filter][w3] , bv[w3]
+            nstarOnImage += len(hip)
 
             # Load in image data
             data = fits.getdata(fn,ext=0)
             popt_plot_list = []
             
             #fit 2D Gaussians to standard stars in the image
+            xposImg, yposImg = [], []
             for i in range(len(px)):
+
+                # Skip stars with elevation below 12-degrees
+                star = coord.SkyCoord(
+                    ra=ra[i]*u.deg, dec=dec[i]*u.deg, frame='icrs'
+                )
+                StarTopo = star.transform_to(
+                    coord.AltAz(obstime=obstime, location=site)
+                )
+                elev = StarTopo.alt.deg
+                if elev < 12.0:
+                    continue
+                nstarAboveHorizon += 1
+
                 #set the aperture radii
+                apRadius = 6
+                annInner = 8
+                annOuter = 12
                 r = ((x-px[i])**2+(y-py[i])**2)**0.5
-                w = n.where(r<3)              #source aperture radius = 3 pix
-                b = n.where((r>4) & (r<8))    #background aperture 4-8 pix ring
+                # w = n.where(r<3)              #source aperture radius = 3 pix
+                # b = n.where((r>4) & (r<8))    #background aperture 4-8 pix ring
+                w = n.where(r<apRadius)         #source aperture radius = 6 pix
+                b = n.where(                    #background aperture 8-12 pix ring
+                    (r>annInner) & 
+                    (r<annOuter)
+                )
                 
                 #subtract background from the fitted data
                 bg = n.median(data[b])
                 f = data[w].ravel() - bg
 
                 # Skip over objects near to saturation limit
-                if max(f + bg) > 55000:
+                if (max(f + bg) > 55000) | (max(f + bg) < 4000):
                     continue
+                nstarFluxLimits += 1
                 
-                #fit
+                # Perform Gaussian fit
                 guess = (px[i], py[i], 0.6, 50000)  #(x,y,std,brightness)
                 with warnings.catch_warnings():
                     warnings.filterwarnings('error')
@@ -356,30 +423,106 @@ def extinction(dnight, sets, filter, plot_img=0):
                     except:
                         continue
 
-                # Calculate elevation of the star
-                star = coord.SkyCoord(
-                    ra=ra[i]*u.deg, dec=dec[i]*u.deg, frame='icrs'
+                # Perform aperture photometry with photutils
+                position = [(popt[0],popt[1])]
+                aperture = CircularAperture(position, r=3.0)
+                annulus = CircularAnnulus(
+                    position, r_in=8.0, r_out=12.0
                 )
-                StarTopo = star.transform_to(
-                    coord.AltAz(obstime=obstime, location=site)
-                )
-                elev = StarTopo.alt.deg
+                photTable = aperture_photometry(data, aperture)
 
-                # Skip stars with elevation near zero
-                if elev < 5.0:
-                    continue
+                # Subtract median background in annulus from central aperture
+                sigclip = SigmaClip(sigma=5.0, maxiters=10)
+                bkgStats = ApertureStats(data, annulus, sigma_clip=sigclip)
+                bkgSum = bkgStats.median * aperture.area
+                photTable['Flux'] = (photTable['aperture_sum'] - bkgSum) / H['exptime']
                 
                 #set the acceptance threshold and record the measurement
                 delta_position = n.sum(((popt-guess)**2)[0:2])   #position diff
                 signal = popt[3]/bg       #brightness over the background level
                 sigma = popt[2]           #sigma of the gaussian
 
-                if sigma<2 and signal>25 and delta_position<1:
-                    t = [fn[-7:],hip[i],M[i],elev]
+                # if sigma<2 and signal>25 and delta_position<2:
+                if hip[i] in origStars:
+                    t = [fn[-7:],hip[i],M[i],elev,bvcol[i]]
                     t.extend(popt[:3])
                     t.append(popt[3]/H['exptime'])
+                    t.append(photTable['Flux'])
                     bestfit.append(t)
                     popt_plot_list.append(popt)
+                    xposImg.append(popt[0])
+                    yposImg.append(popt[1])
+                    nstarFinal += 1
+
+                    # Make summary figure
+                    if (filter == 'V'):
+                        fig = plt.figure(figsize=(17,5))
+                        gs = GridSpec(1,3)
+                        ax = fig.add_subplot(gs[0])
+                        bx = fig.add_subplot(gs[1])
+                        cx = fig.add_subplot(gs[2])
+
+                        # Get area of image to plot
+                        imw = 10
+                        implot = data[
+                            int(py[i]-imw):int(py[i]+imw),
+                            int(px[i]-imw):int(px[i]+imw)
+                        ]
+                        vmin,vmax = ZS.get_limits(implot)
+
+                        # Plot image in first two panels
+                        ax.imshow(data,vmin=vmin,vmax=vmax,cmap='Greys')
+                        bx.imshow(data,vmin=vmin,vmax=vmax,cmap='Greys')
+
+                        # Add initial guess and fitted centroid
+                        ax.scatter(px[i],py[i],fc='c',ec='k',s=30)
+                        bx.scatter(px[i],py[i],fc='c',ec='k',s=30)
+                        ax.scatter(popt[0],popt[1],fc='r',ec='r',marker='x',s=80)
+                        bx.scatter(popt[0],popt[1],fc='r',ec='r',marker='x',s=80)
+
+                        # Add apertures
+                        circAper1 = plt.Circle((px[i],py[i]), apRadius, ec='forestgreen', fc='None', lw=2)
+                        circAper2 = plt.Circle((px[i],py[i]), apRadius, ec='forestgreen', fc='None', lw=2)
+                        ax.add_patch(circAper1)
+                        bx.add_patch(circAper2)
+
+                        # Plot Radial Profile in third panel
+                        ropt = ((x-popt[0])**2+(y-popt[1])**2)**0.5
+                        rmod = n.arange(0.0,7.025,0.025)
+                        gmod = popt[3]/(2*n.pi*popt[2]**2)*n.exp(-(rmod**2)/(2*popt[2]**2))
+                        cx.scatter(ropt[w],f/1e3,c='k')
+                        cx.axhline(0.0,ls=':',c='k',lw=1)
+                        cx.plot(rmod, gmod/1e3, c='r')
+
+                        # Set XY limits
+                        ax.set_xlim(px[i]-imw, px[i]+imw)
+                        ax.set_ylim(py[i]-imw, py[i]+imw)
+                        bx.set_xlim(px[i]-imw, px[i]+imw)
+                        bx.set_ylim(py[i]-imw, py[i]+imw)
+                        cx.set_xlim(0,7)
+
+                        # Set XY labels
+                        ax.set_xlabel('X (pix)',fontsize=16)
+                        bx.set_xlabel('X (pix)',fontsize=16)
+                        cx.set_xlabel('Radial Distance (pix)',fontsize=16)
+                        ax.set_ylabel('Y (pix)',fontsize=16)
+                        bx.set_ylabel('Y (pix)',fontsize=16)
+                        cx.set_ylabel('Flux (10$^3$ DN)',fontsize=16)
+
+                        # Tick params
+                        ax.tick_params(which='both',labelsize=14)
+                        bx.tick_params(which='both',labelsize=14)
+                        cx.tick_params(which='both',labelsize=14)
+
+                        # Add title
+                        title = f"HIP {hip[i]} in Image {fn[-9:]}, {dnight}"
+                        plt.suptitle(title,fontsize=18,y=0.98)
+
+                        figname = f'{calsetp}cutouts/cutout_{hip[i]}.png'
+                        plt.savefig(figname, dpi=100, bbox_inches='tight')
+                        plt.close()
+                    
+                        pcount += 1
             
             #plot the image overlaid with the bestfit contours
             if int(fn[-7:-4]) == plot_img:
@@ -388,23 +531,35 @@ def extinction(dnight, sets, filter, plot_img=0):
             #reading in the solved plate scale is x and y image plane
             xscale.append(abs(H['CDELT1']))
             yscale.append(abs(H['CDELT2']))
-            
-        
+
         # Fit for the zeropoint and extinction coefficient
         stars = n.array((bestfit),dtype=object)
         M = n.float64(stars[:,2])            #V_mag, absolute
         elev = n.float64(stars[:,3])         #elevation[deg]
-        flux = n.float64(stars[:,7])         #flux, background subtracted [DN]
-        # airmass = 1/n.sin(n.deg2rad(elev))   #airmass
+        flux = n.float64(stars[:,8])         #flux, background subtracted [DN]
         m = -2.5*n.log10(flux)               #v_mag, apparent
+        airmass = 1/n.sin(n.deg2rad(elev))   #airmass
+
+        # Apply distortion correction (?? not really sure what this is about)
+        # xpos = stars[:,5].astype(n.float64)
+        # ypos = stars[:,6].astype(n.float64)
+        # offcenter = n.sqrt((xpos-511)**2 + (ypos-511)**2)
+        # mcorr = n.zeros_like(m, dtype=n.float64)
+        # mcorr[offcenter > 340] = 0.0003 * (offcenter[offcenter > 340] - 340)
+        # m += mcorr
+
+        # # Apply color correction
+        # color = stars[:,4].astype(n.float64)
+        # mdiff = M - m
+        # mdiff += 0.04 * color
 
         # Use Hardie (1962) equation for airmass
-        za = 90. - elev
-        secantZ = 1./n.cos(n.deg2rad(za))
-        am1 = 0.0018167 * (secantZ - 1.0)
-        am2 = 0.0028750 * (secantZ - 1.0)**2
-        am3 = 0.0008083 * (secantZ - 1.0)**3
-        airmass = secantZ - am1 - am2 - am3
+        # za = 90. - elev
+        # secantZ = 1./n.cos(n.deg2rad(za))
+        # am1 = 0.0018167 * (secantZ - 1.0)
+        # am2 = 0.0028750 * (secantZ - 1.0)**2
+        # am3 = 0.0008083 * (secantZ - 1.0)**3
+        # airmass = secantZ - am1 - am2 - am3
         
         # Perform fit with sigma-clipping
         param, cov, clipped_index = poly_sigfit(
@@ -414,9 +569,17 @@ def extinction(dnight, sets, filter, plot_img=0):
         c_err, z_err = n.sqrt(cov.diagonal()) # uncertainties
         Nfit = sum(clipped_index)             # Number of sources used in fit
 
+        # Print numbers of stars
+        print(f'Catalog Stars            : {nstarCatalog}')
+        print(f'Stars on Images          : {nstarOnImage}')
+        print(f'Stars Above Horizon      : {nstarAboveHorizon}')
+        print(f'Stars Within Flux Limits : {nstarFluxLimits}')
+        print(f'Stars Passed             : {nstarFinal}')
+        print(f'Stars Used in Fit        : {Nfit}')
+
         # Save the list of stars used for calculating the zeropoint
-        fmt = ['%7s','%8s','%7.2f','%9.2f','%7.1f','%6.1f','%5.2f','%7.f']
-        H = 'File    Star   Magnitude Elevation   X      Y   sigma flux[DN/s]'
+        fmt = ['%7s','%8s','%7.2f','%9.2f','%7.2f','%7.1f','%6.1f','%5.2f','%8.f','%8.f']
+        H = 'File    Star   Magnitude Elevation   B-V   X      Y      sigma   PSF_flux  Aper_flux'
         fileout = filepath.calibdata+dnight+'/extinction_stars_%s_%s.txt'\
                   %(filter,s[0])
         n.savetxt(fileout,stars[clipped_index,:],fmt=fmt,header=H)
