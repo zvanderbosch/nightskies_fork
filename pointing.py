@@ -165,7 +165,10 @@ def pointing_err(dnight, sets):
                 H = fits.getheader(fn,ext=0)
             
             #calculate the pointing error only if the plate is solved
-            if ('PLTSOLVD' not in H) | (H['PLTSOLVD'] == False): 
+            if 'PLTSOLVD' not in H:
+                notsolved.append(fn)
+                continue
+            elif H['PLTSOLVD'] == False:
                 notsolved.append(fn)
                 continue
             solved.append(int(fn[-7:-4]))
