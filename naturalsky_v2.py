@@ -1524,7 +1524,7 @@ class MosaicAnalysis(_MosaicAnalysis):
         plt.title(title, fontsize=18, fontweight='bold')
 
         # Axis limits
-        ax.set_xlim(xlow,xupp)
+        ax.set_xlim(xlow-0.5,xupp+0.5)
         ax.set_ylim(0,ymax)
 
         # Save histogram figure
