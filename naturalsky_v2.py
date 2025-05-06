@@ -1436,9 +1436,24 @@ class MosaicAnalysis(_MosaicAnalysis):
         fig = plt.figure(figsize=(24,6))
         ax = fig.add_subplot(111)
 
+        # Figure out what bins to use
+        skyglowPct95 = stats[stats['Mosaic_Name'] == 'skyglow']['95th Percentile'].iloc[0]
+        if skyglowPct95 < 200:
+            xlow = -49.5
+            xupp = 199.5
+        elif skyglowPct95 < 1000:
+            xlow = -249.5
+            xupp = 999.5
+        elif skyglowPct95 < 5000:
+            xlow = -1249.5
+            xupp = 4999.5
+        else:
+            xlow = -2449.5
+            xupp = 9999.5
+
         # Plot histogram
         ax.hist(
-            histarray, bins=249, range=(-49.5,199.5),
+            histarray, bins=249, range=(xlow,xupp),
             histtype='bar',facecolor='b',edgecolor='k'
         )
 
@@ -1451,35 +1466,49 @@ class MosaicAnalysis(_MosaicAnalysis):
         font3 = {'family':'monospace', 'weight':'bold'   ,'size': 15}
 
         # Add stats as text
-        xloc = -49
+        # xloc = -49
+        xloc = 0.01
         ymax = ax.get_ylim()[1]
         skyglowIdx = (stats.Mosaic_Name == 'skyglow')
-        ax.text(xloc, 0.95*ymax, 
-            f"{'Mean allsky (nL)':19s}{stats['Allsky Average Luminance'][skyglowIdx].iloc[0]:>7.2f}", fontdict=font1)
-        ax.text(xloc, 0.90*ymax, 
-            f"{'Median allsky (nL)':19s}{stats['Median'][skyglowIdx].iloc[0]:>7.2f}", fontdict=font1)
-        ax.text(xloc, 0.85*ymax, 
-            f"{'Mean zenith (nL)':19s}{stats['Zenith'][skyglowIdx].iloc[0]:>7.2f}", fontdict=font1)
-        ax.text(xloc, 0.78*ymax, 
-            "Parameters:", fontdict=font1)
-        ax.text(xloc, 0.72*ymax, 
-            f"{'Emit Lyr Ht (km)':19s}{self.airglow_height:>7.2f}", fontdict=font2)
-        ax.text(xloc, 0.67*ymax, 
-            f"{'Ext Coeff':19s}{self.extinction:>7.3f}", fontdict=font2)
-        ax.text(xloc, 0.62*ymax, 
-            f"{'Zenith Airglow (nL)':19s}{self.airglow_zenith:>7.2f}", fontdict=font2)
-        ax.text(xloc, 0.57*ymax, 
-            f"{'A.G. Const':19s}{self.airglow_ext:>7.2f}", fontdict=font2)
-        ax.text(xloc, 0.52*ymax, 
-            f"{'Zod Const':19s}{self.zod_ext:>7.2f}", fontdict=font2)
-        ax.text(xloc, 0.47*ymax, 
-            f"{'Gal Const':19s}{self.gal_ext:>7.2f}", fontdict=font2)
-        ax.text(xloc, 0.42*ymax, 
-            f"{'A.D.L. Mult':19s}{self.adl_factor:>7.2f}", fontdict=font2)
-        ax.text(xloc, 0.32*ymax, 
-            f"{'LUM ALR':14s}{stats['Lum_ALR'][skyglowIdx].iloc[0]:>5.2f}", fontdict=font3)
-        ax.text(xloc, 0.25*ymax, 
-            f"{'CLIP ILL ALR':14s}{stats['Illum_ALR'][skyglowIdx].iloc[0]:>5.2f}", fontdict=font3)
+        ax.text(xloc, 0.95, 
+            f"{'Mean allsky (nL)':19s}{stats['Allsky Average Luminance'][skyglowIdx].iloc[0]:>7.2f}", 
+            fontdict=font1, transform=ax.transAxes)
+        ax.text(xloc, 0.90, 
+            f"{'Median allsky (nL)':19s}{stats['Median'][skyglowIdx].iloc[0]:>7.2f}", 
+            fontdict=font1, transform=ax.transAxes)
+        ax.text(xloc, 0.85, 
+            f"{'Mean zenith (nL)':19s}{stats['Zenith'][skyglowIdx].iloc[0]:>7.2f}", 
+            fontdict=font1, transform=ax.transAxes)
+        ax.text(xloc, 0.78, 
+            f"Parameters:", 
+            fontdict=font1, transform=ax.transAxes)
+        ax.text(xloc, 0.72, 
+            f"{'Emit Lyr Ht (km)':19s}{self.airglow_height:>7.2f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.67, 
+            f"{'Ext Coeff':19s}{self.extinction:>7.3f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.62, 
+            f"{'Zenith Airglow (nL)':19s}{self.airglow_zenith:>7.2f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.57, 
+            f"{'A.G. Const':19s}{self.airglow_ext:>7.2f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.52, 
+            f"{'Zod Const':19s}{self.zod_ext:>7.2f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.47, 
+            f"{'Gal Const':19s}{self.gal_ext:>7.2f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.42, 
+            f"{'A.D.L. Mult':19s}{self.adl_factor:>7.2f}", 
+            fontdict=font2, transform=ax.transAxes)
+        ax.text(xloc, 0.32, 
+            f"{'LUM ALR':14s}{stats['Lum_ALR'][skyglowIdx].iloc[0]:>5.2f}", 
+            fontdict=font3, transform=ax.transAxes)
+        ax.text(xloc, 0.25, 
+            f"{'CLIP ILL ALR':14s}{stats['Illum_ALR'][skyglowIdx].iloc[0]:>5.2f}",
+            fontdict=font3, transform=ax.transAxes)
         
         # Add lines indicating clipping limits
         ax.axvline( 8.6, linewidth=1.5, color='r', ls = ':')
@@ -1495,7 +1524,8 @@ class MosaicAnalysis(_MosaicAnalysis):
         plt.title(title, fontsize=18, fontweight='bold')
 
         # Axis limits
-        ax.set_xlim(-50,200)
+        ax.set_xlim(xlow,xupp)
+        ax.set_ylim(0,ymax)
 
         # Save histogram figure
         figFile = f"{gridsetp}/S_0{self.set}/hist.png"
