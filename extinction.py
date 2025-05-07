@@ -289,10 +289,11 @@ def extinction(dnight, sets, filter, plot_img=0):
         )
         exp = H['exptime'] #[s]
 
-        # Check for figure directory
+        # Check for figure directory if image cutout plotting is enabled.
+        # Plotting will usually be disabled except for diagnostic pusposes.
         makePlots = False
-        figsetp = f"{calsetp}cutouts/"
         if makePlots:
+            figsetp = f"{calsetp}cutouts/"
             if os.path.exists(figsetp):
                 shutil.rmtree(figsetp, onerror=remove_readonly)
             os.makedirs(figsetp)
