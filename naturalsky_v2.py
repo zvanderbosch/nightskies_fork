@@ -1437,14 +1437,14 @@ class MosaicAnalysis(_MosaicAnalysis):
         ax = fig.add_subplot(111)
 
         # Figure out what bins to use
-        skyglowPct95 = stats[stats['Mosaic_Name'] == 'skyglow']['95th Percentile'].iloc[0]
-        if skyglowPct95 < 200:
+        skyglowPct80 = stats[stats['Mosaic_Name'] == 'skyglow']['80th Percentile'].iloc[0]
+        if skyglowPct80 < 200:
             xlow = -49.5
             xupp = 199.5
-        elif skyglowPct95 < 1000:
+        elif skyglowPct80 < 1000:
             xlow = -249.5
             xupp = 999.5
-        elif skyglowPct95 < 5000:
+        elif skyglowPct80 < 5000:
             xlow = -1249.5
             xupp = 4999.5
         else:
