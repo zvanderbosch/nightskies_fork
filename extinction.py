@@ -48,6 +48,7 @@ from matplotlib.patches import Circle,Annulus
 from astropy.visualization import ZScaleInterval
 
 import os
+import stat
 import shutil
 import astropy.units as u
 import astropy.wcs as wcs
@@ -287,11 +288,18 @@ def extinction(dnight, sets, filter, plot_img=0):
             height = H['ELEVATIO']*u.m
         )
         exp = H['exptime'] #[s]
+
+        # Check for figure directory
+        makePlots = False
+        figsetp = f"{calsetp}cutouts/"
+        if makePlots:
+            if os.path.exists(figsetp):
+                shutil.rmtree(figsetp, onerror=remove_readonly)
+            os.makedirs(figsetp)
                 
         # loop through each file in the set
         print(f'{PREFIX}Processing images for {filter}-band Set {s[0]}...')
         images = sorted(glob(calsetp+'ib???.fit'))
-        makePlots = False
         for imnum in range(len(images)):
 
             # Get header and create WCS object
@@ -448,11 +456,6 @@ def extinction(dnight, sets, filter, plot_img=0):
                     # Make summary figure showing image cutouts
                     if makePlots:
 
-                        # Check for figure directory
-                        if os.path.exists(f"{calsetp}cutouts/"):
-                            shutil.rmtree(gridsetp, onerror=remove_readonly)
-                        os.makedirs(f"{calsetp}cutouts/")
-
                         fig = plt.figure(figsize=(17,5))
                         gs = GridSpec(1,3)
                         ax = fig.add_subplot(gs[0])
@@ -547,7 +550,7 @@ def extinction(dnight, sets, filter, plot_img=0):
                         bx.set_title(titleb, fontsize=15)
                         cx.set_title(titlec, fontsize=15)
 
-                        figname = f'{calsetp}cutouts/cutout_{hip[i]}_aper{apRadius:.0f}.png'
+                        figname = f'{figsetp}cutout_{hip[i]}_aper{apRadius:.0f}.png'
                         plt.savefig(figname, dpi=200, bbox_inches='tight')
                         plt.close()
             
