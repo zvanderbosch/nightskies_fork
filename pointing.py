@@ -243,8 +243,6 @@ def pointing_err(dnight, sets):
         # Status update
         print(f'{PREFIX}Set {s[0]} COMPLETE')
 
-        
-
 
 if __name__ == "__main__":
     # pass
