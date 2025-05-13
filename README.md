@@ -45,12 +45,11 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
    - `conda config --add envs_dirs “C:\Program Files\ArcGIS\Pro\bin\Python\envs”`
 2. Clone **arcgispro-py3** to create a new environment named **ccd**:
    - `conda create --clone arcgispro-py3 --name ccd`
-3. Copy the **pinned** file from the **arcgispro-py3** environment's conda-meta folder to the **ccd** environment's conda-meta folder. This file ensures that certain package versions are held fixed when additional packages are installed so that arcpy remains functional.
+3. Copy the **pinned** file from the **arcgispro-py3** environment to the **ccd** environment:
    - `cp "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\conda-meta\pinned" "C:\Users\<YourUsername>\AppData\Local\miniforge3\envs\ccd\conda-meta"`
 4. Install other necessary packages into **ccd** environment:
    - `conda activate ccd`
    - `conda install astropy scikit-image photutils`
-   - All other package dependencies are either pre-installed within the **arcgispro-py3** environment or are installed along with astropy, scikit-image, and photutils.
 
 **Troubleshooting your Installation**
 
