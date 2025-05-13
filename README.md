@@ -85,21 +85,21 @@ CCD
 
 CCD 
 │
-└───Data
-│   │
-│   └───calibdata
-│   └───fielddata
-│   └───graphics
-│   └───griddata
-│   └───maps
-│   └───processing
-│   └───rasters
-│   └───standards
+└─── Data
+│    │
+│    └─── calibdata
+│    └─── fielddata
+│    └─── graphics
+│    └─── griddata
+│    └─── maps
+│    └─── processing
+│    └─── rasters
+│    └─── standards
 │   
-└───Images
-    │
-    └───Linearity Curves
-    └───Master
+└─── Images
+     │
+     └─── Linearity Curves
+     └─── Master
 ```
 
 ## Processing Flow Chart
