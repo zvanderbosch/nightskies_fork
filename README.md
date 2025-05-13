@@ -56,11 +56,11 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
 Below are a few common issues that have been encountered during installation or during initial attempts at executing the processing pipeline:
 
 1. SSL Certificate Errors during package installation or when downloading online content:
-   - Try installing the pip-system-certs python package, using the `--cert` command-line-argument if needed to pass in a certificate file:
+   - Try installing the pip-system-certs package, using the `--cert` argument if needed to pass in a certificate file:
       - `pip install pip-system-certs`
       - `pip install pip-system-certs --cert="path/to/CertFile.cer"`
 2. lxml DLL error when running arcpy commands:
-   - Try uninstalling and re-installing the lxml python package, making note of which version (e.g. 5.1.0) of lxml is being used:
+   - Uninstall and re-install the lxml package, making note of which version (e.g. 5.1.0) of lxml is being used:
       - `pip uninstall lxml`
       - `pip install lxml==5.1.0`
 
