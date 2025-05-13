@@ -67,22 +67,8 @@ Below are a few common issues that have been encountered during installation or 
 
 ## Preparing Data For Processing
 
-The basic directory structure assumed by the pipeline
+The directory structure assumed by the pipeline looks as follows:
 ```
-CCD
-├── Data
-│   ├── calibdata
-│   ├── fielddata
-│   ├── graphics
-│   ├── griddata
-│   ├── maps
-│   ├── processing
-│   ├── rasters
-│   ├── standards
-├── Images
-│   ├── Linearity Curves
-│   ├── Master
-
 CCD 
 │
 └─── Data
