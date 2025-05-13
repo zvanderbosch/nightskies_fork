@@ -39,7 +39,7 @@
 
 **Setting up a Conda Environment**
 
-ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** that is setup to use arcpy. The easiest way to get arcpy functionality in a new conda environment is to clone the **arcgispro-py3** environment and then install additional packages as needed. The following steps provide setup instructions for a Windows machine:
+ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** that is setup to use arcpy. The easiest way to get arcpy functionality into a new conda environment is to clone the **arcgispro-py3** environment and then install additional packages as needed. The following steps provide setup instructions for a Windows machine:
 
 1. Add path to **arcgispro-py3** environment to your conda configuration file:
    - `conda config --add envs_dirs “C:\Program Files\ArcGIS\Pro\bin\Python\envs”`
@@ -50,13 +50,19 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
 4. Install other necessary packages into **ccd** environment:
    - `conda activate ccd`
    - `conda install astropy scikit-image photutils`
-   - All other package dependencies are either pre-installed within the **arcgispro-py3** environment are are installed along with astropy, scikit-image, and photutils.
+   - All other package dependencies are either pre-installed within the **arcgispro-py3** environment or are installed along with astropy, scikit-image, and photutils.
 
 **Troubleshooting your Installation**
 
 Below are a few common issues that have been encountered during installation or during initial attempts at executing the processing pipeline:
 
-
+1. SSL Certificate Errors during 
+   - Try installing the pip-system-certs python package:
+      - `pip install pip-system-certs`
+2. lxml DLL error when running arcpy commands
+   - Try uninstalling and re-installing the lxml python package, making note of which version (e.g. 5.1.0) of lxml is being used:
+      - `pip uninstall lxml`
+      - `pip install lxml==5.1.0`
 
 
 ## Preparing Data For Processing
