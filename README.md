@@ -59,7 +59,7 @@ Below are a few common issues that have been encountered during installation or 
 1. SSL Certificate Errors during package installation or when downloading online content:
    - Try installing the pip-system-certs python package, using the `--cert` command-line-argument if needed to pass in a certificate file:
       - `pip install pip-system-certs`
-      - `pip install pip-system-certs --cert="path/to/DOIRootCA.cer"`
+      - `pip install pip-system-certs --cert="path/to/CertFile.cer"`
 2. lxml DLL error when running arcpy commands:
    - Try uninstalling and re-installing the lxml python package, making note of which version (e.g. 5.1.0) of lxml is being used:
       - `pip uninstall lxml`
