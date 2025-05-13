@@ -68,23 +68,24 @@ Below are a few common issues that have been encountered during installation or 
 ## Preparing Data For Processing
 
 ```
-├── src
-│   ├── controller
-│   │   ├── **/*.css
-│   ├── views
-│   ├── model
-│   ├── index.js
-├── public
-│   ├── css
-│   │   ├── **/*.css
-│   ├── images
-│   ├── js
-│   ├── index.html
-├── dist (or build
-├── node_modules
-├── package.json
-├── package-lock.json
-└── .gitignore
+CCD
+├── Data
+│   ├── calibdata
+│   ├── fielddata
+│   ├── graphics
+│   ├── griddata
+│   ├── maps
+│   ├── processing
+│   ├── rasters
+│   ├── standards
+├── Images
+│   ├── Linearity Curves
+│   │   ├── ML*.txt
+│   │   ├── sbig*.txt
+│   ├── Master
+│   │   ├── Flat Files
+│   │   ├── Bias Files
+│   │   ├── Thermal Files
 ```
 
 ## Processing Flow Chart
