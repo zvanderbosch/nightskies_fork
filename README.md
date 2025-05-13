@@ -67,6 +67,25 @@ Below are a few common issues that have been encountered during installation or 
 
 ## Preparing Data For Processing
 
+```
+project
+│   README.md
+│   file001.txt    
+│
+└───folder1
+│   │   file011.txt
+│   │   file012.txt
+│   │
+│   └───subfolder1
+│       │   file111.txt
+│       │   file112.txt
+│       │   ...
+│   
+└───folder2
+    │   file021.txt
+    │   file022.txt
+```
+
 ## Processing Flow Chart
 
 ![processing flow chart](https://github.com/liweihung/nightskies/blob/master/static/FlowChart.png)
