@@ -67,6 +67,7 @@ Below are a few common issues that have been encountered during installation or 
 
 ## Preparing Data For Processing
 
+The basic directory structure assumed by the pipeline
 ```
 CCD
 ├── Data
@@ -80,12 +81,7 @@ CCD
 │   ├── standards
 ├── Images
 │   ├── Linearity Curves
-│   │   ├── ML*.txt
-│   │   ├── sbig*.txt
 │   ├── Master
-│   │   ├── Flat Files
-│   │   ├── Bias Files
-│   │   ├── Thermal Files
 ```
 
 ## Processing Flow Chart
