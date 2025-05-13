@@ -45,8 +45,8 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
    - `conda config --add envs_dirs “C:\Program Files\ArcGIS\Pro\bin\Python\envs”`
 2. Clone **arcgispro-py3** to create a new environment named **ccd**:
    - `conda create --clone arcgispro-py3 --name ccd`
-3. Copy the **pinned** file from the **arcgispro-py3** environment's conda-meta folder to the **ccd** environment's conda-meta folder. This file ensures that certain package versions are fixed when additional packages are installed so that arcpy remains functional.
-   - **pinned** file can be found at `"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\conda-meta\pinned"`
+3. Copy the **pinned** file from the **arcgispro-py3** environment's conda-meta folder to the **ccd** environment's conda-meta folder. This file ensures that certain package versions are held fixed when additional packages are installed so that arcpy remains functional.
+   - `cp "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\conda-meta\pinned" "C:\Users\<YourUsername>\AppData\Local\miniforge3\envs\ccd\conda-meta"`
 4. Install other necessary packages into **ccd** environment:
    - `conda activate ccd`
    - `conda install astropy scikit-image photutils`
@@ -56,10 +56,11 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
 
 Below are a few common issues that have been encountered during installation or during initial attempts at executing the processing pipeline:
 
-1. SSL Certificate Errors during 
-   - Try installing the pip-system-certs python package:
+1. SSL Certificate Errors during package installation or when downloading online content:
+   - Try installing the pip-system-certs python package, using the `--cert` command-line-argument if needed to pass in a certificate file:
       - `pip install pip-system-certs`
-2. lxml DLL error when running arcpy commands
+      - `pip install pip-system-certs --cert="path/to/DOIRootCA.cer"`
+2. lxml DLL error when running arcpy commands:
    - Try uninstalling and re-installing the lxml python package, making note of which version (e.g. 5.1.0) of lxml is being used:
       - `pip uninstall lxml`
       - `pip install lxml==5.1.0`
