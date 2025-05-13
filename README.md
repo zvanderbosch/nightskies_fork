@@ -39,10 +39,14 @@
 
 **Setting up a Conda Environment**
 
-ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** that is setup to use arcpy. The easiest way to get arcpy functionality in a new conda environment is to clone the **arcgispro-py3** environment and then install additional packages as needed:
+ArcGIS Pro comes with a pre-built conda environment called `arcgispro-py3` that is setup to use arcpy. The easiest way to get arcpy functionality in a new conda environment is to clone the `arcgispro-py3` environment and then install additional packages as needed. The following steps provide setup instructions for a Windows machine:
 
-1. One time only: add path to arcgispro-py3 environment to your conda configuration file:
-   - (Windows): `conda config --add envs_dirs “C:\Program Files\ArcGIS\Pro\bin\Python\envs”`
+1. Add path to `arcgispro-py3` environment to your conda configuration file:
+   - `conda config --add envs_dirs “C:\Program Files\ArcGIS\Pro\bin\Python\envs”`
+2. Clone `arcgispro-py3` to create a new environment named `ccd`:
+   - `conda create --clone arcgispro-py3 --name ccd`
+3. Copy the `pinned` file from the `arcgispro-py3` environments 
+
 
 ## Preparing Data For Processing
 
