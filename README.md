@@ -85,19 +85,31 @@ CCD
      └─── Master
 ```
 
-Raw data that will be processed by the pipeline lives in the `fielddata` directory, where each night of data should separated into individual sub-folders named using the 4-letter park code and UTC date of data collection (e.g. ROMO241004 for data collected from Rocky Mountain NP on 2024 October 4th). With a night's data folder will be additional sub-folder, one per data set collected:
+Raw data that will be processed by the pipeline lives in the `CCD --> Data --> fielddata` directory, where each night of data should be separated into individual sub-folders named using the 4-letter park code and UTC date of data collection (e.g. ROMO241004 for data collected from Rocky Mountain NP on 2024 October 4th). Within a night's data folder will be additional sub-folders, one per data set collected:
 
 ```
 CCD 
 └─── Data
 │    └─── fielddata
 │         └─── ROMO241004
-│              └─── Set1
-│              └─── Set2
-│              └─── Set3
+│              └─── 1st
+│              └─── 2nd
+│              └─── 3rd
 │              └─── ...
 ```
 
+Before running the processing pipeline, you will need to:
+
+1. Ensure raw data is placed in the `fielddata` directory.
+2. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
+3. Modify the `filelist.txt` file, located in the `CCD --> Data --> fielddata` directory.
+   - `Dataset` = Name of data night to process (e.g. ROMO241004)
+   - `V_band`: Yes or No, whether to process V-band images
+   - `B_band`: Yes or no, whether to process B-band images
+   - `Flat_V`: Name of master flat file used to calibrate V-band images
+   - `Flat_B`: Name of master flat file used to calibrate B-band images
+   - `Curve`: Name of linearity response curve file used to calibrated images
+   - `Processor`: Name of person running the processing pipeline, first initial + last name (e.g. Z_Vanderbosch)
 
 
 ## Processing Flow Chart
