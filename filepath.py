@@ -34,10 +34,10 @@ lincurve = f"{base}/Images/Linearity Curves/"
 flats = f"{base}/Images/Master/"
 
 # Directory for raw images
-rawdata = f"{base}/Data/FieldData/"
+rawdata = f"{base}/Data/fielddata/"
 
 # Directory for calibrated images & data products
-calibdata = f"{base}/Data/Calibdata/"
+calibdata = f"{base}/Data/calibdata/"
 
 # Directory for mosaicked images
 griddata = f"{base}/Data/griddata/"
@@ -46,7 +46,7 @@ griddata = f"{base}/Data/griddata/"
 tiff = f"{base}/Data/rasters/tiff_tfws/"
 
 # Directory containing standard star catalogs
-standards = f"{base}/Data/Standards/"
+standards = f"{base}/Data/standards/"
 
 # Directory containing galactic/zodiacal model rasters
 rasters = f"{base}/Data/rasters/"
