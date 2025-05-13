@@ -86,7 +86,6 @@ CCD
 CCD 
 │
 └─── Data
-│    │
 │    └─── calibdata
 │    └─── fielddata
 │    └─── graphics
@@ -97,7 +96,6 @@ CCD
 │    └─── standards
 │   
 └─── Images
-     │
      └─── Linearity Curves
      └─── Master
 ```
