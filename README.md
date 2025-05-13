@@ -39,13 +39,24 @@
 
 **Setting up a Conda Environment**
 
-ArcGIS Pro comes with a pre-built conda environment called `arcgispro-py3` that is setup to use arcpy. The easiest way to get arcpy functionality in a new conda environment is to clone the `arcgispro-py3` environment and then install additional packages as needed. The following steps provide setup instructions for a Windows machine:
+ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** that is setup to use arcpy. The easiest way to get arcpy functionality in a new conda environment is to clone the **arcgispro-py3** environment and then install additional packages as needed. The following steps provide setup instructions for a Windows machine:
 
-1. Add path to `arcgispro-py3` environment to your conda configuration file:
+1. Add path to **arcgispro-py3** environment to your conda configuration file:
    - `conda config --add envs_dirs “C:\Program Files\ArcGIS\Pro\bin\Python\envs”`
-2. Clone `arcgispro-py3` to create a new environment named `ccd`:
+2. Clone **arcgispro-py3** to create a new environment named **ccd**:
    - `conda create --clone arcgispro-py3 --name ccd`
-3. Copy the `pinned` file from the `arcgispro-py3` environments 
+3. Copy the **pinned** file from the **arcgispro-py3** environment's conda-meta folder to the **ccd** environment's conda-meta folder. This file ensures that certain package versions are fixed when additional packages are installed so that arcpy remains functional.
+   - **pinned** file can be found at `"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\conda-meta\pinned"`
+4. Install other necessary packages into **ccd** environment:
+   - `conda activate ccd`
+   - `conda install astropy scikit-image photutils`
+   - All other package dependencies are either pre-installed within the **arcgispro-py3** environment are are installed along with astropy, scikit-image, and photutils.
+
+**Troubleshooting your Installation**
+
+Below are a few common issues that have been encountered during installation or during initial attempts at executing the processing pipeline:
+
+
 
 
 ## Preparing Data For Processing
