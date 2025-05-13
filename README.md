@@ -70,7 +70,6 @@ Below are a few common issues that have been encountered during installation or 
 The directory structure assumed by the pipeline looks as follows:
 ```
 CCD 
-│
 └─── Data
 │    └─── calibdata
 │    └─── fielddata
