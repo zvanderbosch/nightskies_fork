@@ -60,14 +60,15 @@ def clear_scratch(scratch_dir):
             os.rmdir(os.path.join(root, name))
 
 
-def calculate_illuminance(dnight,sets):
+def calculate_illuminance(dnight,sets,filter):
     '''
     Calculate illumninace of anthropogenic skyglow mosaic
     '''
 
-    # Define some paths of interest
-    calsetp = f"{filepath.calibdata}{dnight}"
-    gridsetp = f"{filepath.griddata}{dnight}"
+    # Filter paths
+    F = {'V':'', 'B':'B/'}
+
+    # Define path to scratch workspace
     scratchsetp = f"{filepath.rasters}scratch_metrics/"
 
     # Set ArcGIS working directories
@@ -84,7 +85,7 @@ def calculate_illuminance(dnight,sets):
     zoneFile = f'{filepath.rasters}shapefiles/allbands.shp'
     za70File = f'{filepath.rasters}shapefiles/70zamaskf.shp'
     za80File = f'{filepath.rasters}shapefiles/80zamaskf.shp'
-    maskRasterFile = f"{gridsetp}mask/maskd.tif"
+    maskRasterFile = f"{filepath.griddata}{dnight}/mask/maskd.tif"
 
     # Load in the mask raster
     maskRaster = arcpy.sa.Raster(maskRasterFile)
@@ -92,12 +93,12 @@ def calculate_illuminance(dnight,sets):
     # Loop through each data set
     for s in sets:
 
-        # Set path for dataset
+        # Set path for grid datasets
         setnum = int(s[0])
-        calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/"
+        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}"
 
         # Load in anthropogenic skyglow mosaic in nano-Lamberts [nL]
-        anthRaster = arcpy.sa.Raster(f"{calsetp}skyglow/anthlightnl")
+        anthRaster = arcpy.sa.Raster(f"{gridsetp}skyglow/anthlightnl")
 
         # Clip mosaic to 70 and 80 zenith-angle limits
         arcpy.management.Clip(
@@ -125,7 +126,7 @@ def calculate_illuminance(dnight,sets):
         for i,mosaic in enumerate(mosaicList):
             
             # Define output table
-            outputTable = f"{calsetp}skyhemis{i}.dbf"
+            outputTable = f"{gridsetp}skyhemis{i}.dbf"
 
             # Calculate zonal stsatistics
             zonalStats = arcpy.sa.ZonalStatisticsAsTable(
