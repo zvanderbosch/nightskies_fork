@@ -79,12 +79,12 @@ CCD
 │    └─── graphics                  # Final images of all-sky observed and anthropogenic skyglow
 │    └─── griddata                  # ArcGIS grids and mosaics
 │    └─── maps                      # ArcGIS map templates for producing graphics
-│    └─── rasters                   # Workspaces and master input ArcGIS grids for natural sky modeling
-│    │    └─── scratch_fullres      # ArcGIS workspace directory for full-resolution mosaic construction
-│    │    └─── scratch_galactic     # ArcGIS workspace directory for Galactic model  mosaic construction
-│    │    └─── scratch_median       # ArcGIS workspace directory for median-filtered mosaic construction
-│    │    └─── scratch_natsky       # ArcGIS workspace directory for natural sky     mosaic construction
-│    │    └─── scratch_zodiacal     # ArcGIS workspace directory for Zodiacal model  mosaic construction
+│    └─── rasters                   # Workspaces and master ArcGIS grids for natural sky modeling
+│    │    └─── scratch_fullres      # ArcGIS workspace for full-resolution mosaic construction
+│    │    └─── scratch_galactic     # ArcGIS workspace for Galactic model  mosaic construction
+│    │    └─── scratch_median       # ArcGIS workspace for median-filtered mosaic construction
+│    │    └─── scratch_natsky       # ArcGIS workspace for natural sky     mosaic construction
+│    │    └─── scratch_zodiacal     # ArcGIS workspace for Zodiacal model  mosaic construction
 │    └─── standards                 # Standard star catalogs for photometric calibration
 │ 
 └─── Images
