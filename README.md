@@ -32,13 +32,14 @@
 
 ## Required Software and Install Procedures
 
-**Required Software**
+### Required Software
   - ArcGIS Pro 3.3 or later
+  - Adobe Photoshop
   - conda (recommened to use [Miniforge](https://github.com/conda-forge/miniforge) for new installs)
   - Python packages:
     - `arcpy astropy matplotlib scikit-image photutils numpy pandas scipy pillow`
 
-**Setting up a Conda Environment**
+### Setting up a Conda Environment
 
 ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** that is setup to use arcpy. The easiest way to get arcpy functionality into a new conda environment is to clone the **arcgispro-py3** environment and then install additional packages as needed. The following steps provide setup instructions for a Windows machine:
 
@@ -52,7 +53,7 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
    - `conda activate ccd`
    - `conda install astropy scikit-image photutils`
 
-**Troubleshooting your Installation**
+### Troubleshooting your Installation
 
 Below are a few common issues that have been encountered during installation or during initial attempts at executing the processing pipeline:
 
@@ -120,6 +121,13 @@ Before running the processing pipeline, you will need to:
    - `Processor`: Name of person running the processing pipeline, first initial + last name (e.g. J_Doe)
 
 ## Running the Pipeline
+
+Pipeline operation is broken down into four main steps:
+
+1. `process_images.py`: Calibrate raw images, solve image coordinates, stitch images together to create all-sky mosaics, generate corresponding Galactic and Zodiacal model mosaics.
+2. `Adobe Photoshop`: Create the terrain mask using Adobe Photoshop
+3. `naturalsky.py`: Generate combined natural sky model and subtract from observed all-sky mosaics to create anthropogenic skyglow mosaic.
+4. `process_metrics.py`: Calculate complete set of sky brightness metrics and generate final output images.
 
 
 
