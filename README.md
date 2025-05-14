@@ -137,7 +137,7 @@ conda activate ccd
 cd "\path\to\pipeline\code"
 python process_images.py
 ```
-Create the terrain mask in Adobe Photoshop by opening and editing the mask.tif file saved in `CCD --> Data --> griddata --> Night-Folder --> mask`, where `Night-Folder` would be the folder name of the dataset being processed, e.g. ROMO241004.
+- Create the terrain mask in Adobe Photoshop by opening and editing the mask.tif file saved in `CCD --> Data --> griddata --> Night-Folder --> mask`, where `Night-Folder` would be the folder name of the dataset being processed, e.g. ROMO241004.
 ```powershell
 python naturalsky.py
 python process_metrics.py
