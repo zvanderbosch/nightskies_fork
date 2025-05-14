@@ -106,7 +106,7 @@ CCD
                └─── ...
 ```
 
-Before running the processing pipeline, you will need to:
+### Before running the processing pipeline, you will need to:
 
 1. Setup up the CCD directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure, though it is empty of any data, calibration, or ArcGIS grid files you will need to run the pipeline. If you wish to run the pipeline, please [contact the Natural Sounds and Night Skies Division](https://www.nps.gov/subjects/nightskies/contactus.htm) to inquire about obtaining the necessary calibration and grid files.
 2. Ensure raw data is placed in the `fielddata` directory.
@@ -125,10 +125,23 @@ Before running the processing pipeline, you will need to:
 
 Pipeline operation is broken down into four main steps:
 
-1. `process_images.py`: Calibrate raw images, solve image coordinates, stitch images together to create all-sky mosaics, generate corresponding Galactic and Zodiacal model mosaics.
-2. `Adobe Photoshop`: Create the terrain mask using Adobe Photoshop
-3. `naturalsky.py`: Generate combined natural sky model and subtract from observed all-sky mosaics to create anthropogenic skyglow mosaic.
+1. `process_images.py`: Calibrate raw images, solve image coordinates, stitch images together to create all-sky mosaics, and generate corresponding Galactic and Zodiacal model mosaics.
+2. `Adobe Photoshop`: Create the terrain mask.
+3. `naturalsky.py`: Generate the combined natural sky model and subtract it from the observed all-sky mosaics to create an anthropogenic skyglow mosaic.
 4. `process_metrics.py`: Calculate complete set of sky brightness metrics and generate final output images.
+
+Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, a pipeline processing workflow would look like the following:
+
+```bash
+conda activate ccd
+cd "\path\to\pipeline\code"
+python process_images.py
+```
+Create the terrain mask in Adobe Photoshop by opening and editing the mask.tif file saved in `CCD --> Data --> griddata --> Night-Folder --> mask`, where `Night-Folder` would be the folder name of the dataset being processed, e.g. ROMO241004.
+```bash
+python naturalsky.py
+python process_metrics.py
+```
 
 
 
