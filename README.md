@@ -88,8 +88,8 @@ CCD
 │    └─── standards                -Standard star catalogs for photometric calibration
 │ 
 └─── Images
-     └─── Linearity Curves          # Master linearity response curves for each CCD camera
-     └─── Master                    # Master Flat, Bias, and Thermal images for each CCD camera
+     └─── Linearity Curves          # Master linearity curves per CCD camera
+     └─── Master                    # Master Flat/Bias/Thermal images per CCD camera
 ```
 
 Raw data that will be processed by the pipeline lives in the `CCD --> Data --> fielddata` directory, where each night of data should be separated into individual sub-folders named using the 4-letter park code and UTC date of data collection (e.g. ROMO241004 for data collected from Rocky Mountain NP on 2024 October 4th). Within a night's data folder will be additional sub-folders, one per data set collected:
