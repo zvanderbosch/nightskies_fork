@@ -80,6 +80,72 @@ def calculate_illuminance(dnight,sets):
     else:
         os.makedirs(scratchsetp)
 
-    # Define paths files
+    # Define paths to a few needed files
     zoneFile = f'{filepath.rasters}shapefiles/allbands.shp'
-    maskRaster = f"{gridsetp}mask/maskd.tif"
+    za70File = f'{filepath.rasters}shapefiles/70zamaskf.shp'
+    za80File = f'{filepath.rasters}shapefiles/80zamaskf.shp'
+    maskRasterFile = f"{gridsetp}mask/maskd.tif"
+
+    # Load in the mask raster
+    maskRaster = arcpy.sa.Raster(maskRasterFile)
+
+    # Loop through each data set
+    for s in sets:
+
+        # Set path for dataset
+        setnum = int(s[0])
+        calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/"
+
+        # Load in anthropogenic skyglow mosaic in nano-Lamberts [nL]
+        anthRaster = arcpy.sa.Raster(f"{calsetp}skyglow/anthlightnl")
+
+        # Clip mosaic to 70 and 80 zenith-angle limits
+        arcpy.management.Clip(
+            anthRaster,
+            "#",
+            f"anth70{setnum}",
+            za70File,
+            "#",
+            "ClippingGeometry"
+        )
+        arcpy.management.Clip(
+            anthRaster,
+            "#",
+            f"anth80{setnum}",
+            za80File,
+            "#",
+            "ClippingGeometry"
+        )
+        anthRaster70 = arcpy.sa.Raster(f"anth70{setnum}")
+        anthRaster80 = arcpy.sa.Raster(f"anth80{setnum}")
+
+        # Calculate zonal satistics for each mosaic
+        resultDict = {}
+        mosaicList = [anthRaster,anthRaster70,anthRaster80]
+        for i,mosaic in enumerate(mosaicList):
+            
+            # Define output table
+            outputTable = f"{calsetp}skyhemis{i}.dbf"
+
+            # Calculate zonal stsatistics
+            zonalStats = arcpy.sa.ZonalStatisticsAsTable(
+                maskRaster,
+                "Value",
+                mosaic,
+                outputTable,
+                "DATA",
+                "ALL"
+            )
+
+            # Extract stats from output table
+            rows = arcpy.SearchCursor(outputTable)
+            row = rows.next()
+            resultDict[f'skymaxi{i}'] = row.getValue("MAX")
+            resultDict[f'skymini{i}'] = row.getValue("MIN")
+            resultDict[f'skyave{i}'] = row.getValue("MEAN")
+            if row:
+                del row
+            if rows:
+                del rows
+        print(resultDict)
+            
