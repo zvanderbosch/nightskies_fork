@@ -70,27 +70,27 @@ Below are a few common issues that have been encountered during installation or 
 
 ## Preparing Data For Processing
 
-The directory structure assumed by the pipeline looks as follows:
+The directory structure assumed by the pipeline looks as follows, with a description of the primary contents of each folder to the right:
 ```
 CCD 
 └─── Data
-│    └─── calibdata                # Stores calibrated images and associated outputs
-│    └─── fielddata
-│    └─── graphics
-│    └─── griddata
-│    └─── maps
-│    └─── processing
-│    └─── rasters
-│    │    └─── scratch_fullres
-│    │    └─── scratch_galactic
-│    │    └─── scratch_median
-│    │    └─── scratch_natsky
-│    │    └─── scratch_zodiacal
-│    └─── standards
+│    └─── calibdata                # Calibrated images and data validation outputs
+│    └─── fielddata                # Raw images and calibration files
+│    └─── graphics                 # Final images of all-sky observed and anthropogenic skyglow
+│    └─── griddata                 # ArcGIS grids and mosaics
+│    └─── maps                     # ArcGIS map templates for producing graphics
+│    └─── processing               #
+│    └─── rasters                  # Workspaces and master input ArcGIS grids for natural sky modeling
+│    │    └─── scratch_fullres     # ArcGIS workspace directory for full-resolution mosaic construction
+│    │    └─── scratch_galactic    # ArcGIS workspace directory for Galactic model  mosaic construction
+│    │    └─── scratch_median      # ArcGIS workspace directory for median-filtered mosaic construction
+│    │    └─── scratch_natsky      # ArcGIS workspace directory for natural sky     mosaic construction
+│    │    └─── scratch_zodiacal    # ArcGIS workspace directory for Zodiacal model  mosaic construction
+│    └─── standards                # Standard star catalogs for photometric calibration
 │   
 └─── Images
-     └─── Linearity Curves
-     └─── Master
+     └─── Linearity Curves         # Master linearity response curves for each CCD camera
+     └─── Master                   # Master Flat, Bias, and Thermal images for each CCD camera
 ```
 
 Raw data that will be processed by the pipeline lives in the `CCD --> Data --> fielddata` directory, where each night of data should be separated into individual sub-folders named using the 4-letter park code and UTC date of data collection (e.g. ROMO241004 for data collected from Rocky Mountain NP on 2024 October 4th). Within a night's data folder will be additional sub-folders, one per data set collected:
@@ -132,8 +132,6 @@ Pipeline operation is broken down into four main steps:
 
 Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, an example pipeline processing workflow for a dataset named **ROMO241004** would look like the following:
 
-<div style="background-color:rgb(229, 255, 204);">
-
 > ```powershell
 > conda activate ccd
 > cd "\path\to\pipeline\code"
@@ -144,8 +142,6 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > python naturalsky.py ROMO241004 1 V --airglowzenith=45
 > python process_metrics.py
 > ```
-
-</div>
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
 
