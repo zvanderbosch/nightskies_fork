@@ -116,7 +116,6 @@ Before running the processing pipeline, you will need to:
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
    - `Processor`: Name of person running the processing pipeline, first initial + last name (e.g. J_Doe)
-4. 
 
 
 
