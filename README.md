@@ -109,7 +109,7 @@ Before running the processing pipeline, you will need to:
 2. Ensure raw data is placed in the `fielddata` directory.
 3. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
 4. In the `filepath.py` script, update the `apikey` parameter with your own [Astrometry.net](https://nova.astrometry.net/) API key. This will be needed for image plate solving.
-5. Modify the `filelist.txt` file, which should be located in the `CCD --> Data --> processing` directory. An example `filelist.txt` file is provided [here](data/filelist.txt), and has the following fields:
+5. Modify the `filelist.txt` file, which should be located in the `CCD --> Data --> processing` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.txt` file is provided [here](data/filelist.txt), and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
    - `V_band`: Yes or No, whether to process V-band images
    - `B_band`: Yes or no, whether to process B-band images
