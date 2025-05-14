@@ -100,9 +100,10 @@ CCD
 
 Before running the processing pipeline, you will need to:
 
+1. Setup up the directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure
 1. Ensure raw data is placed in the `fielddata` directory.
 2. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
-3. Modify the `filelist.txt` file, located in the `CCD --> Data --> fielddata` directory.
+3. Modify the `filelist.txt` file, located in the `CCD --> Data --> processing` directory.
    - `Dataset` = Name of data night to process (e.g. ROMO241004)
    - `V_band`: Yes or No, whether to process V-band images
    - `B_band`: Yes or no, whether to process B-band images
@@ -110,6 +111,8 @@ Before running the processing pipeline, you will need to:
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
    - `Processor`: Name of person running the processing pipeline, first initial + last name (e.g. Z_Vanderbosch)
+4. 
+
 
 
 ## Processing Flow Chart
