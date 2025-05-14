@@ -1,9 +1,14 @@
 # NSNSD Night Skies CCD Camera Data Reduction Pipeline
+
+A Python package for National Park Service [Natural Sounds and Night Skies Division (NSNSD)](https://www.nps.gov/orgs/1050/index.htm) staff to process and analyze all-sky imagery acquired with the CCD Camera System ([Dan Duriscoe et al. 2007](https://iopscience.iop.org/article/10.1086/512069)) to assess light pollution impacts on parks' night sky resources.
+
 ![false color CCD image](https://github.com/liweihung/nightskies/blob/master/static/FalseColor_example.png)
+
+
+## Table of Contents
 
 <!-- MarkdownTOC autolink=true depth=3 bracket=round -->
 
-- [Purpose](#purpose)
 - [Required Software and Install Procedures](#required-software)
 - [Preparing Data For Processing](#preparing-data-for-processing)
 - [Running the Pipeline](#running-the-pipeline)
@@ -19,16 +24,12 @@
   - [8. Zodiacal Mosaic](#8-galactic-and-zodiacal-coordinates)
   - [9. Full-resolution Mosaic](#9-galactic-and-zodiacal-coordinates)
   - [10. Median-filtered Mosaic](#10-galactic-and-zodiacal-coordinates)
-
   - [Public domain](#public-domain)
 
 <!-- /MarkdownTOC -->
 
 
 ----------------------------------
-
-
-## Purpose
 
 ## Required Software and Install Procedures
 
