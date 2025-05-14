@@ -83,6 +83,7 @@ CCD
 │    │    └─── scratch_fullres     -ArcGIS workspace for full-resolution mosaics
 │    │    └─── scratch_galactic    -ArcGIS workspace for Galactic model mosaics
 │    │    └─── scratch_median      -ArcGIS workspace for median-filtered mosaics
+│    │    └─── scratch_metrics     -ArcGIS workspace for claculating skyglow metrics
 │    │    └─── scratch_natsky      -ArcGIS workspace for natural sky mosaics
 │    │    └─── scratch_zodiacal    -ArcGIS workspace for Zodiacal model mosaics
 │    └─── standards                -Standard star catalogs for photometric calibration
