@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------#
-#process.py
+#process_images.py
 #
 #NPS Night Skies Program
 #
@@ -55,7 +55,7 @@ import progressbars
 import printcolors as pc
 
 # Define print status prefix
-PREFIX = f'{pc.GREEN}process.py     {pc.END}: '
+PREFIX = f'{pc.GREEN}process_images.py  {pc.END}: '
 
 
 ##########################  Definitions  ######################################
@@ -78,7 +78,7 @@ def loghistory(message):
 def log_inputs(p):
     '''starting the history file and log the input files used'''
     print('Recording the reduction process in: ')
-    print(filepath.calibdata+dnight+'/processlog.txt')
+    print(filepath.calibdata+dnight+'/processlog_images.txt')
     print(' ')
     m = []
     logm(m,'%s processed on %s by %s' %(p[0],str(Dtime.now())[:19],p[6]))
@@ -290,7 +290,7 @@ if __name__ == '__main__':
     #Looping through multiple data nights
     for i in range(len(filelist)):
 
-        history = open(filepath.calibdata+Dataset[i]+'/processlog.txt', 'w')
+        history = open(filepath.calibdata+Dataset[i]+'/processlog_images.txt', 'w')
         log_inputs(filelist[i])
         
         # Generate inputs for each processing step
@@ -351,11 +351,11 @@ if __name__ == '__main__':
         
     
         #save the timing records for running the script
-        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime.txt', Z, fmt='%4.1f')
-        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime.png')
+        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
+        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_images.png')
         
     t2 = time.time()
-    print(f'{PREFIX}Total processing time: {(t2-t1)/60:.1f} min')
-    loghistory([f'Total processing time: {(t2-t1)/60:.1f} min',])
+    print(f'{PREFIX}Total image processing time: {(t2-t1)/60:.1f} min')
+    loghistory([f'Total image processing time: {(t2-t1)/60:.1f} min',])
     history.close()
     
