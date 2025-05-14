@@ -132,7 +132,7 @@ Pipeline operation is broken down into four main steps:
 
 Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, an example pipeline processing workflow for a dataset named **ROMO241004** would look like the following:
 
-<div style="background-color:rgba(229, 255, 204, 1);">
+<div style="background-color:rgb(229, 255, 204);">
 
 > ```powershell
 > conda activate ccd
