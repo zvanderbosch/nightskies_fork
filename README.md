@@ -132,13 +132,13 @@ Pipeline operation is broken down into four main steps:
 
 Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, a pipeline processing workflow would look like the following:
 
-```bash
+```powershell
 conda activate ccd
 cd "\path\to\pipeline\code"
 python process_images.py
 ```
 Create the terrain mask in Adobe Photoshop by opening and editing the mask.tif file saved in `CCD --> Data --> griddata --> Night-Folder --> mask`, where `Night-Folder` would be the folder name of the dataset being processed, e.g. ROMO241004.
-```bash
+```powershell
 python naturalsky.py
 python process_metrics.py
 ```
