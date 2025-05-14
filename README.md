@@ -73,7 +73,7 @@ Below are a few common issues that have been encountered during installation or 
 The directory structure assumed by the pipeline looks as follows, with a description of the primary contents of each folder to the right:
 ```
 CCD 
-└─── Data
+└─── Data                          -Contains the filelist.txt processing list
 │    └─── calibdata                -Calibrated images and data validation outputs
 │    └─── fielddata                -Raw images and calibration files
 │    └─── graphics                 -Final all-sky skyglow images per data set
