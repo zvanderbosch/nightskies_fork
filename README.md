@@ -74,18 +74,18 @@ The directory structure assumed by the pipeline looks as follows, with a descrip
 ```
 CCD 
 └─── Data
-│    └─── calibdata                 # Calibrated images and data validation outputs
-│    └─── fielddata                 # Raw images and calibration files
-│    └─── graphics                  # Final images of all-sky observed and anthropogenic skyglow
-│    └─── griddata                  # ArcGIS grids and mosaics
-│    └─── maps                      # ArcGIS map templates for producing graphics
-│    └─── rasters                   # Workspaces and master ArcGIS grids for natural sky modeling
-│    │    └─── scratch_fullres      # ArcGIS workspace for full-resolution mosaic construction
-│    │    └─── scratch_galactic     # ArcGIS workspace for Galactic model  mosaic construction
-│    │    └─── scratch_median       # ArcGIS workspace for median-filtered mosaic construction
-│    │    └─── scratch_natsky       # ArcGIS workspace for natural sky     mosaic construction
-│    │    └─── scratch_zodiacal     # ArcGIS workspace for Zodiacal model  mosaic construction
-│    └─── standards                 # Standard star catalogs for photometric calibration
+│    └─── calibdata                -Calibrated images and data validation outputs
+│    └─── fielddata                -Raw images and calibration files
+│    └─── graphics                 -Final images of all-sky observed and anthropogenic skyglow
+│    └─── griddata                 -ArcGIS grids and mosaics
+│    └─── maps                     -ArcGIS map templates for producing graphics
+│    └─── rasters                  -Workspaces and master ArcGIS grids for natural sky modeling
+│    │    └─── scratch_fullres     -ArcGIS workspace for full-resolution mosaic construction
+│    │    └─── scratch_galactic    -ArcGIS workspace for Galactic model  mosaic construction
+│    │    └─── scratch_median      -ArcGIS workspace for median-filtered mosaic construction
+│    │    └─── scratch_natsky      -ArcGIS workspace for natural sky     mosaic construction
+│    │    └─── scratch_zodiacal    -ArcGIS workspace for Zodiacal model  mosaic construction
+│    └─── standards                -Standard star catalogs for photometric calibration
 │ 
 └─── Images
      └─── Linearity Curves          # Master linearity response curves for each CCD camera
