@@ -105,7 +105,7 @@ CCD
 
 Before running the processing pipeline, you will need to:
 
-1. Setup up the CCD directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure, though it is empty of any data, calibration, or ArcGIS grid files you will need to run the pipeline.
+1. Setup up the CCD directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure, though it is empty of any data, calibration, or ArcGIS grid files you will need to run the pipeline. If you wish to run the pipeline, please [contact the Natural Sounds and Night Skies Division](https://www.nps.gov/subjects/nightskies/contactus.htm) to inquire about obtaining the necessary calibration and grid files.
 2. Ensure raw data is placed in the `fielddata` directory.
 3. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
 4. Modify the `filelist.txt` file, located in the `CCD --> Data --> processing` directory.
