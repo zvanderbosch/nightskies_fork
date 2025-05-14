@@ -78,6 +78,11 @@ CCD
 │    └─── maps
 │    └─── processing
 │    └─── rasters
+│    │    └─── scratch_fullres
+│    │    └─── scratch_galactic
+│    │    └─── scratch_median
+│    │    └─── scratch_natsky
+│    │    └─── scratch_zodiacal
 │    └─── standards
 │   
 └─── Images
@@ -100,10 +105,10 @@ CCD
 
 Before running the processing pipeline, you will need to:
 
-1. Setup up the directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure
-1. Ensure raw data is placed in the `fielddata` directory.
-2. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
-3. Modify the `filelist.txt` file, located in the `CCD --> Data --> processing` directory.
+1. Setup up the CCD directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure, though it is empty of any data, calibration, or ArcGIS grid files you will need to run the pipeline.
+2. Ensure raw data is placed in the `fielddata` directory.
+3. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
+4. Modify the `filelist.txt` file, located in the `CCD --> Data --> processing` directory.
    - `Dataset` = Name of data night to process (e.g. ROMO241004)
    - `V_band`: Yes or No, whether to process V-band images
    - `B_band`: Yes or no, whether to process B-band images
