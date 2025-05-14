@@ -39,6 +39,23 @@
 #
 #-----------------------------------------------------------------------------#
 
+import os
+import time
+import warnings
+import numpy as n
+import matplotlib.pyplot as plt
+
+from datetime import datetime as Dtime
+from multiprocessing import Process, Queue
+
+# Local source
+import filepath
+import progressbars
+import printcolors as pc
+
+# Define print status prefix
+PREFIX = f'{pc.GREEN}process.py     {pc.END}: '
+
 
 ##########################  Definitions  ######################################
 def logm(m,string):
@@ -212,9 +229,6 @@ def mosaic_median(*args):
     args[-1].put(t2-t1)
     
 
-import time
-import numpy as n
-
 if __name__ == '__main__':
     t1 = time.time()
     #-----------------------------------------------------------------------------#    
@@ -226,26 +240,9 @@ if __name__ == '__main__':
     print('--------------------------------------------------------------')
     print(' ')
     
-    #-----------------------------------------------------------------------------#
-    #Standard libraries
-    import matplotlib.pyplot as plt
-    import os
-    import warnings
-    
-    from datetime import datetime as Dtime
-    from multiprocessing import Process, Queue
-    
     warnings.filterwarnings("ignore",".*GUI is implemented.*")
         
     #------------ Read in the processing list and initialize ---------------------#
-    
-    #Local sources
-    import filepath
-    import progressbars
-    import printcolors as pc
-
-    # Define print status prefix
-    PREFIX = f'{pc.GREEN}process.py     {pc.END}: '
 
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
