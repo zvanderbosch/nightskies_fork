@@ -232,13 +232,11 @@ def mosaic_median(*args):
 if __name__ == '__main__':
     t1 = time.time()
     #-----------------------------------------------------------------------------#    
-    print(' ')
-    print('--------------------------------------------------------------')
-    print(' ')
-    print('        NPS NIGHT SKIES PROGRAM RAW IMAGE PROCESSING')
-    print(' ')
-    print('--------------------------------------------------------------')
-    print(' ')
+    print(
+        '\n--------------------------------------------------------------\n\n'
+        '        NPS NIGHT SKIES PROGRAM RAW IMAGE PROCESSING                '
+        '\n\n--------------------------------------------------------------\n'
+    )
     
     warnings.filterwarnings("ignore",".*GUI is implemented.*")
         
