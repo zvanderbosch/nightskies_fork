@@ -292,6 +292,7 @@ if __name__ == '__main__':
         history = open(filepath.calibdata+Dataset[i]+'/processlog.txt', 'w')
         log_inputs(filelist[i])
         
+        # Generate inputs for each processing step
         Filter = []; Filterset = {}
         if V_band[i] == 'Yes': 
             Filter.append('V')
@@ -311,7 +312,7 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # New orering for max parallel prcessing
+        # Set up processes for each pipeline step
         q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K2+Q2)
         q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
         q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K1+Q4)
@@ -321,6 +322,7 @@ if __name__ == '__main__':
         q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K2+Q8)
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K1+Q9)
         
+        # Run processes
         reduce_images(*K0)                            #image reduction   
         register_coord(*K1)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
