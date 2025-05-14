@@ -90,12 +90,12 @@ Raw data that will be processed by the pipeline lives in the `CCD --> Data --> f
 ```
 CCD 
 └─── Data
-│    └─── fielddata
-│         └─── ROMO241004
-│              └─── 1st
-│              └─── 2nd
-│              └─── 3rd
-│              └─── ...
+     └─── fielddata
+          └─── ROMO241004
+               └─── 1st
+               └─── 2nd
+               └─── 3rd
+               └─── ...
 ```
 
 Before running the processing pipeline, you will need to:
