@@ -71,7 +71,7 @@ Below are a few common issues that have been encountered during installation or 
 ## Preparing Data For Processing
 
 The directory structure assumed by the pipeline looks as follows, with a description of the primary contents of each folder to the right:
-```bash
+```
 CCD 
 └─── Data
 │    └─── calibdata                -Calibrated images and data validation outputs
