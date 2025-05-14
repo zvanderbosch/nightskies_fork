@@ -28,7 +28,7 @@ base = "C:/Users/zvanderbosch/data/CCD"
 apikey = 'kdvqtjbqkbkbuyzb'
 
 # Directory where filelist.txt lives
-processlist = f"{base}/Data/processing/"
+processlist = f"{base}/Data/"
 
 # Directory for Linearity Curve calibration files
 lincurve = f"{base}/Images/Linearity Curves/"
