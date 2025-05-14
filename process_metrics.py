@@ -43,6 +43,17 @@ PREFIX = f'{pc.GREEN}process_metrics.py {pc.END}: '
 ##########################  Definitions  ######################################
 
 
+def process_skyglow(*args):
+    '''Calculate skyglow illuminance'''
+    t1 = time.time()
+    import skyglow as SG
+    for filter in args[2]:
+        SG.calculate_illuminance(args[0],args[1],filter)
+    t2 = time.time()
+    print(f'Processing Time: {t2-t1:.2f} seconds')
+
+
+
 
 
 ##########################  Main Program  #####################################
@@ -60,15 +71,7 @@ if __name__ == '__main__':
 
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, Flat_V, Flat_B, Curve, Processor = filelist.T
-    
-    #Check the calibration files exist    
-    for i in range(len(filelist)):
-        if V_band == 'Yes':
-            open(filepath.flats+Flat_V[i])
-        if B_band == 'Yes':
-            open(filepath.flats+Flat_B[i])
-        open(filepath.lincurve+Curve[i]+'.txt')
+    Dataset, V_band, B_band, _, _, _, Processor = filelist.T
     
     #Determine the number of data sets collected in each night 
     img_sets = set(['1st','2nd','3rd','4th','5th','6th','7th','8th'])
@@ -88,4 +91,28 @@ if __name__ == '__main__':
     
     
     #------------ Main data processing code --------------------------------------#
+
+    #Looping through multiple data nights
+    for i in range(len(filelist)):
+        
+        # Generate inputs for each processing step
+        Filter = []
+        if V_band[i] == 'Yes': 
+            Filter.append('V')
+        if B_band[i] == 'Yes': 
+            Filter.append('B')
+        
+        sets = dnight_sets[Dataset[i]]
+        # K0 = (Dataset[i],sets,Filterset,Curve[i])
+        K1 = (Dataset[i],sets,Filter) 
+        # K2 = (Dataset[i],sets)  
+
+        # Status update
+        print(
+            f'{PREFIX}Processing the {pc.BOLD}{pc.CYAN}'
+            f'{Dataset[i]}{pc.END}{pc.END} dataset'
+        )
+
+        process_skyglow(*K1)
+
     
