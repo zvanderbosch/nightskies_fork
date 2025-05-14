@@ -74,23 +74,22 @@ The directory structure assumed by the pipeline looks as follows, with a descrip
 ```
 CCD 
 └─── Data
-│    └─── calibdata                # Calibrated images and data validation outputs
-│    └─── fielddata                # Raw images and calibration files
-│    └─── graphics                 # Final images of all-sky observed and anthropogenic skyglow
-│    └─── griddata                 # ArcGIS grids and mosaics
-│    └─── maps                     # ArcGIS map templates for producing graphics
-│    └─── processing               #
-│    └─── rasters                  # Workspaces and master input ArcGIS grids for natural sky modeling
-│    │    └─── scratch_fullres     # ArcGIS workspace directory for full-resolution mosaic construction
-│    │    └─── scratch_galactic    # ArcGIS workspace directory for Galactic model  mosaic construction
-│    │    └─── scratch_median      # ArcGIS workspace directory for median-filtered mosaic construction
-│    │    └─── scratch_natsky      # ArcGIS workspace directory for natural sky     mosaic construction
-│    │    └─── scratch_zodiacal    # ArcGIS workspace directory for Zodiacal model  mosaic construction
-│    └─── standards                # Standard star catalogs for photometric calibration
-│   
+│    └─── calibdata                 # Calibrated images and data validation outputs
+│    └─── fielddata                 # Raw images and calibration files
+│    └─── graphics                  # Final images of all-sky observed and anthropogenic skyglow
+│    └─── griddata                  # ArcGIS grids and mosaics
+│    └─── maps                      # ArcGIS map templates for producing graphics
+│    └─── rasters                   # Workspaces and master input ArcGIS grids for natural sky modeling
+│    │    └─── scratch_fullres      # ArcGIS workspace directory for full-resolution mosaic construction
+│    │    └─── scratch_galactic     # ArcGIS workspace directory for Galactic model  mosaic construction
+│    │    └─── scratch_median       # ArcGIS workspace directory for median-filtered mosaic construction
+│    │    └─── scratch_natsky       # ArcGIS workspace directory for natural sky     mosaic construction
+│    │    └─── scratch_zodiacal     # ArcGIS workspace directory for Zodiacal model  mosaic construction
+│    └─── standards                 # Standard star catalogs for photometric calibration
+│ 
 └─── Images
-     └─── Linearity Curves         # Master linearity response curves for each CCD camera
-     └─── Master                   # Master Flat, Bias, and Thermal images for each CCD camera
+     └─── Linearity Curves          # Master linearity response curves for each CCD camera
+     └─── Master                    # Master Flat, Bias, and Thermal images for each CCD camera
 ```
 
 Raw data that will be processed by the pipeline lives in the `CCD --> Data --> fielddata` directory, where each night of data should be separated into individual sub-folders named using the 4-letter park code and UTC date of data collection (e.g. ROMO241004 for data collected from Rocky Mountain NP on 2024 October 4th). Within a night's data folder will be additional sub-folders, one per data set collected:
@@ -112,7 +111,7 @@ CCD
 2. Ensure raw data is placed in the `fielddata` directory.
 3. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
 4. In the `filepath.py` script, update the `apikey` parameter with your own [Astrometry.net](https://nova.astrometry.net/) API key. This will be needed for image plate solving.
-5. Modify the `filelist.txt` file, which should be located in the `CCD --> Data --> processing` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.txt` file is provided [here](data/filelist.txt), and has the following fields:
+5. Modify the `filelist.txt` file, which should be located in the `CCD --> Data` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.txt` file is provided [here](data/filelist.txt), and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
    - `V_band`: Yes or No, whether to process V-band images
    - `B_band`: Yes or no, whether to process B-band images
