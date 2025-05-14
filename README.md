@@ -74,7 +74,7 @@ The directory structure assumed by the pipeline looks as follows:
 ```
 CCD 
 └─── Data
-│    └─── calibdata
+│    └─── calibdata                # Stores calibrated images and associated outputs
 │    └─── fielddata
 │    └─── graphics
 │    └─── griddata
