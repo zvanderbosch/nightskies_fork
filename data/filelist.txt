@@ -1,0 +1,3 @@
+# Dataset    V_band  B_band  Flat_V                 Flat_B                Curve   Processor
+ROMO241004   Yes     Yes     ML3Flat_V_2023.fit     ML3Flat_B_2023.fit    ML3     J_Doe
+NIOB240830   Yes     No      ML3Flat_V_2023.fit     ML3Flat_B_2023.fit    ML3     J_Doe
