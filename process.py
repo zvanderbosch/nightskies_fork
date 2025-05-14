@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2017/03/12
+#Last updated: 2025/05/14
 #
 #This script uses multiprocessing to reduce, calibrate, and process the images 
 #collected by the NPS Night Skies Program. This script does the following:
@@ -36,6 +36,7 @@
 #History:
 #	Dan Duriscoe -- Created (named firstbatchv4vb.py originally)
 #	Li-Wei Hung -- Cleaned, modified, and changed some processing methods 
+#   Zach Vanderbosch -- Further cleaning and optimizing parallel processing
 #
 #-----------------------------------------------------------------------------#
 
