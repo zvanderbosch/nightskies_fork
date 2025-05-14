@@ -24,6 +24,9 @@
 # Base directory for CCD data products
 base = "C:/Users/zvanderbosch/data/CCD"
 
+# Astrometry.net API key
+apikey = 'kdvqtjbqkbkbuyzb'
+
 # Directory where filelist.txt lives
 processlist = f"{base}/Data/processing/"
 
@@ -59,6 +62,3 @@ graphics = f"{base}/Data/graphics/"
 
 # Directory for scripts
 scripts = f"{base}/Scripts/"
-
-# Astrometry.net API key
-apikey = 'kdvqtjbqkbkbuyzb'
