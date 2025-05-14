@@ -133,6 +133,7 @@ Pipeline operation is broken down into four main steps:
 Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, an example pipeline processing workflow for a dataset named **ROMO241004** would look like the following:
 
 ---
+---
 ```powershell
 conda activate ccd
 cd "\path\to\pipeline\code"
@@ -143,6 +144,7 @@ python process_images.py
 python naturalsky.py ROMO241004 1 V --airglowzenith=45
 python process_metrics.py
 ```
+---
 ---
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are all related to input parameters for the natural sky model and are listed below along with their default values:
