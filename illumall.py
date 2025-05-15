@@ -6,7 +6,8 @@
 #Last updated: 2025/05/15
 #
 #This script computes sky luminance and illuminance
-#statistics for the anthropogenic skyglow mosaic.
+#statistics for all light sources using the skybright
+#median filtered mosaic.
 #
 #Note: 
 #
@@ -21,14 +22,9 @@
 #
 #-----------------------------------------------------------------------------#
 
-from astropy.io import fits
-from glob import glob, iglob
-
 import os
 import stat
 import arcpy
-import shutil
-import matplotlib.pyplot as plt
 import numpy as n
 
 # Local Source
