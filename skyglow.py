@@ -393,11 +393,6 @@ def calculate_illuminance(dnight,sets,filter):
 
 
         # Calculate zonal histograms
-        print(f'{PREFIX}Calculating SQI zonal histograms...')
+        print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
         calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
-
-
-        # Print out results
-        for key in resultDict:
-            print(key, resultDict[key])
             
