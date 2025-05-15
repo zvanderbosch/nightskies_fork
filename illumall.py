@@ -221,7 +221,7 @@ def calc_scalar_illuminance(mosaic, zoneRaster, gridPath, results):
     return results
 
 
-def calc_horizontal_illuminance(mosaicDict, zoneRaster, gridPath, results):
+def calc_horizontal_illuminance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating horizontal illuminance metrics
     '''
@@ -231,29 +231,20 @@ def calc_horizontal_illuminance(mosaicDict, zoneRaster, gridPath, results):
     horizRaster = arcpy.sa.Raster(horizRasterFile)
 
     # Convert from nL to mlux units and multiply by factor grid
-    mlux = nl_to_mlux(mosaicDict['allsky'])
-    mlux80 = nl_to_mlux(mosaicDict['za80'])
-    mlux70 = nl_to_mlux(mosaicDict['za70'])
-    mosaicListHoriz = [
-        mlux * horizRaster, 
-        mlux80 * horizRaster, 
-        mlux70 * horizRaster
-    ]
+    mosaicMlux = nl_to_mlux(mosaic)
+    mosaicHoriz = mosaicMlux * horizRaster
 
-    # Iterate over each mosaic
-    for i,mosaic in enumerate(mosaicListHoriz):
+    # Calculate zonal stats
+    outputTable = f"{gridPath}skyhoriz.dbf"
+    _ = arcpy.sa.ZonalStatisticsAsTable(
+        zoneRaster,"VALUE",mosaicHoriz,outputTable,"DATA","SUM"
+    )
 
-        # Calculate zonal stats
-        outputTable = f"{gridPath}skyhemis{i}.dbf"
-        _ = arcpy.sa.ZonalStatisticsAsTable(
-            zoneRaster,"VALUE",mosaic,outputTable,"DATA","SUM"
-        )
-
-        # Extract stats from output table
-        rows = arcpy.SearchCursor(outputTable)
-        row = rows.next()
-        results[f'horizs{i}'] = row.getValue("SUM")
-        clear_memory([row,rows])
+    # Extract stats from output table
+    rows = arcpy.SearchCursor(outputTable)
+    row = rows.next()
+    results['horizs'] = row.getValue("SUM")
+    clear_memory([row,rows])
 
     return results
 
