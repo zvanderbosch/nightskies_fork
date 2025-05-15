@@ -253,14 +253,12 @@ def calculate_illuminance(dnight,sets,filter):
     # Filter paths
     F = {'V':'', 'B':'B/'}
 
-    # Define path to scratch workspace
-    scratchsetp = f"{filepath.rasters}scratch_metrics/"
-
     # Set ArcGIS working directories
+    scratchsetp = f"{filepath.rasters}scratch_metrics/"
     arcpy.env.workspace = scratchsetp
     arcpy.env.scratchWorkspace = scratchsetp
 
-    # Create or clear out scratch directory
+    # Create or clear out working directory
     if os.path.exists(scratchsetp):
         clear_scratch(scratchsetp)
     else:
@@ -321,9 +319,11 @@ def calculate_illuminance(dnight,sets,filter):
         print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
         resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
 
+
         # Calculate horizontal illuminance
         print(f'{PREFIX}Calculating anthropogenic horizontal illuminance...')
         resultDict = calc_horizontal_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
+
 
         # Calculate horizontal illuminance
         print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
