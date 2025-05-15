@@ -39,7 +39,7 @@ arcpy.env.compression = "NONE"
 arcpy.CheckOutExtension("Spatial")
 
 # Define print staus prefix
-scriptName = 'skyglow.py'
+scriptName = 'illumall.py'
 PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #------------------------------------------------------------------------------#
@@ -67,6 +67,10 @@ coordinateSystem = (
         "UNIT['Meter',1.0]"
     "]"
 )
+
+#------------------------------------------------------------------------------#
+#-------------------           Various Functions            -------------------#
+#------------------------------------------------------------------------------#
 
 def clear_scratch(scratch_dir):
     '''
@@ -97,85 +101,122 @@ def nl_to_mlux(raster):
     return (0.000000761544 * raster) / 314.159
 
 
-def calc_sky_luminance(mosaicDict, zoneRaster, gridPath, results):
+def calc_sky_area_luminance(mosaic, zoneRaster, gridPath, results):
     '''
-    Function for calculating sky luminance metrics
-    '''
-
-    # Set mosaic processing order
-    mosaicOrder = ['allsky','za80','za70']
-
-    # Iterate over each mosaic
-    for i,key in enumerate(mosaicOrder):
-        
-        # Choose the mosaic to process
-        mosaic = mosaicDict[key]
-
-        # Calculate zonal stats
-        outputTable = f"{gridPath}skyhemis{i}.dbf"
-        _ = arcpy.sa.ZonalStatisticsAsTable(
-            zoneRaster,"VALUE",mosaic,outputTable,"DATA","ALL"
-        )
-
-        # Extract stats from output table
-        rows = arcpy.SearchCursor(outputTable)
-        row = rows.next()
-        results[f'skymax{i}'] = row.getValue("MAX")
-        results[f'skymin{i}'] = row.getValue("MIN")
-        results[f'skyave{i}'] = row.getValue("MEAN")
-        clear_memory([row,rows])
-
-    return results
-
-
-def calc_zonal_sky_luminance(mosaic, zoneRaster, gridPath, results):
-    '''
-    Function for calculating mean sky luminance by zone
+    Function for calculating observed sky luminance is full area
+    down to Zenith Angle 96, including below horizon values.
     '''
 
     # Calculate zonal stats
-    outputTable = f"{gridPath}skyzones.dbf"
+    outputTable = f"{gridPath}skyhemisall.dbf"
     _ = arcpy.sa.ZonalStatisticsAsTable(
-        zoneRaster,"band",mosaic,outputTable,"DATA","MEAN"
+        zoneRaster,"VALUE",mosaic,outputTable,"DATA","ALL"
     )
 
     # Extract stats from output table
     rows = arcpy.SearchCursor(outputTable)
-    for i in range(5):
-        row = rows.next()
-        results[f'zoneAve{i}'] = row.getValue("MEAN")
-        results[f'zoneMax{i}'] = row.getValue("COUNT")
+    row = rows.next()
+    results[f'skymax0'] = row.getValue("MAX")
+    results[f'skymin0'] = row.getValue("MIN")
+    results[f'skyave0'] = row.getValue("MEAN")
     clear_memory([row,rows])
 
     return results
 
 
-def calc_luminouos_emittance(mosaicDict, zoneRaster, gridPath, results):
+def calc_sky_mask_luminance(mosaic, zoneRaster, gridPath, results):
     '''
-    Function for calculating luminous emittance metrics
+    Function for calculating observed all-sky luminance,
+    excluding below horizon values.
+    '''
+
+    # Calculate zonal stats
+    outputTable = f"{gridPath}skyhemismasked.dbf"
+    _ = arcpy.sa.ZonalStatisticsAsTable(
+        zoneRaster,"VALUE",mosaic,outputTable,"DATA","ALL"
+    )
+
+    # Extract stats from output table
+    rows = arcpy.SearchCursor(outputTable)
+    row = rows.next()
+    results[f'skymax1'] = row.getValue("MAX")
+    results[f'skymin1'] = row.getValue("MIN")
+    results[f'skyave1'] = row.getValue("MEAN")
+    clear_memory([row,rows])
+
+    return results
+
+
+def calc_area_luminouos_emittance(mosaic, zoneRaster, gridPath, results):
+    '''
+    Function for calculating observed luminous emittance in full
+    area down to Zenith Angle 96, including below horizon values.
     '''
 
     # Convert from nL to mlux units
-    mlux = nl_to_mlux(mosaicDict['allsky'])
-    mlux80 = nl_to_mlux(mosaicDict['za80'])
-    mlux70 = nl_to_mlux(mosaicDict['za70'])
-    mosaicListMlux = [mlux, mlux80, mlux70]
+    mosaicMlux = nl_to_mlux(mosaic)
 
-    # Iterate over each mosaic
-    for i,mosaic in enumerate(mosaicListMlux):
+    # Calculate zonal stats
+    outputTable = f"{gridPath}skyhemisall1.dbf"
+    _ = arcpy.sa.ZonalStatisticsAsTable(
+        zoneRaster,"VALUE",mosaicMlux,outputTable,"DATA","ALL"
+    )
 
-        # Calculate zonal stats
-        outputTable = f"{gridPath}skyhemis{i}.dbf"
-        _ = arcpy.sa.ZonalStatisticsAsTable(
-            zoneRaster,"VALUE",mosaic,outputTable,"DATA","ALL"
-        )
+    # Extract stats from output table
+    rows = arcpy.SearchCursor(outputTable)
+    row = rows.next()
+    results[f'hemis0'] = row.getValue("MEAN")
+    results[f'totalill0'] = row.getValue("SUM")
+    clear_memory([row,rows])
 
-        # Extract stats from output table
-        rows = arcpy.SearchCursor(outputTable)
-        row = rows.next()
-        results[f'hemis{i}'] = row.getValue("MEAN")
-        results[f'totalill{i}'] = row.getValue("SUM")
-        clear_memory([row,rows])
+    return results
+
+
+def calc_mask_luminouos_emittance(mosaic, zoneRaster, gridPath, results):
+    '''
+    Function for calculating observed luminous emittance,
+    excluding below-horizon values
+    '''
+
+    # Convert from nL to mlux units
+    mosaicMlux = nl_to_mlux(mosaic)
+
+    # Calculate zonal stats
+    outputTable = f"{gridPath}skyhemisall2.dbf"
+    _ = arcpy.sa.ZonalStatisticsAsTable(
+        zoneRaster,"VALUE",mosaicMlux,outputTable,"DATA","ALL"
+    )
+
+    # Extract stats from output table
+    rows = arcpy.SearchCursor(outputTable)
+    row = rows.next()
+    results[f'hemis1'] = row.getValue("MEAN")
+    results[f'totalill1'] = row.getValue("SUM")
+    clear_memory([row,rows])
+
+    return results
+
+
+def calc_scalar_illuminance(mosaic, zoneRaster, gridPath, results):
+    '''
+    Function for calculating observed scalar luminance, using
+    all values down to Zenith Angle 90 (full hemisphere).
+    '''
+
+    # Convert from nL to mlux units
+    mosaicMlux = nl_to_mlux(mosaic)
+
+    # Calculate zonal stats
+    outputTable = f"{gridPath}skyscalar.dbf"
+    _ = arcpy.sa.ZonalStatisticsAsTable(
+        zoneRaster,"VALUE",mosaicMlux,outputTable,"DATA","SUM"
+    )
+
+    # Extract stats from output table
+    rows = arcpy.SearchCursor(outputTable)
+    row = rows.next()
+    results['skyscalar'] = row.getValue("SUM")
+    clear_memory([row,rows])
 
     return results
 
@@ -330,7 +371,7 @@ def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
 #-----------------------------------------------------------------------------#
 # Main Program
 
-def calculate_illuminance(dnight,sets,filter):
+def calculate_statistics(dnight,sets,filter):
     '''
     Main program for computing sky luminance and illuminance
     statistics from only anthropogenic sources. 
@@ -350,14 +391,10 @@ def calculate_illuminance(dnight,sets,filter):
     else:
         os.makedirs(scratchsetp)
 
-    # Define paths to a few needed files
-    zoneFile = f'{filepath.rasters}shapefiles/allbands.shp'
-    za80File = f'{filepath.rasters}shapefiles/80zamaskf.shp'
-    za70File = f'{filepath.rasters}shapefiles/70zamaskf.shp'
-    maskRasterFile = f"{filepath.griddata}{dnight}/mask/maskd.tif"
-
     # Load in the mask raster
-    maskRaster = arcpy.sa.Raster(maskRasterFile)
+    maskRaster = arcpy.sa.Raster(f"{filepath.griddata}{dnight}/mask/maskd.tif")
+    areaRaster = arcpy.sa.Raster(f"{filepath.rasters}arearasterf")
+    hemiRaster = arcpy.sa.Raster(f"{filepath.rasters}hemirasterf")
 
     # Loop through each data set
     for s in sets:
@@ -369,54 +406,61 @@ def calculate_illuminance(dnight,sets,filter):
         # Initial status update for data set
         print(f'{PREFIX}Processing {dnight} Set-{setnum} {filter}-band...')
 
-        # Load in anthropogenic skyglow mosaic in nano-Lamberts [nL]
-        anthRaster = arcpy.sa.Raster(f"{gridsetp}skyglow/anthlightnl")
+        # Load in median sky brightness mosaic in nano-Lamberts [nL]
+        inRaster = arcpy.sa.Raster(f"{gridsetp}median/skybrightnl")
 
-        # Clip mosaic to 80 and 70 zenith-angle limits
-        print(f'{PREFIX}Clipping skyglow (nL) mosaic to 80 and 70 Zenith Angle limits...')
-        arcpy.management.Clip(
-            anthRaster,"#",f"anth80{setnum}",za80File,"#","ClippingGeometry"
+        # Project raster into fisheye coordinate system
+        brightRasterFile = "skynlf.tif"
+        arcpy.ProjectRaster_management (
+            inRaster, brightRasterFile, coordinateSystem, "BILINEAR","5558.8"
         )
-        arcpy.management.Clip(
-            anthRaster,"#",f"anth70{setnum}",za70File,"#","ClippingGeometry"
-        )
-        anthRaster80 = arcpy.sa.Raster(f"anth80{setnum}")
-        anthRaster70 = arcpy.sa.Raster(f"anth70{setnum}")
+        brightRaster = arcpy.sa.Raster(brightRasterFile)
 
-        # Initialize result and mosaic dicts
+        # # Clip mosaic to 80 and 70 zenith-angle limits
+        # print(f'{PREFIX}Clipping skyglow (nL) mosaic to 80 and 70 Zenith Angle limits...')
+        # arcpy.management.Clip(
+        #     anthRaster,"#",f"anth80{setnum}",za80File,"#","ClippingGeometry"
+        # )
+        # arcpy.management.Clip(
+        #     anthRaster,"#",f"anth70{setnum}",za70File,"#","ClippingGeometry"
+        # )
+        # anthRaster80 = arcpy.sa.Raster(f"anth80{setnum}")
+        # anthRaster70 = arcpy.sa.Raster(f"anth70{setnum}")
+
+        # # Initialize result and mosaic dicts
         resultDict = {}
-        mosaicDict = {
-            'allsky': anthRaster,
-            'za80': anthRaster80,
-            'za70': anthRaster70
-        }
+        # mosaicDict = {
+        #     'allsky': anthRaster,
+        #     'za80': anthRaster80,
+        #     'za70': anthRaster70
+        # }
 
         # Calculate sky luminance metrics
-        print(f'{PREFIX}Calculating anthropogenic sky luminance...')
-        resultDict = calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
+        print(f'{PREFIX}Calculating sky luminance for all sources...')
+        resultDict = calc_sky_area_luminance(brightRaster, areaRaster, gridsetp, resultDict)
+        resultDict = calc_sky_mask_luminance(brightRaster, maskRaster, gridsetp, resultDict)
+
+        # Calculate luminous emittance
+        print(f'{PREFIX}Calculating luminous emittance for all sources...')
+        resultDict = calc_area_luminouos_emittance(brightRaster, areaRaster, gridsetp, resultDict)
+        resultDict = calc_mask_luminouos_emittance(brightRaster, maskRaster, gridsetp, resultDict)
+
+        # Calculate scalar illuminance
+        print(f'{PREFIX}Calculating scalar illuminance for all sources...')
+        resultDict = calc_scalar_illuminance(brightRaster, hemiRaster, gridsetp, resultDict)
 
 
-        # Calculate mean sky luminance by zone
-        print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
-        resultDict = calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
+        # # Calculate horizontal illuminance
+        # print(f'{PREFIX}Calculating anthropogenic horizontal illuminance...')
+        # resultDict = calc_horizontal_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # Calculate zonal stats for each mosaic
-        print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
-        resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
+        # # Calculate horizontal illuminance
+        # print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
+        # resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # Calculate horizontal illuminance
-        print(f'{PREFIX}Calculating anthropogenic horizontal illuminance...')
-        resultDict = calc_horizontal_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
-
-
-        # Calculate horizontal illuminance
-        print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
-        resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
-
-
-        # Calculate zonal histograms
-        print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
-        calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
+        # # Calculate zonal histograms
+        # print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
+        # calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
             
