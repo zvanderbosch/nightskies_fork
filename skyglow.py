@@ -60,6 +60,7 @@ def clear_scratch(scratch_dir):
             os.chmod(os.path.join(root, name), stat.S_IWRITE)
             os.rmdir(os.path.join(root, name))
 
+
 def clear_memory(objectList):
     '''
     Function for clearing variables from memory
@@ -67,6 +68,7 @@ def clear_memory(objectList):
     for obj in objectList:
         if obj:
             del obj
+
 
 def nl_to_mlux(raster):
     '''
@@ -189,8 +191,56 @@ def calc_horizontal_illuminance(mosaicDict, zoneRaster, gridPath, results):
         # Extract stats from output table
         rows = arcpy.SearchCursor(outputTable)
         row = rows.next()
-        results['horizs' + str(y)] = row.getValue("SUM")
+        results[f'horizs{i}'] = row.getValue("SUM")
         clear_memory([row,rows])
+
+    return results
+
+
+def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
+    '''
+    Function for calculating vertical illuminance metrics
+    '''
+
+    # Convert skyglow from nL to mlux units
+    mlux = nl_to_mlux(mosaicDict['allsky'])
+    mlux80 = nl_to_mlux(mosaicDict['za80'])
+    mlux70 = nl_to_mlux(mosaicDict['za70'])
+
+    # Define array of rotation angles (0 -> 350 in 10-degree increments)
+    rotationAngles = n.arange(0,360,10,dtype=int)
+
+    # Iterate over rotation angles in 10-degree increments
+    for angle in rotationAngles:
+
+        # Status update
+        print(f'{PREFIX}Calculating vertical illuminance at angle {angle}...')
+
+        # Load in corresponding raster file
+        vertRasterFile = f"{filepath.rasters}vertgrids/vertf{-angle}"
+        vertRaster = arcpy.sa.Raster(vertRasterFile)
+
+        # Calculate vertical illuminance in mlux for each zone
+        mosaicListVert = [
+            mlux * vertRaster,
+            mlux80 * vertRaster,
+            mlux70 * vertRaster
+        ]
+
+        # Iterate over each mosaic
+        for i,mosaic in enumerate(mosaicListVert):
+
+            # Calculate zonal stats
+            outputTable = f"{gridPath}skyvert{i}.dbf"
+            _ = arcpy.sa.ZonalStatisticsAsTable(
+                zoneRaster,"VALUE",mosaic,outputTable,"DATA","SUM"
+            )
+
+            # Extract stats from output table
+            rows = arcpy.SearchCursor(outputTable)
+            row = rows.next()
+            results[f'vert-{angle:03d}-{i}'] = row.getValue("SUM")
+            clear_memory([row,rows])
 
     return results
 
@@ -259,17 +309,25 @@ def calculate_illuminance(dnight,sets,filter):
 
         # Calculate sky luminance metrics
         print(f'{PREFIX}Calculating anthropogenic sky luminance...')
-        calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
+        resultDict = calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
         # Calculate mean sky luminance by zone
         print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
-        calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
+        resultDict = calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
 
 
         # Calculate zonal stats for each mosaic
         print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
-        calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
+        resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
+
+        # Calculate horizontal illuminance
+        print(f'{PREFIX}Calculating anthropogenic horizontal illuminance...')
+        resultDict = calc_horizontal_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
+
+        # Calculate horizontal illuminance
+        print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
+        resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
         # Print out results
