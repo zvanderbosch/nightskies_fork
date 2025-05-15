@@ -37,10 +37,11 @@ import progressbars
 import printcolors as pc
 
 # Define print status prefix
-PREFIX = f'{pc.GREEN}process_metrics.py {pc.END}: '
+scriptName = 'process_metrics.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 
-##########################  Definitions  ######################################
+######################  Function Definitions  #################################
 
 
 def process_skyglow(*args):

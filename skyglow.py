@@ -43,7 +43,8 @@ arcpy.env.compression = "NONE"
 arcpy.CheckOutExtension("Spatial")
 
 # Define print staus prefix
-PREFIX = f'{pc.GREEN}skyglow.py      {pc.END}: '
+scriptName = 'skyglow.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
 
