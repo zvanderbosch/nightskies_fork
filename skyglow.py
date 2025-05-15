@@ -21,14 +21,9 @@
 #
 #-----------------------------------------------------------------------------#
 
-from astropy.io import fits
-from glob import glob, iglob
-
 import os
 import stat
 import arcpy
-import shutil
-import matplotlib.pyplot as plt
 import numpy as n
 
 # Local Source
