@@ -297,67 +297,6 @@ def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
     return results
 
 
-def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
-    '''
-    Function to calculate Sky Quality Index (SQI) histograms
-    '''
-
-    # Clip skyglow magnitudes mosaic to 80 and 70 Zenith Angle limits
-    print(f'{PREFIX}Clipping skyglow (mag) mosaic to 80 and 70 Zenith Angle limits...')
-    inputRaster = f"{gridPath}skyglow/anthlightmags"
-    arcpy.management.Clip(
-        inputRaster,"#", "anth80mags", clipFile80,"#","ClippingGeometry"
-    )
-    arcpy.management.Clip(
-        inputRaster,"#", "anth70mags", clipFile70,"#","ClippingGeometry"
-    )
-
-    # Create raster layers from anthropogenic mags mosaic
-    print(f'{PREFIX}Generating skyglow (mag) raster layers...')
-    layerName = "anthmaskedlyr"
-    layerName80 = "anth80lyr"
-    layerName70 = "anth70lyr"
-    symbologyLayer = f"{filepath.rasters}magnitudes1.lyrx"
-    arcpy.management.MakeRasterLayer(
-        inputRaster,layerName,"#","#","#"
-    )
-    arcpy.management.MakeRasterLayer(
-        "anth80mags",layerName80,"#","#","#"
-    )
-    arcpy.management.MakeRasterLayer(
-        "anth70mags",layerName70,"#","#","#"
-    )
-    arcpy.management.ApplySymbologyFromLayer(
-        layerName, symbologyLayer
-    )
-    arcpy.management.ApplySymbologyFromLayer(
-        layerName80, symbologyLayer
-    )
-    arcpy.management.ApplySymbologyFromLayer(
-        layerName70, symbologyLayer
-    )
-
-    # Iterate over each layer
-    print(f'{PREFIX}Calculating SQI zonal histograms...')
-    layerList = [layerName, layerName80, layerName70]
-    for layer in layerList:
-
-        # Determine output table name
-        if "80" in layer:
-            outputTable = f"{gridPath}sqitbl80.dbf"
-        elif "70" in layer:
-            outputTable = f"{gridPath}sqitbl80.dbf"
-        else:
-            outputTable = f"{gridPath}sqitbl.dbf"
-
-        # Generate zonal histogram
-        arcpy.sa.ZonalHistogram(
-            zoneRaster, "VALUE", layer, outputTable, ""
-        )
-
-        # Delete the layer
-        arcpy.management.Delete(layer,"")
-
 
 #-----------------------------------------------------------------------------#
 # Main Program
@@ -435,9 +374,4 @@ def calculate_statistics(dnight,sets,filter):
         # # Calculate vertical illuminance
         # print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
         # resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
-
-
-        # # Calculate zonal histograms
-        # print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
-        # calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
             
