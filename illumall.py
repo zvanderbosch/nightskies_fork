@@ -407,46 +407,32 @@ def calculate_statistics(dnight,sets,filter):
         )
         brightRaster = arcpy.sa.Raster(brightRasterFile)
 
-        # # Clip mosaic to 80 and 70 zenith-angle limits
-        # print(f'{PREFIX}Clipping skyglow (nL) mosaic to 80 and 70 Zenith Angle limits...')
-        # arcpy.management.Clip(
-        #     anthRaster,"#",f"anth80{setnum}",za80File,"#","ClippingGeometry"
-        # )
-        # arcpy.management.Clip(
-        #     anthRaster,"#",f"anth70{setnum}",za70File,"#","ClippingGeometry"
-        # )
-        # anthRaster80 = arcpy.sa.Raster(f"anth80{setnum}")
-        # anthRaster70 = arcpy.sa.Raster(f"anth70{setnum}")
-
-        # # Initialize result and mosaic dicts
+        # Initialize result dict
         resultDict = {}
-        # mosaicDict = {
-        #     'allsky': anthRaster,
-        #     'za80': anthRaster80,
-        #     'za70': anthRaster70
-        # }
 
         # Calculate sky luminance metrics
         print(f'{PREFIX}Calculating sky luminance for all sources...')
         resultDict = calc_sky_area_luminance(brightRaster, areaRaster, gridsetp, resultDict)
         resultDict = calc_sky_mask_luminance(brightRaster, maskRaster, gridsetp, resultDict)
 
+
         # Calculate luminous emittance
         print(f'{PREFIX}Calculating luminous emittance for all sources...')
         resultDict = calc_area_luminouos_emittance(brightRaster, areaRaster, gridsetp, resultDict)
         resultDict = calc_mask_luminouos_emittance(brightRaster, maskRaster, gridsetp, resultDict)
+
 
         # Calculate scalar illuminance
         print(f'{PREFIX}Calculating scalar illuminance for all sources...')
         resultDict = calc_scalar_illuminance(brightRaster, hemiRaster, gridsetp, resultDict)
 
 
-        # # Calculate horizontal illuminance
-        # print(f'{PREFIX}Calculating anthropogenic horizontal illuminance...')
-        # resultDict = calc_horizontal_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
+        # Calculate horizontal illuminance
+        print(f'{PREFIX}Calculating horizontal illuminance for all sources...')
+        resultDict = calc_horizontal_illuminance(brightRaster, hemiRaster, gridsetp, resultDict)
 
 
-        # # Calculate horizontal illuminance
+        # # Calculate vertical illuminance
         # print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
         # resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
