@@ -3,10 +3,10 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/14
+#Last updated: 2025/05/15
 #
-#This script calculates horizontal and vertical illuminance values
-#from the anthropogenic light all-aky mosaics.
+#This script computes sky luminance and illuminance
+#statistics for the anthropogenic skyglow mosaic.
 #
 #Note: 
 #
