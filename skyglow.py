@@ -305,7 +305,7 @@ def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
 #-----------------------------------------------------------------------------#
 # Main Program
 
-def calculate_illuminance(dnight,sets,filter):
+def calculate_statistics(dnight,sets,filter):
     '''
     Main program for computing sky luminance and illuminance
     statistics from only anthropogenic sources. 
