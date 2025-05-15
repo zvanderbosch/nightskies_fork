@@ -49,7 +49,7 @@ def process_skyglow(*args):
     t1 = time.time()
     import skyglow as SG
     for filter in args[2]:
-        SG.calculate_illuminance(args[0],args[1],filter)
+        SG.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
     print(f'Processing Time: {t2-t1:.2f} seconds')
 
