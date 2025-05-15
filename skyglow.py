@@ -80,8 +80,14 @@ def calc_sky_luminance(mosaicDict, zoneRaster, gridPath, results):
     Function for calculating sky luminance metrics
     '''
 
+    # Set mosaic processing order
+    mosaicOrder = ['allsky','za80','za70']
+
     # Iterate over each mosaic
-    for i,mosaic in enumerate(mosaicDict.values()):
+    for i,key in enumerate(mosaicOrder):
+        
+        # Choose the mosaic to process
+        mosaic = mosaicDict[key]
 
         # Calculate zonal stats
         outputTable = f"{gridPath}skyhemis{i}.dbf"
@@ -124,7 +130,7 @@ def calc_zonal_sky_luminance(mosaic, zoneRaster, gridPath, results):
 
 def calc_luminouos_emittance(mosaicDict, zoneRaster, gridPath, results):
     '''
-    Function for calculating sky luminance metrics
+    Function for calculating luminous emittance metrics
     '''
 
     # Convert from nL to mlux units
@@ -147,6 +153,43 @@ def calc_luminouos_emittance(mosaicDict, zoneRaster, gridPath, results):
         row = rows.next()
         results[f'hemis{i}'] = row.getValue("MEAN")
         results[f'totalill{i}'] = row.getValue("SUM")
+        clear_memory([row,rows])
+
+    return results
+
+
+def calc_horizontal_illuminance(mosaicDict, zoneRaster, gridPath, results):
+    '''
+    Function for calculating horizontal illuminance metrics
+    '''
+
+    # Load in horizontal illuminance factor grid
+    horizRasterFile = f"{filepath.rasters}horizillf"
+    horizRaster = arcpy.sa.Raster(horizRasterFile)
+
+    # Convert from nL to mlux units and multiply by factor grid
+    mlux = nl_to_mlux(mosaicDict['allsky'])
+    mlux80 = nl_to_mlux(mosaicDict['za80'])
+    mlux70 = nl_to_mlux(mosaicDict['za70'])
+    mosaicListHoriz = [
+        mlux * horizRaster, 
+        mlux80 * horizRaster, 
+        mlux70 * horizRaster
+    ]
+
+    # Iterate over each mosaic
+    for i,mosaic in enumerate(mosaicListHoriz):
+
+        # Calculate zonal stats
+        outputTable = f"{gridPath}skyhemis{i}.dbf"
+        _ = arcpy.sa.ZonalStatisticsAsTable(
+            zoneRaster,"VALUE",mosaic,outputTable,"DATA","SUM"
+        )
+
+        # Extract stats from output table
+        rows = arcpy.SearchCursor(outputTable)
+        row = rows.next()
+        results['horizs' + str(y)] = row.getValue("SUM")
         clear_memory([row,rows])
 
     return results
