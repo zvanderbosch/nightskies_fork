@@ -386,7 +386,7 @@ def calculate_statistics(dnight,sets,filter):
         resultDict = calc_horizontal_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # Calculate horizontal illuminance
+        # Calculate vertical illuminance
         print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
         resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
