@@ -54,6 +54,16 @@ def process_skyglow(*args):
     print(f'Processing Time: {t2-t1:.2f} seconds')
 
 
+def process_illumall(*args):
+    '''Calculate skyglow illuminance'''
+    t1 = time.time()
+    import illumall as IA
+    for filter in args[2]:
+        IA.calculate_statistics(args[0],args[1],filter)
+    t2 = time.time()
+    print(f'Processing Time: {t2-t1:.2f} seconds')
+
+
 
 
 
@@ -114,6 +124,7 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        process_skyglow(*K1)
+        # process_skyglow(*K1)
+        process_illumall(*K1)
 
     
