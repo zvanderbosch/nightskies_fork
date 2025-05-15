@@ -60,6 +60,36 @@ def clear_scratch(scratch_dir):
             os.chmod(os.path.join(root, name), stat.S_IWRITE)
             os.rmdir(os.path.join(root, name))
 
+def clear_memory(objectList):
+    '''
+    Function for clearing variables from memory
+    '''
+    for obj in objectList:
+        if obj:
+            del obj
+
+def nl_to_mlux(raster):
+    '''
+    Unit conversion from nano-Lamberts to milli-Lux
+    '''
+    return (0.000000761544 * raster) / 314.159
+
+def raster_stats(raster):
+
+    # Convert raster to numpy array
+    arr = arcpy.RasterToNumPyArray(
+        raster,
+        nodata_to_value=n.nan
+    )
+
+    # Calculate stats
+    statDict = {
+        'MEAN': n.nanmean(arr),
+        'MIN': n.nanmin(arr),
+        'MAX': n.nanmax(arr),
+        'SUM': n.nansum(arr)
+    }
+
 
 def calculate_illuminance(dnight,sets,filter):
     '''
@@ -98,56 +128,82 @@ def calculate_illuminance(dnight,sets,filter):
         setnum = int(s[0])
         gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}"
 
+        # Status update
+        print(f'{PREFIX}Processing {dnight} Set-{setnum} {filter}-band...')
+
         # Load in anthropogenic skyglow mosaic in nano-Lamberts [nL]
         anthRaster = arcpy.sa.Raster(f"{gridsetp}skyglow/anthlightnl")
 
         # Clip mosaic to 70 and 80 zenith-angle limits
+        print(f'{PREFIX}Clipping skyglow mosaic to 70 and 80 Zenith Angle limits...')
         arcpy.management.Clip(
-            anthRaster,
-            "#",
-            f"anth70{setnum}",
-            za70File,
-            "#",
-            "ClippingGeometry"
+            anthRaster,"#",f"anth70{setnum}",za70File,"#","ClippingGeometry"
         )
         arcpy.management.Clip(
-            anthRaster,
-            "#",
-            f"anth80{setnum}",
-            za80File,
-            "#",
-            "ClippingGeometry"
+            anthRaster,"#",f"anth80{setnum}",za80File,"#","ClippingGeometry"
         )
         anthRaster70 = arcpy.sa.Raster(f"anth70{setnum}")
         anthRaster80 = arcpy.sa.Raster(f"anth80{setnum}")
 
-        # Calculate zonal satistics for each mosaic
+        # Calculate zonal stats for each mosaic
+        print(f'{PREFIX}Calculating anthropogenic sky luminance...')
         resultDict = {}
         mosaicList = [anthRaster,anthRaster70,anthRaster80]
         for i,mosaic in enumerate(mosaicList):
-            
-            # Define output table
-            outputTable = f"{gridsetp}skyhemis{i}.dbf"
 
-            # Calculate zonal stsatistics
-            zonalStats = arcpy.sa.ZonalStatisticsAsTable(
-                maskRaster,
-                "Value",
-                mosaic,
-                outputTable,
-                "DATA",
-                "ALL"
+            # Calculate zonal stats
+            outputTable = f"{gridsetp}skyhemis{i}.dbf"
+            _ = arcpy.sa.ZonalStatisticsAsTable(
+                maskRaster,"VALUE",mosaic,outputTable,"DATA","ALL"
             )
 
             # Extract stats from output table
             rows = arcpy.SearchCursor(outputTable)
             row = rows.next()
-            resultDict[f'skymaxi{i}'] = row.getValue("MAX")
-            resultDict[f'skymini{i}'] = row.getValue("MIN")
+            resultDict[f'skymax{i}'] = row.getValue("MAX")
+            resultDict[f'skymin{i}'] = row.getValue("MIN")
             resultDict[f'skyave{i}'] = row.getValue("MEAN")
-            if row:
-                del row
-            if rows:
-                del rows
+            clear_memory([row,rows])
+
+        # Calculate zonal stats
+        print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
+        outputTable = f"{gridsetp}skyzones.dbf"
+        _ = arcpy.sa.ZonalStatisticsAsTable(
+            zoneFile,"band",anthRaster,outputTable,"DATA","MEAN"
+        )
+
+        # Extract stats from output table
+        zoneAve,zoneMax = [],[]
+        rows = arcpy.SearchCursor(outputTable)
+        for i in range(5):
+            row = rows.next()
+            zoneAve.append(row.getValue("MEAN"))
+            zoneMax.append(row.getValue("COUNT"))
+        clear_memory([row,rows])
+
+        # Calculate zonal stats for each mosaic
+        print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
+        mlux = nl_to_mlux(anthRaster)
+        mlux70 = nl_to_mlux(anthRaster70)
+        mlux80 = nl_to_mlux(anthRaster80)
+        mosaicList = [mlux, mlux80, mlux70]
+        for i,mosaic in enumerate(mosaicList):
+
+            # Calculate zonal stats
+            outputTable = f"{gridsetp}skyhemis{i}.dbf"
+            _ = arcpy.sa.ZonalStatisticsAsTable(
+                maskRaster,"VALUE",mosaic,outputTable,"DATA","ALL"
+            )
+
+            # Extract stats from output table
+            rows = arcpy.SearchCursor(outputTable)
+            row = rows.next()
+            resultDict[f'hemis{i}'] = row.getValue("MEAN")
+            resultDict[f'totalill{i}'] = row.getValue("SUM")
+            clear_memory([row,rows])
+
+        
         print(resultDict)
+        print(zoneAve)
+        print(zoneMax)
             
