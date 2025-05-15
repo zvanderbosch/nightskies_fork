@@ -307,9 +307,13 @@ def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
         arcpy.management.Delete(layer,"")
 
 
+#-----------------------------------------------------------------------------#
+# Main Program
+
 def calculate_illuminance(dnight,sets,filter):
     '''
-    Calculate illumninace of anthropogenic skyglow mosaic
+    Main program for computing sky luminance and illuminance
+    statistics from only anthropogenic sources. 
     '''
 
     # Filter paths
