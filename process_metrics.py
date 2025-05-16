@@ -51,7 +51,7 @@ def process_skyglow(*args):
     for filter in args[2]:
         SG.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
-    print(f'Processing Time: {t2-t1:.2f} seconds')
+    print(f'{PREFIX}Processing Time (skyglow): {t2-t1:.2f} seconds')
 
 
 def process_illumall(*args):
@@ -61,7 +61,7 @@ def process_illumall(*args):
     for filter in args[2]:
         IA.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
-    print(f'Processing Time: {t2-t1:.2f} seconds')
+    print(f'{PREFIX}Processing Time (illumall): {t2-t1:.2f} seconds')
 
 def process_starsvis(*args):
     '''Calculate skyglow illuminance'''
@@ -70,7 +70,7 @@ def process_starsvis(*args):
     for filter in args[2]:
         SV.calculate_stars_visible(args[0],args[1],filter)
     t2 = time.time()
-    print(f'Processing Time: {t2-t1:.2f} seconds')
+    print(f'{PREFIX}Processing Time (starsvis): {t2-t1:.2f} seconds')
 
 
 
