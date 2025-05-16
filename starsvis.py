@@ -259,8 +259,8 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.analysis.Clip(
             starName, maskShape, skyStarsFile
         )
-        numstarsf = int(arcpy.GetCount_management(skyStarsFlatFile).getOutput(0))
-        numstarsm = int(arcpy.GetCount_management(skyStarsFile).getOutput(0))
+        numstarsf = int(arcpy.management.GetCount(skyStarsFlatFile).getOutput(0)) # Num stars to flat horizon
+        numstarsm = int(arcpy.management.GetCount(skyStarsFile).getOutput(0))     # Num stars to observed horizon
 
         # Calculate extinction of stars
         arcpy.sa.ExtractMultiValuesToPoints( # Extract airmass values
@@ -295,3 +295,67 @@ def calculate_stars_visible(dnight,sets,filter):
             skyStarsFile, "emn", "DOUBLE")
         arcpy.management.CalculateField(
             skyStarsFile, "emn", '!lmn! - !extmag!', "PYTHON")
+        
+        # Make a layer from the feature class
+        skyStarsLayer = "skystars_lyr"
+        arcpy.management.MakeFeatureLayer(
+            skyStarsFile, skyStarsLayer)
+        arcpy.management.SaveToLayerFile(
+            skyStarsLayer, f"{gridsetp}nat/skystarslyr.lyr", "ABSOLUTE")
+        
+        # Select stars with extincted mag < 7.5 only
+        extStarsShape = f"{gridsetp}nat/extstars.shp"
+        extStarsLayerName = "extstars_lyr"
+        extStarsLayerFile = f"{gridsetp}nat/extstarslyr.lyr"
+        arcpy.management.SelectLayerByAttribute(
+            skyStarsLayer, "NEW_SELECTION", "extmag < 7.9") # Is this a Bug?? Should be 7.5??
+        arcpy.management.CopyFeatures(
+            skyStarsLayer, extStarsShape)
+        arcpy.management.MakeFeatureLayer(
+            extStarsShape, extStarsLayerName)
+        arcpy.management.SaveToLayerFile(
+            extStarsLayerName, extStarsLayerFile, "ABSOLUTE")
+        numstarse = int(arcpy.management.GetCount(extStarsShape).getOutput(0))
+
+        # Select visible stars only
+        visStarsShape = f"{gridsetp}nat/visstars.shp"
+        visStarsLayerName = "visstars_lyr"
+        visStarsLayerFile = f"{gridsetp}nat/visstarslyr.lyr"
+        arcpy.management.SelectLayerByAttribute(
+            skyStarsLayer, "CLEAR_SELECTION", "")
+        arcpy.management.SelectLayerByAttribute(
+            skyStarsLayer, "NEW_SELECTION", "em > 0")
+        arcpy.management.CopyFeatures(
+            skyStarsLayer, visStarsShape)
+        arcpy.management.MakeFeatureLayer(
+            visStarsShape, visStarsLayerName)
+        arcpy.management.SaveToLayerFile(
+            visStarsLayerName, visStarsLayerFile, "ABSOLUTE")
+        numstars = int(arcpy.GetCount_management(visStarsLayerFile).getOutput(0))
+
+        # Get number of visible stars in natural sky
+        natStarsShape = f"{gridsetp}nat/visstarsn.shp"
+        natStarsLayerName = "visstarsn_lyr"
+        natStarsLayerFile = f"{gridsetp}nat/visstarsnlyr.lyr"
+        arcpy.management.SelectLayerByAttribute(
+            skyStarsLayer, "NEW_SELECTION", "emn > 0")
+        arcpy.management.CopyFeatures(
+            skyStarsLayer, natStarsShape)
+        arcpy.management.MakeFeatureLayer(
+            natStarsShape, natStarsLayerName)
+        arcpy.management.SaveToLayerFile(
+            natStarsLayerName, natStarsLayerFile, "ABSOLUTE")
+        numstarsn = int(arcpy.GetCount_management(natStarsLayerFile).getOutput(0))
+
+        # Apply symbologies to visible star layers
+        symbologyVisStars = f"{filepath.rasters}skystarslp.lyrx"
+        symbologyNatStars = f"{filepath.rasters}skystarslpn.lyrx"
+        arcpy.ApplySymbologyFromLayer_management (visStarsLayerFile, symbologyVisStars)
+        arcpy.ApplySymbologyFromLayer_management (natStarsLayerFile, symbologyNatStars)
+
+        # Print out results
+        print(f'Number of stars to flat horizon                           : {numstarsf}')
+        print(f'Number of stars to observed horizon                       : {numstarsm}')
+        print(f'Number of stars visible without any background brightness : {numstarse}')
+        print(f'Number of stars visible in polluted sky                   : {numstars}')
+        print(f'Number of stars visible in natural sky                    : {numstarsn}')
