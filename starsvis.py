@@ -1,0 +1,193 @@
+#-----------------------------------------------------------------------------#
+#starsvis.py
+#
+#NPS Night Skies Program
+#
+#Last updated: 2025/05/16
+#
+#This script computes the number/fraction of stars visible.
+#
+#Note: 
+#
+#Input:
+#   (1) 
+#
+#Output:
+#   (1) 
+#
+#History:
+#	Zach Vanderbosch -- Created script
+#
+#-----------------------------------------------------------------------------#
+
+from astropy.time import Time
+from astropy.io import fits
+
+import os
+import stat
+import arcpy
+import numpy as n
+import astropy.units as u
+import astropy.coordinates as coord
+
+# Local Source
+import filepath
+import printcolors as pc
+
+# Set arcpy environment variables
+arcpy.env.overwriteOutput = True
+arcpy.env.rasterStatistics = "NONE"
+arcpy.env.pyramid = "NONE"
+arcpy.env.compression = "NONE"
+arcpy.CheckOutExtension("Spatial")
+
+# Define print staus prefix
+scriptName = 'starsvis.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
+
+#------------------------------------------------------------------------------#
+#-----------------  Define Fisheye Equal Area Coord System  -------------------#
+#------------------------------------------------------------------------------#
+
+geogcs = (
+    "GEOGCS["
+        "'GCS_Sphere_EMEP',"
+        "DATUM['D_Sphere_EMEP',"
+        "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
+        "PRIMEM['Greenwich',0.0],"
+        "UNIT['Degree',0.0174532925199433]"
+    "]"
+)
+coordinateSystem = (
+    "PROJCS["
+        "'fisheye equal area',"
+        f"{geogcs},"
+        "PROJECTION['Lambert_Azimuthal_Equal_Area'],"
+        "PARAMETER['False_Easting',0.0],"
+        "PARAMETER['False_Northing',0.0],"
+        "PARAMETER['Central_Meridian',180.0],"
+        "PARAMETER['Latitude_Of_Origin',90.0],"
+        "UNIT['Meter',1.0]"
+    "]"
+)
+
+#------------------------------------------------------------------------------#
+#-------------------           Various Functions            -------------------#
+#------------------------------------------------------------------------------#
+
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
+
+
+def clear_memory(objectList):
+    '''
+    Function for clearing variables from memory
+    '''
+    for obj in objectList:
+        if obj:
+            del obj
+
+
+def get_zenith_coords(imageFile):
+    '''
+    Function to compute zenith RA and Dec coordinates
+    at the time and location of a given image.
+    '''
+
+    # Load image header
+    H = fits.getheader(imageFile)
+
+    # Set observing time and site
+    obstime = Time(H['JD'], format='jd', scale='utc')
+    site = coord.EarthLocation.from_geodetic(
+        lon = H['LONGITUD']*u.deg,
+        lat = H['LATITUDE']*u.deg,
+        height = H['ELEVATIO']*u.m
+    )
+
+    # Define Alt-Az coordinate object at zenith
+    zenithTopoCoord = coord.SkyCoord(
+        az=0.0*u.deg,
+        alt=90.0*u.deg,
+        obstime=obstime,
+        location=site,
+        frame='altaz'
+    )
+
+    # Transform to ICRS reference frame
+    zenithICRSCoord = zenithTopoCoord.transform_to(coord.ICRS())
+    raZenith = zenithICRSCoord.ra.deg
+    decZenith = zenithICRSCoord.dec.deg
+
+    return raZenith,decZenith
+
+
+
+
+#------------------------------------------------------------------------------#
+#-------------------              Main Program              -------------------#
+#------------------------------------------------------------------------------#
+
+def calculate_stars_visible(dnight,sets,filter):
+    '''
+    Main program for computing the numnber/fraction of visible stars
+    '''
+
+    # Filter paths
+    F = {'V':'', 'B':'B/'}
+
+    # Set ArcGIS working directories
+    scratchsetp = f"{filepath.rasters}scratch_metrics/"
+    arcpy.env.workspace = scratchsetp
+    arcpy.env.scratchWorkspace = scratchsetp
+
+    # Create or clear out working directory
+    if os.path.exists(scratchsetp):
+        clear_scratch(scratchsetp)
+    else:
+        os.makedirs(scratchsetp)
+
+    # Load in the mask and airmass rasters
+    maskRaster = arcpy.sa.Raster(f"{filepath.griddata}{dnight}/mask/maskd.tif")
+    airmassRaster = arcpy.sa.Raster(f"{filepath.rasters}airmassf")
+
+    # Convert mask raster to shape file
+    maskShape = "mask.shp"
+    arcpy.conversion.RasterToPolygon(
+        maskRaster, maskShape, "SIMPLIFY", "VALUE"
+    )
+
+    # Define paths to additional shape files
+    starShape = f"{filepath.rasters}shapefiles/SAOJ200079.shp"
+    allskyShape = f"{filepath.rasters}shapefiles/allskyf.shp"
+
+
+    # Loop through each data set
+    for s in sets:
+
+        # Set path for grid datasets
+        setnum = int(s[0])
+        calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/{F[filter]}"
+        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}"
+
+        # Initial status update for data set
+        print(f'{PREFIX}Processing {dnight} Set-{setnum} {filter}-band...')
+
+
+        # Get Zenith RA and Dec at dataset midpoint in time
+        midpointImage = f"{calsetp}ib022.fit"
+        raZenith, decZenith = get_zenith_coords(midpointImage)
+        print(raZenith,decZenith)
+        
+
+        # Get extinction coefficient
+        
