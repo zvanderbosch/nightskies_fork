@@ -62,15 +62,6 @@ def clear_scratch(scratch_dir):
             os.rmdir(os.path.join(root, name))
 
 
-def clear_memory(objectList):
-    '''
-    Function for clearing variables from memory
-    '''
-    for obj in objectList:
-        if obj:
-            del obj
-
-
 def get_zenith_coords(imageFile):
     '''
     Function to compute zenith RA and Dec coordinates
