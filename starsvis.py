@@ -46,32 +46,6 @@ scriptName = 'starsvis.py'
 PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #------------------------------------------------------------------------------#
-#-----------------  Define Fisheye Equal Area Coord System  -------------------#
-#------------------------------------------------------------------------------#
-
-geogcs = (
-    "GEOGCS["
-        "'GCS_Sphere_EMEP',"
-        "DATUM['D_Sphere_EMEP',"
-        "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
-        "PRIMEM['Greenwich',0.0],"
-        "UNIT['Degree',0.0174532925199433]"
-    "]"
-)
-coordinateSystem = (
-    "PROJCS["
-        "'fisheye equal area',"
-        f"{geogcs},"
-        "PROJECTION['Lambert_Azimuthal_Equal_Area'],"
-        "PARAMETER['False_Easting',0.0],"
-        "PARAMETER['False_Northing',0.0],"
-        "PARAMETER['Central_Meridian',180.0],"
-        "PARAMETER['Latitude_Of_Origin',90.0],"
-        "UNIT['Meter',1.0]"
-    "]"
-)
-
-#------------------------------------------------------------------------------#
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
