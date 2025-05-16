@@ -301,12 +301,12 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.management.MakeFeatureLayer(
             skyStarsFile, skyStarsLayer)
         arcpy.management.SaveToLayerFile(
-            skyStarsLayer, f"{gridsetp}nat/skystarslyr.lyr", "ABSOLUTE")
+            skyStarsLayer, f"{gridsetp}nat/skystarslyr.lyrx", "ABSOLUTE")
         
         # Select stars with extincted mag < 7.5 only
         extStarsShape = f"{gridsetp}nat/extstars.shp"
         extStarsLayerName = "extstars_lyr"
-        extStarsLayerFile = f"{gridsetp}nat/extstarslyr.lyr"
+        extStarsLayerFile = f"{gridsetp}nat/extstarslyr.lyrx"
         arcpy.management.SelectLayerByAttribute(
             skyStarsLayer, "NEW_SELECTION", "extmag < 7.9") # Is this a Bug?? Should be 7.5??
         arcpy.management.CopyFeatures(
@@ -320,7 +320,7 @@ def calculate_stars_visible(dnight,sets,filter):
         # Select visible stars only
         visStarsShape = f"{gridsetp}nat/visstars.shp"
         visStarsLayerName = "visstars_lyr"
-        visStarsLayerFile = f"{gridsetp}nat/visstarslyr.lyr"
+        visStarsLayerFile = f"{gridsetp}nat/visstarslyr.lyrx"
         arcpy.management.SelectLayerByAttribute(
             skyStarsLayer, "CLEAR_SELECTION", "")
         arcpy.management.SelectLayerByAttribute(
@@ -336,7 +336,7 @@ def calculate_stars_visible(dnight,sets,filter):
         # Get number of visible stars in natural sky
         natStarsShape = f"{gridsetp}nat/visstarsn.shp"
         natStarsLayerName = "visstarsn_lyr"
-        natStarsLayerFile = f"{gridsetp}nat/visstarsnlyr.lyr"
+        natStarsLayerFile = f"{gridsetp}nat/visstarsnlyr.lyrx"
         arcpy.management.SelectLayerByAttribute(
             skyStarsLayer, "NEW_SELECTION", "emn > 0")
         arcpy.management.CopyFeatures(
@@ -354,8 +354,8 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.ApplySymbologyFromLayer_management (natStarsLayerFile, symbologyNatStars)
 
         # Print out results
-        print(f'Number of stars to flat horizon                           : {numstarsf}')
-        print(f'Number of stars to observed horizon                       : {numstarsm}')
-        print(f'Number of stars visible without any background brightness : {numstarse}')
-        print(f'Number of stars visible in polluted sky                   : {numstars}')
-        print(f'Number of stars visible in natural sky                    : {numstarsn}')
+        print(f'{PREFIX}Number of stars to flat horizon                           : {numstarsf}')
+        print(f'{PREFIX}Number of stars to observed horizon                       : {numstarsm}')
+        print(f'{PREFIX}Number of stars visible without any background brightness : {numstarse}')
+        print(f'{PREFIX}Number of stars visible in polluted sky                   : {numstars}')
+        print(f'{PREFIX}Number of stars visible in natural sky                    : {numstarsn}')
