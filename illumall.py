@@ -313,7 +313,7 @@ def calculate_statistics(dnight,sets,filter):
     else:
         os.makedirs(scratchsetp)
 
-    # Load in the mask raster
+    # Load in mask rasters for zonal stats
     maskRaster = arcpy.sa.Raster(f"{filepath.griddata}{dnight}/mask/maskd.tif")
     areaRaster = arcpy.sa.Raster(f"{filepath.rasters}arearasterf")
     hemiRaster = arcpy.sa.Raster(f"{filepath.rasters}hemirasterf")
