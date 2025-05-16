@@ -365,7 +365,4 @@ def calculate_statistics(dnight,sets,filter):
         # Calculate vertical illuminance
         print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
         resultDict = calc_vertical_illuminance(brightRaster, areaRaster, gridsetp, resultDict)
-
-        for key in resultDict:
-            print(key,resultDict[key])
-            
+        
