@@ -137,6 +137,34 @@ def get_zenith_coords(imageFile):
     return raZenith,decZenith
 
 
+def get_coordinate_system(centralMeridian=180.0, latitudeOfOrigin=90.0):
+    '''
+    Function to define an ArcGIS coordinate system in WKT format
+    '''
+
+    geogcs = (
+        "GEOGCS["
+            "'GCS_Sphere_EMEP',"
+            "DATUM['D_Sphere_EMEP',"
+            "SPHEROID['Sphere_EMEP',6370000.0,0.0]],"
+            "PRIMEM['Greenwich',0.0],"
+            "UNIT['Degree',0.0174532925199433]"
+        "]"
+    )
+    coordinateSystem = (
+        "PROJCS["
+            "'fisheye equal area',"
+            f"{geogcs},"
+            "PROJECTION['Lambert_Azimuthal_Equal_Area'],"
+            "PARAMETER['False_Easting',0.0],"
+            "PARAMETER['False_Northing',0.0],"
+            f"PARAMETER['Central_Meridian',{centralMeridian:.8f}],"
+            f"PARAMETER['Latitude_Of_Origin',{latitudeOfOrigin:.8f}],"
+            "UNIT['Meter',1.0]"
+        "]"
+    )
+
+    return coordinateSystem
 
 
 #------------------------------------------------------------------------------#
@@ -174,7 +202,7 @@ def calculate_stars_visible(dnight,sets,filter):
 
     # Define paths to additional shape files
     starShape = f"{filepath.rasters}shapefiles/SAOJ200079.shp"
-    allskyShape = f"{filepath.rasters}shapefiles/allskyf.shp"
+    flatmaskShape = f"{filepath.rasters}shapefiles/allskyf.shp"
 
 
     # Loop through each data set
@@ -195,5 +223,47 @@ def calculate_stars_visible(dnight,sets,filter):
         
         # Get extinction coefficient
         extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.txt"
-        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[s-1,4])
+        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[setnum-1,4])
+
+        # Load in median sky brightness and natural sky rasters
+        brightRasterMag = arcpy.sa.Raster(f"{gridsetp}median/skybrightmags")
+        brightRasterNl = arcpy.sa.Raster(f"{gridsetp}median/skybrightnl")
+        natRasterMag = arcpy.sa.Raster(f"{gridsetp}nat/natskymags")
         
+        # Get coordinate systems
+        coordSysLocal = get_coordinate_system()
+        coordSysZenith = get_coordinate_system(
+            centralMeridian=raZenith,
+            latitudeOfOrigin=decZenith
+        )
+
+        # Project sky brightness rasters to fisheye equal area
+        brightMagName = f"brightf{setnum}"
+        brightNlName = f"brightnl{setnum}"
+        arcpy.management.ProjectRaster(
+            brightRasterMag, brightMagName, coordSysLocal, "BILINEAR", "5558.8"
+        )
+        arcpy.management.ProjectRaster(
+            brightRasterNl, brightNlName, coordSysLocal, "BILINEAR", "5558.8"
+        )
+        ndiffusem = arcpy.sa.Raster(brightMagName)
+        ndiffuse = arcpy.sa.Raster(brightNlName)
+
+        # Project star shapefile to local horizon
+        starName = "j2000proj.shp"
+        arcpy.management.Project(
+            starShape, starName, coordSysZenith
+        )
+        arcpy.management.DefineProjection(
+            starName, coordSysLocal
+        )
+
+        # Clip projected stars to flat and true horizons
+        arcpy.analysis.Clip(
+            starName, flatmaskShape, "skystarsflat.shp"
+        )
+        arcpy.analysis.Clip(
+            starName, maskShape, f"{gridsetp}nat/skystars.shp"
+        )
+        numstarsf = int(arcpy.GetCount_management("skystarsflat.shp").getOutput(0))
+        numstarsm = int(arcpy.GetCount_management(f"{gridsetp}nat/skystars.shp").getOutput(0))
