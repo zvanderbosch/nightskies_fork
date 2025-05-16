@@ -141,6 +141,24 @@ def get_coordinate_system(centralMeridian=180.0, latitudeOfOrigin=90.0):
     return coordinateSystem
 
 
+def background_equation(varName):
+    '''
+    Function for generating background estimation equations 
+    in string format with Python syntax for input to 
+    arcpy.management.CalculateField
+    '''
+
+    stringEq = (
+        f'( (0.00131744 * (!{varName}! ** 4))) - '
+        f'(0.0925575 * (!{varName}! ** 3)) + '
+        f'(2.38963265 * (!{varName}! ** 2)) - '
+        f'(26.2432168 * !{varName}!) + '
+        f'104.91069174'
+    )
+
+    return stringEq
+
+
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
@@ -166,7 +184,7 @@ def calculate_stars_visible(dnight,sets,filter):
 
     # Load in the mask and airmass rasters
     maskRaster = arcpy.sa.Raster(f"{filepath.griddata}{dnight}/mask/maskd.tif")
-    # airmassRaster = arcpy.sa.Raster(f"{filepath.rasters}airmassf")
+    airmassRaster = arcpy.sa.Raster(f"{filepath.rasters}airmassf")
 
     # Convert mask raster to shape file
     maskShape = "mask.shp"
@@ -220,8 +238,8 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.management.ProjectRaster(
             brightRasterNl, brightNlName, coordSysLocal, "BILINEAR", "5558.8"
         )
-        ndiffusem = arcpy.sa.Raster(brightMagName)
-        ndiffuse = arcpy.sa.Raster(brightNlName)
+        brightRasterMagProjected = arcpy.sa.Raster(brightMagName)
+        # brightRasterNlProjected = arcpy.sa.Raster(brightNlName)
 
         # Project star shapefile to local horizon
         starName = "j2000proj.shp"
@@ -233,11 +251,47 @@ def calculate_stars_visible(dnight,sets,filter):
         )
 
         # Clip projected stars to flat and true horizons
+        skyStarsFlatFile = "skystarsflat.shp"
+        skyStarsFile = f"{gridsetp}nat/skystars.shp"
         arcpy.analysis.Clip(
-            starName, flatmaskShape, "skystarsflat.shp"
+            starName, flatmaskShape, skyStarsFlatFile
         )
         arcpy.analysis.Clip(
-            starName, maskShape, f"{gridsetp}nat/skystars.shp"
+            starName, maskShape, skyStarsFile
         )
-        numstarsf = int(arcpy.GetCount_management("skystarsflat.shp").getOutput(0))
-        numstarsm = int(arcpy.GetCount_management(f"{gridsetp}nat/skystars.shp").getOutput(0))
+        numstarsf = int(arcpy.GetCount_management(skyStarsFlatFile).getOutput(0))
+        numstarsm = int(arcpy.GetCount_management(skyStarsFile).getOutput(0))
+
+        # Calculate extinction of stars
+        arcpy.sa.ExtractMultiValuesToPoints( # Extract airmass values
+            skyStarsFile, [[airmassRaster, "airmass"]], "NONE")
+        arcpy.management.AddField(           # Add extmag field
+            skyStarsFile, "extmag", "DOUBLE")
+        arcpy.management.CalculateField(     # Calculate extincted star magnitudes
+            skyStarsFile, "extmag", f"(!airmass! * {extCoeff:.8f}) + !vmag!", "PYTHON")
+
+        # Extract bacground brightness values
+        arcpy.sa.ExtractMultiValuesToPoints(
+            skyStarsFile, [[brightRasterMagProjected, "background"]], "NONE")
+        arcpy.sa.ExtractMultiValuesToPoints(
+            skyStarsFile, [[natRasterMag, "backn"]], "NONE")
+
+        # Calculate limiting magnitude at each star location
+        arcpy.management.AddField(
+            skyStarsFile, "lm", "DOUBLE")
+        arcpy.management.CalculateField(
+            skyStarsFile, "lm", background_equation('background'), "PYTHON")
+        arcpy.management.AddField(
+            skyStarsFile, "lmn", "DOUBLE")
+        arcpy.management.CalculateField(
+            skyStarsFile, "lmn", background_equation('backn'), "PYTHON")
+
+        # Calculate visibility of each star
+        arcpy.management.AddField(
+            skyStarsFile, "em", "DOUBLE")
+        arcpy.management.CalculateField(
+            skyStarsFile, "em", '!lm! - !extmag!', "PYTHON")
+        arcpy.management.AddField(
+            skyStarsFile, "emn", "DOUBLE")
+        arcpy.management.CalculateField(
+            skyStarsFile, "emn", '!lmn! - !extmag!', "PYTHON")
