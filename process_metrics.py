@@ -133,8 +133,9 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # process_skyglow(*K1)
-        # process_illumall(*K1)
-        process_starsvis(*K1)
+        # Execute each processing step
+        process_skyglow(*K1)               # Asthropogenic skyglow luminance & illuminance
+        process_illumall(*K1)              # All sources skyglow luminance & illuminance
+        process_starsvis(*K1)              # Number/fraction of visible stars
 
     
