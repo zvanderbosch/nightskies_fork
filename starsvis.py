@@ -72,7 +72,7 @@ coordinateSystem = (
 )
 
 #------------------------------------------------------------------------------#
-#-------------------           Various Functions            -------------------#
+#-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
 def clear_scratch(scratch_dir):
@@ -107,8 +107,8 @@ def get_zenith_coords(imageFile):
     H = fits.getheader(imageFile)
 
     # Set observing time and site
-    obstime = Time(H['JD'], format='jd', scale='utc')
-    site = coord.EarthLocation.from_geodetic(
+    obsTime = Time(H['JD'], format='jd', scale='utc')
+    obsSite = coord.EarthLocation.from_geodetic(
         lon = H['LONGITUD']*u.deg,
         lat = H['LATITUDE']*u.deg,
         height = H['ELEVATIO']*u.m
@@ -118,8 +118,8 @@ def get_zenith_coords(imageFile):
     zenithTopoCoord = coord.SkyCoord(
         az=0.0*u.deg,
         alt=90.0*u.deg,
-        obstime=obstime,
-        location=site,
+        obstime=obsTime,
+        location=obsSite,
         frame='altaz'
     )
 
@@ -127,6 +127,12 @@ def get_zenith_coords(imageFile):
     zenithICRSCoord = zenithTopoCoord.transform_to(coord.ICRS())
     raZenith = zenithICRSCoord.ra.deg
     decZenith = zenithICRSCoord.dec.deg
+
+    # Wrap the RA coordinate at 180-deg
+    if raZenith > 180:
+        raZenith = -(raZenith - 360)
+    else:
+        raZenith = -raZenith
 
     return raZenith,decZenith
 
@@ -158,7 +164,7 @@ def calculate_stars_visible(dnight,sets,filter):
 
     # Load in the mask and airmass rasters
     maskRaster = arcpy.sa.Raster(f"{filepath.griddata}{dnight}/mask/maskd.tif")
-    airmassRaster = arcpy.sa.Raster(f"{filepath.rasters}airmassf")
+    # airmassRaster = arcpy.sa.Raster(f"{filepath.rasters}airmassf")
 
     # Convert mask raster to shape file
     maskShape = "mask.shp"
@@ -186,8 +192,8 @@ def calculate_stars_visible(dnight,sets,filter):
         # Get Zenith RA and Dec at dataset midpoint in time
         midpointImage = f"{calsetp}ib022.fit"
         raZenith, decZenith = get_zenith_coords(midpointImage)
-        print(raZenith,decZenith)
         
-
         # Get extinction coefficient
+        extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.txt"
+        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[s-1,4])
         
