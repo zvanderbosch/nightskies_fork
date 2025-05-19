@@ -73,7 +73,7 @@ def clear_memory(objectList):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def calculate_alr_model(dnight,sets,filter):
+def calculate_alr_model(dnight):
     '''
     Main program for computing the numnber/fraction of visible stars
     '''
@@ -96,7 +96,7 @@ def calculate_alr_model(dnight,sets,filter):
     alrRaster = arcpy.sa.Raster(f"{filepath.rasters}alrmodel")
 
     # Get site longitude and latitude
-    imsetp = f"{filepath.calibdata}{dnight}/S_*/{F[filter]}"
+    imsetp = f"{filepath.calibdata}{dnight}/S_*/{F['V']}"
     imageFiles = glob(f"{imsetp}ib???.fit")
     if len(imageFiles) == 0:
         print(f'Could not find FITS files at {imsetp}')
