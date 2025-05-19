@@ -93,6 +93,15 @@ def process_albedomodel(*args):
     print(f'{PREFIX}Processing Time (albedomodel): {t2-t1:.2f} seconds')
 
 
+def process_places(*args):
+    '''Calculate distance & Walker's Law for places'''
+    t1 = time.time()
+    import places as PL
+    PL.calculate_places(*args)
+    t2 = time.time()
+    print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
+
+
 
 
 
@@ -159,6 +168,7 @@ if __name__ == '__main__':
         p3 = multiprocessing.Process(target=process_starsvis,    args=K1)
         p4 = multiprocessing.Process(target=process_alrmodel,    args=K0)
         p5 = multiprocessing.Process(target=process_albedomodel, args=K0)
+        p6 = multiprocessing.Process(target=process_places,      args=K0)
 
         # Execute each processing step
         # p1.start()  # Asthropogenic skyglow luminance & illuminance
@@ -167,9 +177,11 @@ if __name__ == '__main__':
         # p2.join()
         # p3.start()  # Number/fraction of visible stars
         # p3.join()
-        p4.start()  # All-sky Light Pollution Ratio (ALR) model
-        p4.join()
-        p5.start()  # Albedo model
-        p5.join()
+        # p4.start()  # All-sky Light Pollution Ratio (ALR) model
+        # p4.join()
+        # p5.start()  # Albedo model
+        # p5.join()
+        p6.start()  # Places
+        p6.join()
 
     
