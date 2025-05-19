@@ -144,8 +144,8 @@ if __name__ == '__main__':
         
         sets = dnight_sets[Dataset[i]]
         # K0 = (Dataset[i],sets,Filterset,Curve[i])
-        K1 = (Dataset[i],sets,Filter) 
-        K2 = (Dataset[i],)  
+        K0 = (Dataset[i],)  
+        K1 = (Dataset[i],sets,Filter)  
 
         # Status update
         print(
@@ -157,8 +157,8 @@ if __name__ == '__main__':
         p1 = multiprocessing.Process(target=process_skyglow,     args=K1)
         p2 = multiprocessing.Process(target=process_illumall,    args=K1)
         p3 = multiprocessing.Process(target=process_starsvis,    args=K1)
-        p4 = multiprocessing.Process(target=process_alrmodel,    args=K2)
-        p5 = multiprocessing.Process(target=process_albedomodel, args=K2)
+        p4 = multiprocessing.Process(target=process_alrmodel,    args=K0)
+        p5 = multiprocessing.Process(target=process_albedomodel, args=K0)
 
         # Execute each processing step
         # p1.start()  # Asthropogenic skyglow luminance & illuminance
