@@ -72,6 +72,15 @@ def process_starsvis(*args):
     t2 = time.time()
     print(f'{PREFIX}Processing Time (starsvis): {t2-t1:.2f} seconds')
 
+def process_alrmodel(*args):
+    '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
+    t1 = time.time()
+    import alrmodel as AM
+    for filter in args[2]:
+        AM.calculate_alr_model(args[0],args[1],filter)
+    t2 = time.time()
+    print(f'{PREFIX}Processing Time (alrmodel): {t2-t1:.2f} seconds')
+
 
 
 
@@ -137,5 +146,6 @@ if __name__ == '__main__':
         # process_skyglow(*K1)               # Asthropogenic skyglow luminance & illuminance
         # process_illumall(*K1)              # All sources skyglow luminance & illuminance
         # process_starsvis(*K1)              # Number/fraction of visible stars
+        process_alrmodel(*K1)              # All-sky Light Pollution Ratio (ALR) model
 
     
