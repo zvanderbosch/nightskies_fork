@@ -26,6 +26,7 @@ import os
 import time
 import warnings
 import numpy as n
+import multiprocessing
 import matplotlib.pyplot as plt
 
 from datetime import datetime as Dtime
@@ -152,11 +153,23 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
+        # Create multiprocessing objects for each step
+        p1 = multiprocessing.Process(target=process_skyglow,     args=K1)
+        p2 = multiprocessing.Process(target=process_illumall,    args=K1)
+        p3 = multiprocessing.Process(target=process_starsvis,    args=K1)
+        p4 = multiprocessing.Process(target=process_alrmodel,    args=K2)
+        p5 = multiprocessing.Process(target=process_albedomodel, args=K2)
+
         # Execute each processing step
-        # process_skyglow(*K1)               # Asthropogenic skyglow luminance & illuminance
-        # process_illumall(*K1)              # All sources skyglow luminance & illuminance
-        # process_starsvis(*K1)              # Number/fraction of visible stars
-        # process_alrmodel(*K2)              # All-sky Light Pollution Ratio (ALR) model
-        process_albedomodel(*K2)           # Albedo model
+        # p1.start()  # Asthropogenic skyglow luminance & illuminance
+        # p1.join()
+        # p2.start()  # All sources skyglow luminance & illuminance
+        # p2.join()
+        # p3.start()  # Number/fraction of visible stars
+        # p3.join()
+        p4.start()  # All-sky Light Pollution Ratio (ALR) model
+        p4.join()
+        p5.start()  # Albedo model
+        p5.join()
 
     
