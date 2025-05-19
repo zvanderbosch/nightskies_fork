@@ -78,8 +78,7 @@ def process_alrmodel(*args):
     '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
     t1 = time.time()
     import alrmodel as AM
-    for filter in args[2]:
-        AM.calculate_alr_model(args[0],args[1],filter)
+    AM.calculate_alr_model(*args)
     t2 = time.time()
     print(f'{PREFIX}Processing Time (alrmodel): {t2-t1:.2f} seconds')
 
@@ -88,8 +87,7 @@ def process_albedomodel(*args):
     '''Calculate albedo model'''
     t1 = time.time()
     import albedomodel as BM
-    for filter in args[2]:
-        BM.calculate_albedo_model(args[0],args[1],filter)
+    BM.calculate_albedo_model(*args)
     t2 = time.time()
     print(f'{PREFIX}Processing Time (albedomodel): {t2-t1:.2f} seconds')
 
@@ -146,7 +144,7 @@ if __name__ == '__main__':
         sets = dnight_sets[Dataset[i]]
         # K0 = (Dataset[i],sets,Filterset,Curve[i])
         K1 = (Dataset[i],sets,Filter) 
-        # K2 = (Dataset[i],sets)  
+        K2 = (Dataset[i],)  
 
         # Status update
         print(
@@ -158,7 +156,7 @@ if __name__ == '__main__':
         # process_skyglow(*K1)               # Asthropogenic skyglow luminance & illuminance
         # process_illumall(*K1)              # All sources skyglow luminance & illuminance
         # process_starsvis(*K1)              # Number/fraction of visible stars
-        # process_alrmodel(*K1)              # All-sky Light Pollution Ratio (ALR) model
-        process_albedomodel(*K1)           # Albedo model
+        # process_alrmodel(*K2)              # All-sky Light Pollution Ratio (ALR) model
+        process_albedomodel(*K2)           # Albedo model
 
     
