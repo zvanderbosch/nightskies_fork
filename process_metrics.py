@@ -45,7 +45,7 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 
 def process_skyglow(*args):
-    '''Calculate skyglow illuminance'''
+    '''Calculate luminance/illuminance metrics for artificial skyglow'''
     t1 = time.time()
     import skyglow as SG
     for filter in args[2]:
@@ -55,7 +55,7 @@ def process_skyglow(*args):
 
 
 def process_illumall(*args):
-    '''Calculate skyglow illuminance'''
+    '''Calculate luminance/illuminance metrics for all light sources'''
     t1 = time.time()
     import illumall as IA
     for filter in args[2]:
@@ -64,7 +64,7 @@ def process_illumall(*args):
     print(f'{PREFIX}Processing Time (illumall): {t2-t1:.2f} seconds')
 
 def process_starsvis(*args):
-    '''Calculate skyglow illuminance'''
+    '''Calculate visible stars'''
     t1 = time.time()
     import starsvis as SV
     for filter in args[2]:
@@ -134,8 +134,8 @@ if __name__ == '__main__':
         )
 
         # Execute each processing step
-        process_skyglow(*K1)               # Asthropogenic skyglow luminance & illuminance
-        process_illumall(*K1)              # All sources skyglow luminance & illuminance
-        process_starsvis(*K1)              # Number/fraction of visible stars
+        # process_skyglow(*K1)               # Asthropogenic skyglow luminance & illuminance
+        # process_illumall(*K1)              # All sources skyglow luminance & illuminance
+        # process_starsvis(*K1)              # Number/fraction of visible stars
 
     
