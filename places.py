@@ -115,14 +115,12 @@ def bearing_angle(lon1, lat1, lon2, lat2):
     y = n.sin(lon1-lon2)*n.cos(lat2)
 
     # Calculate bearing angle
-    bearing = n.rad2deg(n.arctan(y/x))
+    bearing = n.rad2deg(n.arctan2(y,x))
 
-    # Wrap at 180 degrees
-    for i in range(len(x)):
-        if x[i] < 0: 
-            bearing[i] += 180
-        bearing[i] = -bearing[i] % 360.
-    
+    # Return in 0 --> 360 range
+    bearing = -bearing
+    bearing[bearing < 0] += 360
+
     return bearing
 
 #------------------------------------------------------------------------------#
@@ -162,17 +160,17 @@ def calculate_places(dnight):
         n.deg2rad(lon),
         n.deg2rad(lat)
     )
+    placesNearby['DISTANCE'] = dist
 
-    # Shorten list of places to those nearby to site
+    # Shorten list of places to those nearby to site (< 451 km)
     placesNearby = places.loc[dist < 451].reset_index(drop=True)
-    placesNearby['DISTANCE'] = dist[dist < 451]
 
     # Calculate bearing angles
     bearingAngles = bearing_angle(
-        n.deg2rad(placesNearby.LONGITUDE.values),
-        n.deg2rad(placesNearby.LATITUDE.values),
         n.deg2rad(lon),
-        n.deg2rad(lat)
+        n.deg2rad(lat),
+        n.deg2rad(placesNearby.LONGITUDE.values),
+        n.deg2rad(placesNearby.LATITUDE.values)
     )
     placesNearby['BEARING'] = bearingAngles
 
@@ -180,10 +178,56 @@ def calculate_places(dnight):
     walkersLaw = 0.1 * placesNearby['2010 POPULATION'] * placesNearby['DISTANCE']**(-2.5)
     placesNearby['Walkers Law'] = walkersLaw
 
-    # Shorten list of places to those with Walkers Law > 0.001
+    # Shorten list of places to those with Walker's Law > 0.001
     placesHighImpact = placesNearby.loc[walkersLaw > 0.001].reset_index(drop=True)
-    print(len(placesHighImpact))
+
+    # Sort list of places in decreasing Walker's Law values
+    placesHighImpact.sort_values(by=['Walkers Law'], ascending=False, inplace=True)
+
+    # Compute some additional coordinates
+    halfWidth = n.rad2deg(n.arctan(placesHighImpact['radius']/placesHighImpact['DISTANCE']))
+    leftAzimuth = placesHighImpact['BEARING'] - halfWidth
+    rightAzimuth = placesHighImpact['BEARING'] + halfWidth
+    rightAzimuthCapped = n.maximum(rightAzimuth, 360*n.ones(len(rightAzimuth)))
+    geogAzimuth = placesHighImpact['BEARING'].values
+    geogAzimuth[geogAzimuth > 180] -= 360
+
+    leftAzimuthCorr,rightAzimuthCorr = [],[]
+    for i,(l,r) in enumerate(zip(leftAzimuth,rightAzimuth)):
+        if (l<0) | (r>360):
+            if r>360:
+                leftAzimuthCorr.append(0.0)
+                rightAzimuthCorr.append(r-360.)
+            else:
+                leftAzimuthCorr.append(360.+l)
+                rightAzimuthCorr.append(360.)
+        else:
+            leftAzimuthCorr.append(n.nan)
+            rightAzimuthCorr.append(n.nan)
 
 
+    # Generate output file
+    xcelOutput = pd.DataFrame({
+        'Place': placesHighImpact['NAME'],
+        'State': placesHighImpact['STATE'],
+        'Distance': placesHighImpact['DISTANCE'],
+        'Bearing': placesHighImpact['BEARING'],
+        'Population': placesHighImpact['2010 POPULATION'],
+        'Walkers Law': placesHighImpact['Walkers Law'],
+        'Half Width (Degrees)': halfWidth,
+        'Radius (km)': placesHighImpact['radius'],
+        'Left Az': leftAzimuth,
+        'Right Az': rightAzimuth,
+        'laz1': leftAzimuth,
+        'raz1': rightAzimuthCapped,
+        'laz2': leftAzimuthCorr,
+        'raz2': rightAzimuthCorr,
+        'geogaz': geogAzimuth,
+        'geoglaz': geogAzimuth - halfWidth,
+        'geograz': geogAzimuth + halfWidth
+    })
 
-    print(placesHighImpact.head())
+    # Save results to file
+    xcelOutput.to_excel(f"{filepath.calibdata}{dnight}/cities.xlsx", index=False)
+
+    print(xcelOutput.head())
