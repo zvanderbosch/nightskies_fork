@@ -160,7 +160,7 @@ def calculate_places(dnight):
         n.deg2rad(lon),
         n.deg2rad(lat)
     )
-    placesNearby['DISTANCE'] = dist
+    places['DISTANCE'] = dist
 
     # Shorten list of places to those nearby to site (< 451 km)
     placesNearby = places.loc[dist < 451].reset_index(drop=True)
