@@ -102,6 +102,15 @@ def process_places(*args):
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
 
 
+def process_drawmaps(*args):
+    '''Generate panoramic graphics'''
+    t1 = time.time()
+    import drawmaps as DM
+    DM.generate_graphics(*args)
+    t2 = time.time()
+    print(f'{PREFIX}Processing Time (drawmaps): {t2-t1:.2f} seconds')
+
+
 
 
 
@@ -120,7 +129,7 @@ if __name__ == '__main__':
 
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, _, _, _, Processor = filelist.T
+    Dataset, V_band, B_band, _, _, _, processor, centralAz, location = filelist.T
     
     #Determine the number of data sets collected in each night 
     img_sets = set(['1st','2nd','3rd','4th','5th','6th','7th','8th'])
@@ -155,6 +164,7 @@ if __name__ == '__main__':
         # K0 = (Dataset[i],sets,Filterset,Curve[i])
         K0 = (Dataset[i],)  
         K1 = (Dataset[i],sets,Filter)  
+        K2 = (Dataset[i],sets,processor[0],int(centralAz[0]),location[0])  
 
         # Status update
         print(
@@ -169,6 +179,8 @@ if __name__ == '__main__':
         p4 = multiprocessing.Process(target=process_alrmodel,    args=K0)
         p5 = multiprocessing.Process(target=process_albedomodel, args=K0)
         p6 = multiprocessing.Process(target=process_places,      args=K0)
+        # p7 = multiprocessing.Process(target=process_sqi,         args=K0)
+        p8 = multiprocessing.Process(target=process_drawmaps,    args=K2)
 
         # Execute each processing step
         # p1.start()  # Asthropogenic skyglow luminance & illuminance
@@ -181,7 +193,11 @@ if __name__ == '__main__':
         # p4.join()
         # p5.start()  # Albedo model
         # p5.join()
-        p6.start()  # Places
-        p6.join()
+        # p6.start()  # Places
+        # p6.join()
+        # p7.start()  # SQI
+        # p7.join()
+        p8.start()  # Draw maps
+        p8.join()
 
     
