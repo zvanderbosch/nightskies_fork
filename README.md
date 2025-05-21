@@ -115,7 +115,7 @@ CCD
 5. Modify the `filelist.txt` file, which should be located in the `CCD --> Data` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.txt` file is provided [here](data/filelist.txt), and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
    - `V_band`: Yes or No, whether to process V-band images
-   - `B_band`: Yes or no, whether to process B-band images
+   - `B_band`: Yes or No, whether to process B-band images
    - `Flat_V`: Name of master flat file used to calibrate V-band images
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
