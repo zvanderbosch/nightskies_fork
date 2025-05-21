@@ -119,7 +119,9 @@ CCD
    - `Flat_V`: Name of master flat file used to calibrate V-band images
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
-   - `Processor`: Name of person running the processing pipeline, first initial + last name (e.g. J_Doe)
+   - `Processor`: Name of data processor with an **underscore** between first initial and last name (e.g. J_Doe)
+   - `Central_Az`: Azimuth coordinate to place at the center of final panoramic graphics
+   - `Location`: Descriptive park name (e.g. Rocky_Mountain_NP), using **underscores** instead of spaces
 
 ## Running the Pipeline
 
@@ -130,7 +132,7 @@ Pipeline operation is broken down into four main steps:
 3. `naturalsky.py`: Generate the combined natural sky model and subtract it from the observed all-sky mosaics to create an anthropogenic skyglow mosaic.
 4. `process_metrics.py`: Calculate complete set of sky brightness metrics and generate final output images.
 
-Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, an example pipeline processing workflow for a dataset named **ROMO241004** would look like the following:
+Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [conda environment setup](#setting-up-a-conda-environment) and [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, an example pipeline processing workflow for a dataset named **ROMO241004** would look like the following:
 
 > ```powershell
 > conda activate ccd
