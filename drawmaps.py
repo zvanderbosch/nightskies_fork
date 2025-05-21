@@ -331,7 +331,7 @@ def generate_graphics(dnight,sets,processorName,centralAzimuth,locationName):
         site, observers, date = get_site_info(firstImage)
 
         # Generate map title
-        titleText = f"{locationName.replace('_',' ')} {site}  {date}"
+        titleText = f"{locationName.replace('_',' ')}  {site}  {date}"
 
         # Set text elements
         mapTitle.text = titleText
