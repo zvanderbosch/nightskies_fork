@@ -26,7 +26,6 @@ import os
 import time
 import warnings
 import numpy as n
-import multiprocessing
 import matplotlib.pyplot as plt
 
 from datetime import datetime as Dtime
@@ -78,100 +77,84 @@ def update_progressbar(x,y,t=0):
 
 def process_skyglow(*args):
     '''Calculate luminance/illuminance metrics for artificial skyglow'''
-    i = args[-1]
-    update_progressbar(0,i)
     t1 = time.time()
     import skyglow as SG
     for filter in args[2]:
         SG.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
-    update_progressbar(0,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (skyglow): {t2-t1:.2f} seconds')
 
 
 def process_illumall(*args):
     '''Calculate luminance/illuminance metrics for all light sources'''
-    i = args[-1]
-    update_progressbar(1,i)
     t1 = time.time()
     import illumall as IA
     for filter in args[2]:
         IA.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
-    update_progressbar(1,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (illumall): {t2-t1:.2f} seconds')
 
 
 def process_starsvis(*args):
     '''Calculate visible stars'''
-    i = args[-1]
-    update_progressbar(2,i)
     t1 = time.time()
     import starsvis as SV
     for filter in args[2]:
         SV.calculate_stars_visible(args[0],args[1],filter)
     t2 = time.time()
-    update_progressbar(2,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (starsvis): {t2-t1:.2f} seconds')
 
 
 def process_alrmodel(*args):
     '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
-    i = args[-1]
-    update_progressbar(3,i)
     t1 = time.time()
     import alrmodel as AM
     AM.calculate_alr_model(*args[:-1])
     t2 = time.time()
-    update_progressbar(3,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (alrmodel): {t2-t1:.2f} seconds')
 
 
 def process_albedomodel(*args):
     '''Calculate albedo model'''
-    i = args[-1]
-    update_progressbar(4,i)
     t1 = time.time()
     import albedomodel as BM
     BM.calculate_albedo_model(*args[:-1])
     t2 = time.time()
-    update_progressbar(4,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (albedomodel): {t2-t1:.2f} seconds')
 
 
 def process_places(*args):
     '''Calculate distance & Walker's Law for places'''
-    i = args[-1]
-    update_progressbar(5,i)
     t1 = time.time()
     import places as PL
     PL.calculate_places(*args[:-1])
     t2 = time.time()
-    update_progressbar(5,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
 
 
 def process_skyquality(*args):
     '''Calculate SQI and SQM sky quality metrics'''
-    i = args[-1]
-    update_progressbar(6,i)
     t1 = time.time()
     import skyquality as SQ
     SQ.calculate_sky_quality(*args[:-1])
     t2 = time.time()
-    update_progressbar(6,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
 
 
 def process_drawmaps(*args):
     '''Generate panoramic graphics'''
-    i = args[-1]
-    update_progressbar(7,i)
     t1 = time.time()
     import drawmaps as DM
     DM.generate_graphics(*args[:-1])
     t2 = time.time()
-    update_progressbar(7,i,t2-t1)
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (drawmaps): {t2-t1:.2f} seconds')
 
 
@@ -189,6 +172,7 @@ if __name__ == '__main__':
         '     NPS NIGHT SKIES PROGRAM LIGHT POLLUTION CALCULATIONS           '
         '\n\n--------------------------------------------------------------\n'
     )
+    warnings.filterwarnings("ignore",".*GUI is implemented.*")
         
     #------------ Read in the processing list and initialize ---------------------#
 
@@ -234,10 +218,10 @@ if __name__ == '__main__':
             Filter.append('B')
         
         sets = dnight_sets[Dataset[i]]
-        K0 = (Dataset[i],i)
-        K1 = (Dataset[i],sets,i)
-        K2 = (Dataset[i],sets,Filter,i)
-        K3 = (Dataset[i],sets,processor[0],int(centralAz[0]),location[0],i)
+        K0 = (Dataset[i],)
+        K1 = (Dataset[i],sets)
+        K2 = (Dataset[i],sets,Filter)
+        K3 = (Dataset[i],sets,processor[0],int(centralAz[0]),location[0])
 
         # Status update
         print(
@@ -246,32 +230,32 @@ if __name__ == '__main__':
         )
 
         # Create multiprocessing objects for each step
-        p1 = Process(target=process_skyglow,args=K2)
-        p2 = Process(target=process_illumall,args=K2)
-        p3 = Process(target=process_starsvis,args=K2)
-        p4 = Process(target=process_alrmodel,args=K0)
-        p5 = Process(target=process_albedomodel,args=K0)
-        p6 = Process(target=process_places,args=K0)
-        p7 = Process(target=process_skyquality,args=K1)
-        p8 = Process(target=process_drawmaps,args=K3)
+        q0=Queue(); Q0=(q0,); p0 = Process(target=process_skyglow,args=K2+Q0)
+        q1=Queue(); Q1=(q1,); p1 = Process(target=process_illumall,args=K2+Q1)
+        q2=Queue(); Q2=(q2,); p2 = Process(target=process_starsvis,args=K2+Q2)
+        q3=Queue(); Q3=(q3,); p3 = Process(target=process_alrmodel,args=K0+Q3)
+        q4=Queue(); Q4=(q4,); p4 = Process(target=process_albedomodel,args=K0+Q4)
+        q5=Queue(); Q5=(q5,); p5 = Process(target=process_places,args=K0+Q5)
+        q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K1+Q6)
+        q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
 
         # Execute each processing step
-        # p1.start()  # Anthropogenic skyglow luminance & illuminance
-        # p1.join()
-        # p2.start()  # All sources skyglow luminance & illuminance
-        # p2.join()
-        # p3.start()  # Number/fraction of visible stars
-        # p3.join()
-        # p4.start()  # All-sky Light Pollution Ratio (ALR) model
-        # p4.join()
-        # p5.start()  # Albedo model
-        # p5.join()
-        # p6.start()  # Places
-        # p6.join()
-        p7.start()  # Sky quality metrics
-        p7.join()
-        # p8.start()  # Draw maps
-        # p8.join()
+        # p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
+        # p0.join() ; update_progressbar(0,i,q0.get())
+        # p1.start(); update_progressbar(1,i)            # All sources skyglow luminance & illuminance
+        # p1.join() ; update_progressbar(1,i,q1.get())
+        # p2.start(); update_progressbar(2,i)            # Number/fraction of visible stars
+        # p2.join() ; update_progressbar(2,i,q2.get())
+        # p3.start(); update_progressbar(3,i)            # All-sky Light Pollution Ratio (ALR) model
+        # p3.join() ; update_progressbar(3,i,q3.get())
+        # p4.start(); update_progressbar(4,i)            # Albedo model
+        # p4.join() ; update_progressbar(4,i,q4.get())
+        # p5.start(); update_progressbar(5,i)            # Places
+        # p5.join() ; update_progressbar(5,i,q5.get())
+        p6.start(); update_progressbar(6,i)              # Sky quality metrics
+        p6.join() ; update_progressbar(6,i,q6.get())
+        # p7.start(); update_progressbar(7,i)            # Draw maps
+        # p7.join() ; update_progressbar(7,i,q7.get())
 
         # Save the timing records for running the script
         n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
