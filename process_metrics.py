@@ -52,6 +52,7 @@ def process_skyglow(*args):
     for filter in args[2]:
         SG.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (skyglow): {t2-t1:.2f} seconds')
 
 
@@ -62,6 +63,7 @@ def process_illumall(*args):
     for filter in args[2]:
         IA.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (illumall): {t2-t1:.2f} seconds')
 
 
@@ -72,6 +74,7 @@ def process_starsvis(*args):
     for filter in args[2]:
         SV.calculate_stars_visible(args[0],args[1],filter)
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (starsvis): {t2-t1:.2f} seconds')
 
 
@@ -79,8 +82,9 @@ def process_alrmodel(*args):
     '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
     t1 = time.time()
     import alrmodel as AM
-    AM.calculate_alr_model(*args)
+    AM.calculate_alr_model(*args[:-1])
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (alrmodel): {t2-t1:.2f} seconds')
 
 
@@ -88,8 +92,9 @@ def process_albedomodel(*args):
     '''Calculate albedo model'''
     t1 = time.time()
     import albedomodel as BM
-    BM.calculate_albedo_model(*args)
+    BM.calculate_albedo_model(*args[:-1])
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (albedomodel): {t2-t1:.2f} seconds')
 
 
@@ -97,8 +102,9 @@ def process_places(*args):
     '''Calculate distance & Walker's Law for places'''
     t1 = time.time()
     import places as PL
-    PL.calculate_places(*args)
+    PL.calculate_places(*args[:-1])
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
 
 
@@ -106,8 +112,9 @@ def process_drawmaps(*args):
     '''Generate panoramic graphics'''
     t1 = time.time()
     import drawmaps as DM
-    DM.generate_graphics(*args)
+    DM.generate_graphics(*args[:-1])
     t2 = time.time()
+    args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (drawmaps): {t2-t1:.2f} seconds')
 
 
@@ -173,18 +180,18 @@ if __name__ == '__main__':
         )
 
         # Create multiprocessing objects for each step
-        p1 = multiprocessing.Process(target=process_skyglow,     args=K1)
-        p2 = multiprocessing.Process(target=process_illumall,    args=K1)
-        p3 = multiprocessing.Process(target=process_starsvis,    args=K1)
-        p4 = multiprocessing.Process(target=process_alrmodel,    args=K0)
-        p5 = multiprocessing.Process(target=process_albedomodel, args=K0)
-        p6 = multiprocessing.Process(target=process_places,      args=K0)
-        # p7 = multiprocessing.Process(target=process_sqi,         args=K0)
-        p8 = multiprocessing.Process(target=process_drawmaps,    args=K2)
+        q1=Queue(); Q1=(q1,); p1 = Process(target=process_skyglow,args=K1+Q1)
+        q2=Queue(); Q2=(q2,); p2 = Process(target=process_illumall,args=K1+Q2)
+        q3=Queue(); Q3=(q3,); p3 = Process(target=process_starsvis,args=K1+Q3)
+        q4=Queue(); Q4=(q4,); p4 = Process(target=process_alrmodel,args=K0+Q4)
+        q5=Queue(); Q5=(q5,); p5 = Process(target=process_albedomodel,args=K0+Q5)
+        q6=Queue(); Q6=(q6,); p6 = Process(target=process_places,args=K0+Q6)
+        # q7=Queue(); Q7=(q7,); p7 = Process(target=process_sqi,args=K0+Q7)
+        q8=Queue(); Q8=(q8,); p8 = Process(target=process_drawmaps,args=K2+Q8)
 
         # Execute each processing step
-        # p1.start()  # Asthropogenic skyglow luminance & illuminance
-        # p1.join()
+        p1.start()  # Anthropogenic skyglow luminance & illuminance
+        p1.join()
         # p2.start()  # All sources skyglow luminance & illuminance
         # p2.join()
         # p3.start()  # Number/fraction of visible stars
@@ -197,7 +204,7 @@ if __name__ == '__main__':
         # p6.join()
         # p7.start()  # SQI
         # p7.join()
-        p8.start()  # Draw maps
-        p8.join()
+        # p8.start()  # Draw maps
+        # p8.join()
 
     
