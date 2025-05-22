@@ -60,5 +60,8 @@ maps = f"{base}/Data/maps/"
 # Directory containing saved graphics
 graphics = f"{base}/Data/graphics/"
 
+# Directory to generic spreadsheets
+spreadsheets = f"{base}/Data/spreadsheets/"
+
 # Directory for scripts
 scripts = f"{base}/Scripts/"
