@@ -172,24 +172,22 @@ def calc_SQI(gridPath,mask):
     return sqi    
 
 
-def calc_SQM(dataNight, setNum, filterName):
+def calc_sky_SQM(dataNight, setNum, filterName):
+    '''
+    Function to calculate synthetic Sky Quality Meter (SQM)
+    metric using measured sky brightness.
+    '''
     
     # Get zeropoint, extinction coeff, plate scale, & exposure time
     extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
     extData = n.loadtxt(extfile, ndmin=2)
     zeropoint = extData[setNum-1,2]
-    extcoeff = abs(extData[setNum-1,4])
     platescale = extData[setNum-1,8]
     exptime = abs(extData[setNum-1,9])
     psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
 
-    # Get Zenith RA and Dec at dataset midpoint in time
-    imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
-    midpointImage = f"{imgsetp}ib022.fit"
-    lon,lat,date,time = get_site_info(midpointImage)
-
     # Perform sky brightness measurements
-    print(f"{PREFIX}Measuring sky brightness...")
+    imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
     photometry = measure_skybrightness(imgsetp)
 
     # Calculate cosine of Zenith angle and apply to ADU
@@ -204,7 +202,7 @@ def calc_SQM(dataNight, setNum, filterName):
     # Calculate SQM scale factor
     sqmScaleFactor = 2.5 * n.log10(arcsecSum)
 
-    # Convert platescale adjustment to sq. arcsec per ADU
+    # Convert platescale adjustment (mag) to sq. arcsec per ADU
     psaADU = (4*3600*3600) / (10**(0.4*psa))
 
     # Calculate synthetic SQM
@@ -212,6 +210,19 @@ def calc_SQM(dataNight, setNum, filterName):
     sqm = sqmScaleFactor + mags
 
     return sqm
+
+
+def calc_star_SQM(dataNight, setNum, filterName):
+    '''
+    Function to calculate synthetic Sky Quality Meter (SQM)
+    metric using number of visible stars and planets.
+    '''
+
+    # Get Zenith RA and Dec at dataset midpoint in time
+    imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
+    midpointImage = f"{imgsetp}ib022.fit"
+    lon,lat,date,time = get_site_info(midpointImage)
+
 
     
 #------------------------------------------------------------------------------#
@@ -244,5 +255,6 @@ def calculate_sky_quality(dnight,sets,filter):
         # sqiZ70 = calc_SQI(gridsetp, 'ZA70')
 
         # Calculate SQM
-        calc_SQM(dnight, setnum, filter)
+        skySQM = calc_sky_SQM(dnight, setnum, filter)
+        starSQM = calc_star_SQM(dnight, setnum, filter)
 
