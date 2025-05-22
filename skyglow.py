@@ -304,7 +304,7 @@ def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
         if "80" in layer:
             outputTable = f"{gridPath}sqitbl80.dbf"
         elif "70" in layer:
-            outputTable = f"{gridPath}sqitbl80.dbf"
+            outputTable = f"{gridPath}sqitbl70.dbf"
         else:
             outputTable = f"{gridPath}sqitbl.dbf"
 
