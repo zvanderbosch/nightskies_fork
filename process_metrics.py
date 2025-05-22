@@ -45,76 +45,114 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 ######################  Function Definitions  #################################
 
 
+def update_progressbar(x,y,t=0):
+    '''
+    update the progress bar plot
+    '''
+    if t == 0: 
+        #gray out for the in-progress status 
+        barax.pcolor([x+4,x+5],[y+5,y+6],[[4],],cmap='gray',vmin=0,vmax=5)
+    else:               
+        #update for the completed status
+        t/=60  # convert to minutes
+
+        #set number formatting
+        if t < 10: texty = '%.1f' %t
+        else: texty = '%.0f' %t
+
+        #set text color
+        if t < 6: c = 'k'
+        else: c = 'w'
+
+        #record the time [min] in a master array
+        Z[y+5,x] = t
+
+        #set text and background color in figure
+        barax.pcolor([x+4,x+5],[y+5,y+6],[[t],],cmap='Greens',vmin=0,vmax=10)
+        barax.text(x+4.5, y+5.5, texty, color=c, horizontalalignment='center',
+                   verticalalignment='center', size='medium')
+        
+    #draw the new data and run the GUI's event loop
+    plt.pause(0.05)
+
+
 def process_skyglow(*args):
     '''Calculate luminance/illuminance metrics for artificial skyglow'''
+    update_progressbar(0,i)
     t1 = time.time()
     import skyglow as SG
     for filter in args[2]:
         SG.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(0,i,t2-t1)
     print(f'{PREFIX}Processing Time (skyglow): {t2-t1:.2f} seconds')
 
 
 def process_illumall(*args):
     '''Calculate luminance/illuminance metrics for all light sources'''
+    update_progressbar(1,i)
     t1 = time.time()
     import illumall as IA
     for filter in args[2]:
         IA.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(1,i,t2-t1)
     print(f'{PREFIX}Processing Time (illumall): {t2-t1:.2f} seconds')
 
 
 def process_starsvis(*args):
     '''Calculate visible stars'''
+    update_progressbar(2,i)
     t1 = time.time()
     import starsvis as SV
     for filter in args[2]:
         SV.calculate_stars_visible(args[0],args[1],filter)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(2,i,t2-t1)
     print(f'{PREFIX}Processing Time (starsvis): {t2-t1:.2f} seconds')
 
 
 def process_alrmodel(*args):
     '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
+    update_progressbar(3,i)
     t1 = time.time()
     import alrmodel as AM
-    AM.calculate_alr_model(*args[:-1])
+    AM.calculate_alr_model(*args)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(3,i,t2-t1)
     print(f'{PREFIX}Processing Time (alrmodel): {t2-t1:.2f} seconds')
 
 
 def process_albedomodel(*args):
     '''Calculate albedo model'''
+    update_progressbar(4,i)
     t1 = time.time()
     import albedomodel as BM
-    BM.calculate_albedo_model(*args[:-1])
+    BM.calculate_albedo_model(*args)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(4,i,t2-t1)
     print(f'{PREFIX}Processing Time (albedomodel): {t2-t1:.2f} seconds')
 
 
 def process_places(*args):
     '''Calculate distance & Walker's Law for places'''
+    update_progressbar(5,i)
     t1 = time.time()
     import places as PL
-    PL.calculate_places(*args[:-1])
+    PL.calculate_places(*args)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(5,i,t2-t1)
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
 
 
 def process_drawmaps(*args):
     '''Generate panoramic graphics'''
+    update_progressbar(7,i)
     t1 = time.time()
     import drawmaps as DM
-    DM.generate_graphics(*args[:-1])
+    DM.generate_graphics(*args)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    update_progressbar(7,i,t2-t1)
     print(f'{PREFIX}Processing Time (drawmaps): {t2-t1:.2f} seconds')
 
 
@@ -153,6 +191,14 @@ if __name__ == '__main__':
         #Make calibration folders
         if not os.path.exists(filepath.calibdata+dnight):
             os.makedirs(filepath.calibdata+dnight)
+
+    #Plot the progress bar template
+    barfig, barax = progressbars.bar_metrics(Dataset, nsets)
+    print('You have 5 seconds to adjust the position of the progress bar window')
+    plt.pause(5) #users have 5 seconds to adjust the figure position
+
+    #Progress bar array (to be filled with processing time)
+    Z = n.empty((5+len(filelist),14))*n.nan
     
     
     #------------ Main data processing code --------------------------------------#
@@ -180,14 +226,14 @@ if __name__ == '__main__':
         )
 
         # Create multiprocessing objects for each step
-        q1=Queue(); Q1=(q1,); p1 = Process(target=process_skyglow,args=K1+Q1)
-        q2=Queue(); Q2=(q2,); p2 = Process(target=process_illumall,args=K1+Q2)
-        q3=Queue(); Q3=(q3,); p3 = Process(target=process_starsvis,args=K1+Q3)
-        q4=Queue(); Q4=(q4,); p4 = Process(target=process_alrmodel,args=K0+Q4)
-        q5=Queue(); Q5=(q5,); p5 = Process(target=process_albedomodel,args=K0+Q5)
-        q6=Queue(); Q6=(q6,); p6 = Process(target=process_places,args=K0+Q6)
-        # q7=Queue(); Q7=(q7,); p7 = Process(target=process_sqi,args=K0+Q7)
-        q8=Queue(); Q8=(q8,); p8 = Process(target=process_drawmaps,args=K2+Q8)
+        p1 = Process(target=process_skyglow,args=K1)
+        p2 = Process(target=process_illumall,args=K1)
+        p3 = Process(target=process_starsvis,args=K1)
+        p4 = Process(target=process_alrmodel,args=K0)
+        p5 = Process(target=process_albedomodel,args=K0)
+        p6 = Process(target=process_places,args=K0)
+        # p7 = Process(target=process_sqi,args=K0)
+        p8 = Process(target=process_drawmaps,args=K2)
 
         # Execute each processing step
         p1.start()  # Anthropogenic skyglow luminance & illuminance
