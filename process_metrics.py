@@ -80,6 +80,8 @@ def process_skyglow(*args):
     t1 = time.time()
     import skyglow as SG
     for filter in args[2]:
+        if filter != "V":
+            continue
         SG.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -91,6 +93,8 @@ def process_illumall(*args):
     t1 = time.time()
     import illumall as IA
     for filter in args[2]:
+        if filter != "V":
+            continue
         IA.calculate_statistics(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -102,6 +106,8 @@ def process_starsvis(*args):
     t1 = time.time()
     import starsvis as SV
     for filter in args[2]:
+        if filter != "V":
+            continue
         SV.calculate_stars_visible(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -142,7 +148,10 @@ def process_skyquality(*args):
     '''Calculate SQI and SQM sky quality metrics'''
     t1 = time.time()
     import skyquality as SQ
-    SQ.calculate_sky_quality(*args[:-1])
+    for filter in args[2]:
+        if filter != "V":
+            continue
+        SQ.calculate_sky_quality(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
@@ -236,29 +245,29 @@ if __name__ == '__main__':
         q3=Queue(); Q3=(q3,); p3 = Process(target=process_alrmodel,args=K0+Q3)
         q4=Queue(); Q4=(q4,); p4 = Process(target=process_albedomodel,args=K0+Q4)
         q5=Queue(); Q5=(q5,); p5 = Process(target=process_places,args=K0+Q5)
-        q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K1+Q6)
+        q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K2+Q6)
         q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
 
         # Execute each processing step
-        p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
-        p0.join() ; update_progressbar(0,i,q0.get())
-        p1.start(); update_progressbar(1,i)            # All sources skyglow luminance & illuminance
-        p1.join() ; update_progressbar(1,i,q1.get())
-        p2.start(); update_progressbar(2,i)            # Number/fraction of visible stars
-        p2.join() ; update_progressbar(2,i,q2.get())
-        p3.start(); update_progressbar(3,i)            # All-sky Light Pollution Ratio (ALR) model
-        p3.join() ; update_progressbar(3,i,q3.get())
-        p4.start(); update_progressbar(4,i)            # Albedo model
-        p4.join() ; update_progressbar(4,i,q4.get())
-        p5.start(); update_progressbar(5,i)            # Places
-        p5.join() ; update_progressbar(5,i,q5.get())
+        # p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
+        # p0.join() ; update_progressbar(0,i,q0.get())
+        # p1.start(); update_progressbar(1,i)            # All sources skyglow luminance & illuminance
+        # p1.join() ; update_progressbar(1,i,q1.get())
+        # p2.start(); update_progressbar(2,i)            # Number/fraction of visible stars
+        # p2.join() ; update_progressbar(2,i,q2.get())
+        # p3.start(); update_progressbar(3,i)            # All-sky Light Pollution Ratio (ALR) model
+        # p3.join() ; update_progressbar(3,i,q3.get())
+        # p4.start(); update_progressbar(4,i)            # Albedo model
+        # p4.join() ; update_progressbar(4,i,q4.get())
+        # p5.start(); update_progressbar(5,i)            # Places
+        # p5.join() ; update_progressbar(5,i,q5.get())
         p6.start(); update_progressbar(6,i)            # Sky quality metrics
         p6.join() ; update_progressbar(6,i,q6.get())
-        p7.start(); update_progressbar(7,i)            # Draw maps
-        p7.join() ; update_progressbar(7,i,q7.get())
+        # p7.start(); update_progressbar(7,i)            # Draw maps
+        # p7.join() ; update_progressbar(7,i,q7.get())
 
         # Save the timing records for running the script
-        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
-        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_metrics.png')
+        # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
+        # barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_metrics.png')
 
     
