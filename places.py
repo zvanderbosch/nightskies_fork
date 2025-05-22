@@ -151,7 +151,6 @@ def calculate_places(dnight):
     # Load in the Places21k spreadsheet with 2010 census data
     placesFile = f"{filepath.scripts}ACP/spreadsheets/Places21k.xlsx"
     places = pd.read_excel(placesFile)
-    print(places.head())
 
     # Calculate great circle distances
     dist = angular_separation(
@@ -229,5 +228,3 @@ def calculate_places(dnight):
 
     # Save results to file
     xcelOutput.to_excel(f"{filepath.calibdata}{dnight}/cities.xlsx", index=False)
-
-    print(xcelOutput.head())
