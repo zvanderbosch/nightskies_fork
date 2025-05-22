@@ -23,7 +23,7 @@
 #
 #History:
 #	Li-Wei Hung -- Created
-#       Zach Vanderbosch -- Added second progress bar for process_metrics.py
+#   Zach Vanderbosch -- Added second progress bar for process_metrics.py
 #
 #-----------------------------------------------------------------------------#
 import matplotlib.pyplot as plt
