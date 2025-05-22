@@ -100,17 +100,15 @@ def measure_skybrightness(imgPath):
         # Calculate aperture median
         sigclip = SigmaClip(sigma=5.0, maxiters=10)
         aperStats = ApertureStats(imgData, apertures, sigma_clip=sigclip)
-        photTable['aperture_median'] = aperStats.median
+        imgPositions.insert(2,'ADU',aperStats.median)
 
-        # Save table to list
-        photTable['image'] = [i+1]*len(photTable)
-        allPhot.append(photTable)
+        # Save photometry to list
+        allPhot.append(imgPositions)
 
     # Concatenate photometry into single dataframe
-    allPhot = pd.concat(allPhot)
+    allPhot = pd.concat(allPhot,ignore_index=True)
     
     return allPhot
-
 
 
 def calc_SQI(gridPath,mask):
@@ -183,6 +181,7 @@ def calc_SQM(dataNight, setNum, filterName):
     extcoeff = abs(extData[setNum-1,4])
     platescale = extData[setNum-1,8]
     exptime = abs(extData[setNum-1,9])
+    psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
 
     # Get Zenith RA and Dec at dataset midpoint in time
     imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
@@ -190,7 +189,29 @@ def calc_SQM(dataNight, setNum, filterName):
     lon,lat,date,time = get_site_info(midpointImage)
 
     # Perform sky brightness measurements
-    measure_skybrightness(imgsetp)
+    print(f"{PREFIX}Measuring sky brightness...")
+    photometry = measure_skybrightness(imgsetp)
+
+    # Calculate cosine of Zenith angle and apply to ADU
+    photometry['cosZ'] = n.cos(n.deg2rad(90.0 - photometry.Pany.values))
+    photometry['net_arcsec'] = photometry.cosZ * 3600 * 3600 * 4
+    photometry['cosADU'] = photometry.cosZ * photometry.ADU
+
+    # Get sums for zenith angles <= 54 degrees
+    arcsecSum = photometry[photometry.Pany >= 36].net_arcsec.sum()
+    aduSum = photometry[photometry.Pany >= 36].cosADU.sum()
+
+    # Calculate SQM scale factor
+    sqmScaleFactor = 2.5 * n.log10(arcsecSum)
+
+    # Convert platescale adjustment to sq. arcsec per ADU
+    psaADU = (4*3600*3600) / (10**(0.4*psa))
+
+    # Calculate synthetic SQM
+    mags = zeropoint - 2.5 * n.log10(aduSum * psaADU / exptime)
+    sqm = sqmScaleFactor + mags
+
+    return sqm
 
     
 #------------------------------------------------------------------------------#
