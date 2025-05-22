@@ -23,6 +23,7 @@
 #
 #History:
 #	Li-Wei Hung -- Created
+#       Zach Vanderbosch -- Added second progress bar for process_metrics.py
 #
 #-----------------------------------------------------------------------------#
 import matplotlib.pyplot as plt
@@ -36,16 +37,115 @@ import filepath
 
 #-----------------------------------------------------------------------------#
 
-def bar(dnight, nset):
+def bar_images(dnight, nset):
+
     #process names
-    pname = ['Number of sets','Reduction','Pointing','Pointing Error','Zeropoint',
-            'Median Filter','Coordinates','Fullres Mosaic','Galactic Mosaic',
-            'Zodiacal Mosaic','Median Mosaic'] 
-    
+    pname = [
+        'Number of sets',
+        'Reduction',
+        'Pointing',
+        'Pointing Error',
+        'Zeropoint',
+        'Median Filter',
+        'Coordinates',
+        'Fullres Mosaic',
+        'Galactic Mosaic',
+        'Zodiacal Mosaic',
+        'Median Mosaic'
+    ] 
     
     #figure setting
     vmerge = 5  #number of row merged vertically in the first row
     hmerge = 3  #number of columns mergerd in the first column
+    
+    if len(dnight) < 5: nrow = 5+vmerge+1
+    else: nrow = len(dnight)+vmerge+1
+    
+    fig = plt.figure('Progress Bar',figsize=((len(pname)+hmerge+2)/1.5,nrow*0.6))
+    plt.clf()
+    ax = fig.add_subplot(111)
+    ax.set_facecolor('k')
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    
+    #make the grid
+    x = n.arange(len(pname)+hmerge+2)
+    y = n.arange(nrow)
+                
+    #Plot the gray grid lines
+    [plt.plot(i*n.ones_like(y),y,'0.4',lw=1.5) for i in x[3:]] #vertical
+    [plt.plot(x,i*n.ones_like(x),'0.4',lw=1.5) for i in y[vmerge:]] #horizontal
+    
+    #Plot "Number of sets"
+    ax.text(3.5, vmerge-0.2, pname[0], color='w', horizontalalignment='center',
+            verticalalignment='bottom', size='large', rotation='vertical')
+            
+    #Plot the process names        
+    for i in range(1,len(pname)):
+        ax.text(3.5+i, vmerge-0.2, pname[i], color='c', horizontalalignment='center',
+                verticalalignment='bottom', size='large', weight='bold', 
+                rotation='vertical')
+        
+    #Plot the data set names and number of sets:
+    for i in range(len(dnight)):
+        ax.text(1.5, vmerge+0.5+i, dnight[i], color='w', horizontalalignment='center',
+                verticalalignment='center', size='large')
+        ax.text(3.5, vmerge+0.5+i, nset[i], color='w', horizontalalignment='center',
+                verticalalignment='center', size='large')
+    
+    
+    #Color bar
+    tmin = 0
+    tmax = 10
+    Bar = ax.pcolor([-1,0],[-2,-1,0],n.array(([tmin],[tmax])),cmap='Greens')
+    C = plt.colorbar(Bar, orientation='horizontal',aspect=60,pad=0.05)
+    C.set_label('Processing time (min)',size='medium')
+    
+    '''
+    #Plot the individual progress cell
+    Z = n.zeros((len(dnight),len(pname)-1))
+    Z = rand(Z.shape[0],Z.shape[1])*15
+    
+    ax.pcolor(x[hmerge+1:hmerge+len(pname)+1],
+                    y[vmerge:vmerge+len(dnight)+1],
+                    Z, cmap='Greens', vmin=tmin, vmax=tmax)
+                    #, norm=PowerNorm(gamma=0.5))
+    '''
+    
+    #more plot setting
+    plt.title('', fontsize='x-large')
+    plt.xlim(0,x[-1])
+    plt.ylim(y[-1],0)
+    
+    plt.tight_layout()
+    plt.draw()
+    plt.ion()
+    plt.pause(0.05)
+    plt.show()
+    
+    return(fig, ax)
+
+
+def bar_metrics(dnight, nset):
+    
+    #process names
+    pname = [
+        'Number of sets',
+        'Skyglow Stats',
+        'All-sky Stats',
+        'Number of Stars Visible',
+        'ALR Model',
+        'Albedo Model',
+        'Places 21K',
+        'Sky Quality Indicators',
+        'Make Graphics',
+        'Make Summary Tables'
+    ] 
+    
+    
+    #figure setting
+    vmerge = 5  #number of row merged vertically in the first row
+    hmerge = 3  #number of columns merged in the first column
     
     if len(dnight) < 5: nrow = 5+vmerge+1
     else: nrow = len(dnight)+vmerge+1
@@ -123,7 +223,7 @@ if __name__ == "__main__":
     #    d = raw_input('Enter another dataset name. If finished, enter 1: ')
     dnight = ['FCNA160803',]
     nsets = ['1',]
-    barfig, barax = bar(dnight, nsets)
+    barfig, barax = bar_images(dnight, nsets)
     Z = n.loadtxt(filepath.calibdata+'FCNA160803/processtime.txt')
     M = n.ma.masked_invalid(Z)
     barax.pcolor(M,cmap='Greens',vmin=0,vmax=10)
