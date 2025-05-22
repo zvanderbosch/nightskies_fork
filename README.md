@@ -38,7 +38,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
   - Adobe Photoshop
   - conda (recommened to use [Miniforge](https://github.com/conda-forge/miniforge) for new installs)
   - Python packages:
-    - `arcpy astropy matplotlib scikit-image photutils numpy pandas scipy pillow`
+    - `arcpy astropy matplotlib scikit-image photutils numpy pandas scipy pillow dbfread`
 
 ### Setting up a Conda Environment
 
@@ -53,6 +53,7 @@ ArcGIS Pro comes with a pre-built conda environment called **arcgispro-py3** tha
 4. Install other necessary packages into **ccd** environment:
    - `conda activate ccd`
    - `conda install astropy scikit-image photutils`
+   - `pip install dbfread`
 
 ### Troubleshooting your Installation
 
