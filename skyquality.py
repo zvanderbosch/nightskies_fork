@@ -23,7 +23,13 @@
 
 from astropy.io import fits
 from dbfread import DBF
+from photutils.aperture import aperture_photometry
+from photutils.aperture import CircularAperture
+from photutils.aperture import CircularAnnulus
+from photutils.aperture import ApertureStats
+from astropy.stats import SigmaClip
 
+import os
 import numpy as n
 import pandas as pd
 
@@ -55,6 +61,56 @@ def get_site_info(imageFile):
     time = isot.split("T")[1]
 
     return lon, lat, date, time
+
+
+def measure_skybrightness(imgPath):
+    '''
+    Function to perform sky brightness aperture
+    photometry for SQM calculations.
+    '''
+
+    # Load in skybright positions spreadsheet
+    allPositions = pd.read_excel(
+        f"{filepath.spreadsheets}skybright_positions.xlsx"
+    )
+
+    # Iterate over each image
+    allPhot = []
+    for i in range(45):
+
+        # Get image data
+        imgFile = f"{imgPath}ib{i+1:03d}.fit"
+        if not os.path.isfile(imgFile):
+            continue
+        with fits.open(imgFile) as hdul:
+            imgData = hdul[0].data
+
+        # Get pixel positions for given image
+        imgPositions = allPositions.loc[allPositions.image == i+1]
+        xpix = imgPositions.PixelX.values
+        ypix = imgPositions.PixelY.values
+        xyPositions = [(x,y) for x,y in zip(xpix,ypix)]
+
+        # Perform aperture photometry on image
+        apRadius = 20.
+        apertures = CircularAperture(xyPositions, r=apRadius)
+        photTable = aperture_photometry(imgData, apertures)
+        photTable = photTable.to_pandas()
+
+        # Calculate aperture median
+        sigclip = SigmaClip(sigma=5.0, maxiters=10)
+        aperStats = ApertureStats(imgData, apertures, sigma_clip=sigclip)
+        photTable['aperture_median'] = aperStats.median
+
+        # Save table to list
+        photTable['image'] = [i+1]*len(photTable)
+        allPhot.append(photTable)
+
+    # Concatenate photometry into single dataframe
+    allPhot = pd.concat(allPhot)
+    
+    return allPhot
+
 
 
 def calc_SQI(gridPath,mask):
@@ -118,18 +174,36 @@ def calc_SQI(gridPath,mask):
     return sqi    
 
 
+def calc_SQM(dataNight, setNum, filterName):
+    
+    # Get zeropoint, extinction coeff, plate scale, & exposure time
+    extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
+    extData = n.loadtxt(extfile, ndmin=2)
+    zeropoint = extData[setNum-1,2]
+    extcoeff = abs(extData[setNum-1,4])
+    platescale = extData[setNum-1,8]
+    exptime = abs(extData[setNum-1,9])
+
+    # Get Zenith RA and Dec at dataset midpoint in time
+    imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
+    midpointImage = f"{imgsetp}ib022.fit"
+    lon,lat,date,time = get_site_info(midpointImage)
+
+    # Perform sky brightness measurements
+    measure_skybrightness(imgsetp)
+
+    
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def calculate_sky_quality(dnight,sets):
+def calculate_sky_quality(dnight,sets,filter):
     '''
     Main program for computing SQI and SQM metrics
     '''
 
     # Filter paths
     F = {'V':'', 'B':'B/'}
-
 
     # Loop through each data set
     for s in sets:
@@ -143,8 +217,11 @@ def calculate_sky_quality(dnight,sets):
         midpointImage = f"{calsetp}ib022.fit"
         lon,lat,date,time = get_site_info(midpointImage)
 
-        # Calculate sky quality index
-        sqiAllsky = calc_SQI(gridsetp, 'horizon')
-        sqiZ80 = calc_SQI(gridsetp, 'ZA80')
-        sqiZ70 = calc_SQI(gridsetp, 'ZA70')
+        # Calculate sky quality indices for each mask
+        # sqiAllsky = calc_SQI(gridsetp, 'horizon')
+        # sqiZ80 = calc_SQI(gridsetp, 'ZA80')
+        # sqiZ70 = calc_SQI(gridsetp, 'ZA70')
+
+        # Calculate SQM
+        calc_SQM(dnight, setnum, filter)
 
