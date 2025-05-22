@@ -47,12 +47,12 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 # Define plotting colors for each set number
 COLORS = {
     1: 'red',
-    2: 'gold',
+    2: 'orange',
     3: 'lime',
     4: 'cornflowerblue',
     5: 'blueviolet',
     6: 'magenta',
-    7: 'darkgrey',
+    7: 'grey',
     8: 'black'
 }
 
@@ -441,13 +441,13 @@ def calculate_statistics(dnight,sets,filter):
             vertValuesMask = [resultDict[k] for k in vertKeysMask]
 
             # Plot horizontal illuminance
-            ax.axhline(horizValue, ls=':', lw=2, c=COLORS[setnum], label=f'{s} H')
+            ax.axhline(horizValue, ls=':', lw=2, c=COLORS[setnum], label=f'Set-{setnum} H')
 
             # Plot smoothed vertical illuminance
             splineInterp = make_interp_spline(vertAnglesMask, vertValuesMask)
             xsmooth = n.linspace(0.,350.,1000)
             ysmooth = splineInterp(xsmooth)
-            ax.plot(xsmooth, ysmooth, ls='-', lw=2, c=COLORS[setnum], label=f'{s} V')
+            ax.plot(xsmooth, ysmooth, ls='-', lw=2, c=COLORS[setnum], label=f'Set-{setnum} V')
 
             # Add plot title and axis labels and set 
             if setnum == 1:
@@ -458,7 +458,7 @@ def calculate_statistics(dnight,sets,filter):
 
                 # Grid lines
                 ax.set_axisbelow(True)
-                ax.grid(ls='-', lw=0.75, c='silver')
+                ax.grid(ls='-', lw=0.75, c='w')
 
                 # Axis labels and titles
                 ax.set_xlabel('Azimuth (deg)',fontsize=14)
@@ -472,16 +472,16 @@ def calculate_statistics(dnight,sets,filter):
 
     # Set XY axis limits and add legend
     for ax in axList:
-        ax.set_facecolor('oldlace')
+        ax.set_facecolor('gainsboro')
         ax.set_xlim(0,350)
         ax.set_ylim(0,1.1*ax.get_ylim()[1])
         ax.legend(
             loc='center left', 
             bbox_to_anchor=(1.01,0.5),
             handlelength=1.5,
-            fontsize=12, 
-            ncol=2,
-            facecolor='oldlace'
+            fontsize=11, 
+            ncol=1,
+            facecolor='gainsboro'
         )
 
     # Save figures
@@ -497,7 +497,4 @@ def calculate_statistics(dnight,sets,filter):
     figZ70.savefig(
         f"{filepath.calibdata}{dnight}/illuminance_za70.png",
         dpi=200, bbox_inches='tight'
-    )
-
-
-            
+    ) 
