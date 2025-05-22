@@ -253,4 +253,8 @@ if __name__ == '__main__':
         # p8.start()  # Draw maps
         # p8.join()
 
+        #save the timing records for running the script
+        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
+        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_metrics.png')
+
     
