@@ -21,12 +21,9 @@
 #
 #-----------------------------------------------------------------------------#
 
-from glob import glob
 from astropy.io import fits
 from dbfread import DBF
 
-import os
-import sys
 import numpy as n
 import pandas as pd
 
