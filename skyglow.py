@@ -21,10 +21,13 @@
 #
 #-----------------------------------------------------------------------------#
 
+from scipy.interpolate import make_interp_spline
+
 import os
 import stat
 import arcpy
 import numpy as n
+import matplotlib.pyplot as plt
 
 # Local Source
 import filepath
@@ -40,6 +43,18 @@ arcpy.CheckOutExtension("Spatial")
 # Define print staus prefix
 scriptName = 'skyglow.py'
 PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
+
+# Define plotting colors for each set number
+COLORS = {
+    1: 'red',
+    2: 'gold',
+    3: 'lime',
+    4: 'cornflowerblue',
+    5: 'blueviolet',
+    6: 'magenta',
+    7: 'darkgrey',
+    8: 'black'
+}
 
 #-----------------------------------------------------------------------------#
 
@@ -334,6 +349,15 @@ def calculate_statistics(dnight,sets,filter):
     # Load in the mask raster
     maskRaster = arcpy.sa.Raster(maskRasterFile)
 
+    # Create figures to plot horizontal and vertical illuminances
+    figAll = plt.figure('Horizon',figsize=(10,6))
+    figZ80 = plt.figure('ZA 80',figsize=(10,6))
+    figZ70 = plt.figure('ZA 70',figsize=(10,6))
+    axAll = figAll.add_subplot(111)
+    axZ80 = figZ80.add_subplot(111)
+    axZ70 = figZ70.add_subplot(111)
+    axList = [axAll,axZ80,axZ70]
+
     # Loop through each data set
     for s in sets:
 
@@ -394,4 +418,86 @@ def calculate_statistics(dnight,sets,filter):
         # Calculate zonal histograms
         print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
         calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
+
+
+        ''' Add horizontal/vertical illuminance data to figures '''
+
+        # Get resultDict keys associated with vertical illuminance
+        vertKeys = [k for k in resultDict.keys() if 'vert' in k]
+
+        # Iterate over each mask (horizon=0, ZA80=1, ZA70=2)
+        for i in range(3):
+
+            # Get the plotting axis
+            ax = axList[i]
+
+            # Get horizontal illuminance value
+            horizKey = f'horizs{i}'
+            horizValue = resultDict[horizKey]
+
+            # Get rotation angles and vertical illuminance values
+            vertKeysMask = [k for k in vertKeys if k[-1] == f"{i}"]
+            vertAnglesMask = [float(k.split("-")[1]) for k in vertKeysMask]
+            vertValuesMask = [resultDict[k] for k in vertKeysMask]
+
+            # Plot horizontal illuminance
+            ax.axhline(horizValue, ls=':', lw=2, c=COLORS[setnum], label=f'{s} H')
+
+            # Plot smoothed vertical illuminance
+            splineInterp = make_interp_spline(vertAnglesMask, vertValuesMask)
+            xsmooth = n.linspace(0.,350.,1000)
+            ysmooth = splineInterp(xsmooth)
+            ax.plot(xsmooth, ysmooth, ls='-', lw=2, c=COLORS[setnum], label=f'{s} V')
+
+            # Add plot title and axis labels and set 
+            if setnum == 1:
+
+                # Tick params
+                ax.minorticks_on()
+                ax.tick_params(which='both', top=True, right=True, direction='in', labelsize=13)
+
+                # Grid lines
+                ax.set_axisbelow(True)
+                ax.grid(ls='-', lw=0.75, c='silver')
+
+                # Axis labels and titles
+                ax.set_xlabel('Azimuth (deg)',fontsize=14)
+                ax.set_ylabel('Illumination (mlux)',fontsize=14)
+                if i == 0:
+                    ax.set_title('Horizontal and Vertical Illuminance from Anthropogenic Light to Horizon',fontsize=15)
+                elif i == 1:
+                    ax.set_title('Horizontal and Vertical Illuminance from Anthropogenic Light to ZA 80',fontsize=15)
+                elif i == 2:
+                    ax.set_title('Horizontal and Vertical Illuminance from Anthropogenic Light to ZA 70',fontsize=15)
+
+    # Set XY axis limits and add legend
+    for ax in axList:
+        ax.set_facecolor('oldlace')
+        ax.set_xlim(0,350)
+        ax.set_ylim(0,1.1*ax.get_ylim()[1])
+        ax.legend(
+            loc='center left', 
+            bbox_to_anchor=(1.01,0.5),
+            handlelength=1.5,
+            fontsize=12, 
+            ncol=2,
+            facecolor='oldlace'
+        )
+
+    # Save figures
+    print(f"{PREFIX}Saving illuminance figures...")
+    figAll.savefig(
+        f"{filepath.calibdata}{dnight}/illuminance_horizon.png",
+        dpi=200, bbox_inches='tight'
+    )
+    figZ80.savefig(
+        f"{filepath.calibdata}{dnight}/illuminance_za80.png",
+        dpi=200, bbox_inches='tight'
+    )
+    figZ70.savefig(
+        f"{filepath.calibdata}{dnight}/illuminance_za70.png",
+        dpi=200, bbox_inches='tight'
+    )
+
+
             
