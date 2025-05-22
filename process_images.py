@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, Flat_V, Flat_B, Curve, Processor = filelist.T
+    Dataset, V_band, B_band, Flat_V, Flat_B, Curve, Processor, _, _ = filelist.T
     
     #Check the calibration files exist    
     for i in range(len(filelist)):
@@ -273,7 +273,7 @@ if __name__ == '__main__':
     
     
     #Plot the progress bar template
-    barfig, barax = progressbars.bar(Dataset, nsets)
+    barfig, barax = progressbars.bar_images(Dataset, nsets)
     if all(Processor == 'L_Hung2'):
         barfig.canvas.manager.window.move(2755,0)  
     else:
