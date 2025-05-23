@@ -180,18 +180,15 @@ def planet_brightness(planet, time, site, dEarthSun):
     return pmag, pTopoCoord.az.deg, pTopoCoord.alt.deg
 
 
-def calculate_airmass(altitude):
+def calculate_airmass(za):
     '''
-    Function to calculate airmass using Hardie (1962) equation
+    Function to calculate airmass using Kasten & Young (1989) equation
     '''
 
-    # Use Hardie (1962) equation for airmass
-    za = 90. - altitude
-    secantZ = 1./n.cos(n.deg2rad(za))
-    am1 = 0.0018167 * (secantZ - 1.0)
-    am2 = 0.0028750 * (secantZ - 1.0)**2
-    am3 = 0.0008083 * (secantZ - 1.0)**3
-    airmass = secantZ - am1 - am2 - am3
+    # Use Kasten & Young (1989) equation for airmass
+    cosZ = n.cos(n.deg2rad(za))
+    am1 = 0.50572 * (96.07995 - za)**(-1.6364)
+    airmass = 1. / (cosZ + am1)
 
     return airmass
 
@@ -297,7 +294,7 @@ def calc_sky_SQM(dataNight, setNum, filterName):
     return sqm
 
 
-def calc_star_SQM(dataNight, setNum, filterName):
+def calc_star_SQM(dataNight, setNum, filterName, skySQM):
     '''
     Function to calculate synthetic Sky Quality Meter (SQM)
     metric using number of visible stars and planets.
@@ -370,14 +367,44 @@ def calc_star_SQM(dataNight, setNum, filterName):
     ].reset_index(drop=True)
 
     # Calculate airmass for stars and planets
-    sAirmass = calculate_airmass(saoStarsOnSky.altitude.values)
-    pAirmass = calculate_airmass(planetsOnSky.altitude.values)
+    saoStarsOnSky['ZA'] = 90 - saoStarsOnSky.altitude
+    planetsOnSky['ZA'] = 90 - planetsOnSky.altitude
+    sAirmass = calculate_airmass(saoStarsOnSky.ZA.values)
+    pAirmass = calculate_airmass(planetsOnSky.ZA.values)
     saoStarsOnSky['airmass'] = sAirmass
     planetsOnSky['airmass'] = pAirmass
 
     # Calculate extincted magnitudes
-    saoStarsOnSky['ext_Mag'] = saoStarsOnSky.Vmag + extCoeff * sAirmass
-    planetsOnSky['ext_Mag'] = planetsOnSky.Mag + extCoeff * pAirmass
+    saoStarsOnSky['extMag'] = saoStarsOnSky.Vmag + extCoeff * sAirmass
+    planetsOnSky['extMag'] = planetsOnSky.Mag + extCoeff * pAirmass
+
+    # Calculate net flux to SQM
+    costermStars = n.cos(n.deg2rad(saoStarsOnSky.ZA))
+    costermPlanets = n.cos(n.deg2rad(planetsOnSky.ZA))
+    saoStarsOnSky['netflux_sqm'] = costermStars * 10**(-saoStarsOnSky.extMag/2.5)
+    planetsOnSky['netflux_sqm'] = costermPlanets * 10**(-planetsOnSky.extMag/2.5)
+    saoStarsOnSky['netflux_sqm'][saoStarsOnSky.ZA < 60] = 0.0
+    planetsOnSky['netflux_sqm'][planetsOnSky.ZA < 60] = 0.0
+    print(saoStarsOnSky[['Vmag','ZA','airmass','extMag','netflux_sqm']])
+
+    # Calculate total flux values
+    totalFluxStars = saoStarsOnSky.netflux_sqm.sum()
+    totalFluxPlanets = planetsOnSky.netflux_sqm.sum()
+
+    # Calculate star and planet flux per square arcsecond
+    deg2sec = 3600*3600 # square arcseconds per square degree
+    arcsecOnSky = 2*n.pi*deg2sec*57.296*(57.296-57.3/n.sqrt(3))
+    starFlux = totalFluxStars / arcsecOnSky
+    planetFlux = totalFluxPlanets / arcsecOnSky
+    print(totalFluxStars)
+    print(starFlux)
+
+    # Calculate synthetic SQM
+    print(skySQM,10**(-skySQM/2.5))
+    starSQM = -2.5 * n.log10(starFlux + 10**(-skySQM/2.5))
+
+
+    print(starSQM)
 
 
 
@@ -409,6 +436,6 @@ def calculate_sky_quality(dnight,sets,filter):
         # sqiZ70 = calc_SQI(gridsetp, 'ZA70')
 
         # Calculate SQM
-        # skySQM = calc_sky_SQM(dnight, setnum, filter)
-        starSQM = calc_star_SQM(dnight, setnum, filter)
+        skySQM = calc_sky_SQM(dnight, setnum, filter)
+        starSQM = calc_star_SQM(dnight, setnum, filter, skySQM)
 
