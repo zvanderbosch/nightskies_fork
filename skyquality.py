@@ -25,13 +25,15 @@ from astropy.io import fits
 from dbfread import DBF
 from photutils.aperture import aperture_photometry
 from photutils.aperture import CircularAperture
-from photutils.aperture import CircularAnnulus
 from photutils.aperture import ApertureStats
 from astropy.stats import SigmaClip
+from astropy.time import Time
 
 import os
 import numpy as n
 import pandas as pd
+import astropy.units as u
+import astropy.coordinates as coord
 
 # Local Source
 import filepath
@@ -56,11 +58,19 @@ def get_site_info(imageFile):
     # Get site and time info
     lon = H['LONGITUD']
     lat = H['LATITUDE']
-    isot = H['DATE-OBS']
-    date = isot.split("T")[0]
-    time = isot.split("T")[1]
+    utc = H['DATE-OBS']
 
-    return lon, lat, date, time
+    # Set up site and time astropy objects
+    obsTime = Time(
+        utc, format='isot', scale='utc'
+    )
+    obsSite = coord.EarthLocation.from_geodetic(
+        lon = H['LONGITUD']*u.deg,
+        lat = H['LATITUDE']*u.deg,
+        height = H['ELEVATIO']*u.m
+    )
+
+    return obsTime, obsSite
 
 
 def measure_skybrightness(imgPath):
@@ -109,6 +119,67 @@ def measure_skybrightness(imgPath):
     allPhot = pd.concat(allPhot,ignore_index=True)
     
     return allPhot
+
+
+def planet_brightness(planet, time, site, dEarthSun):
+    '''
+    Function to calculate apparent magnitude of a
+    solar system planet.
+    '''
+
+    # Metadata for each planet
+    planetMetadata = {
+        'venus': {
+            'albedo': 0.00002,
+            'exponent': 0.65,
+            'zeropoint': 27.5
+        },
+        'mars': {
+            'albedo': 0.0000085,
+            'exponent': 0.5,
+            'zeropoint': 26.7
+        },
+        'jupiter': {
+            'albedo': 0.0002,
+            'exponent': 0.65,
+            'zeropoint': 27.9
+        },
+        'saturn': {
+            'albedo': 0.000174,
+            'exponent': 0.5,
+            'zeropoint': 27.75
+        }
+    }
+    albedo = planetMetadata[planet]['albedo']
+    exp = planetMetadata[planet]['exponent']
+    zp = planetMetadata[planet]['zeropoint']
+
+    # Get topocentric and heliocentric coordinates
+    pCoord = coord.get_body(planet, time, site)
+    pTopoCoord = pCoord.transform_to(
+        coord.AltAz(obstime=time, location=site)
+    )
+    pHelioCoord = pCoord.transform_to(
+        coord.HeliocentricMeanEcliptic()
+    )
+
+    # Get distances to earth and sun in Astronomical Units
+    distToEarth = pTopoCoord.distance.value
+    distToSun = pHelioCoord.distance.value
+
+    # Calculate flux factor for earth-sun-planet positioning
+    t1 = distToEarth**2 + distToSun**2 - dEarthSun**2
+    t2 = 2 * distToEarth * distToSun
+    fluxFactor = (1 + t1/t2) / 2
+
+    # Calculate apparent magnitude
+    t1 = distToEarth * distToSun
+    t2 = albedo * fluxFactor**exp
+    pmag = 5.0 * n.log10(t1/t2) - zp
+    
+    return pmag
+
+
 
 
 def calc_SQI(gridPath,mask):
@@ -183,7 +254,7 @@ def calc_sky_SQM(dataNight, setNum, filterName):
     extData = n.loadtxt(extfile, ndmin=2)
     zeropoint = extData[setNum-1,2]
     platescale = extData[setNum-1,8]
-    exptime = abs(extData[setNum-1,9])
+    exptime = extData[setNum-1,9]
     psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
 
     # Perform sky brightness measurements
@@ -218,10 +289,55 @@ def calc_star_SQM(dataNight, setNum, filterName):
     metric using number of visible stars and planets.
     '''
 
-    # Get Zenith RA and Dec at dataset midpoint in time
+    # Get zeropoint, extinction coeff, plate scale, & exposure time
+    extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
+    extData = n.loadtxt(extfile, ndmin=2)
+    zeropoint = extData[setNum-1,2]
+    extCoeff = abs(extData[setNum-1,4])
+    platescale = extData[setNum-1,8]
+    exptime = extData[setNum-1,9]
+    psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
+
+    # Get Site time and location for data set midpoint
     imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
     midpointImage = f"{imgsetp}ib022.fit"
-    lon,lat,date,time = get_site_info(midpointImage)
+    obsTime, obsSite = get_site_info(midpointImage)
+
+    # Load in catalg of SAO stars with V <= 7.5 mag
+    saoStarsFile = f"{filepath.spreadsheets}SAO_stars75.xlsx"
+    saoStars = pd.read_excel(saoStarsFile)
+
+    # Get SAO star coordinates
+    saoCoord = coord.SkyCoord(
+        ra=saoStars['RA_deg'].values,
+        dec=saoStars['Dec_deg'].values,
+        unit=(u.deg, u.deg),
+        frame='icrs'
+    )
+
+    # Convert to Alt-Az topocentric coordinates
+    saoTopoCoord = saoCoord.transform_to(
+        coord.AltAz(obstime=obsTime, location=obsSite)
+    )
+
+    # Shorten list to stars above horizon
+    saoStarsOnSky = saoStars.loc[
+        saoTopoCoord.alt.deg > 0
+    ].reset_index(drop=True)
+
+    # Get Earth-Sun distance in Astronomical Units
+    sunCoord = coord.get_body('sun', obsTime, obsSite)
+    distEarthToSun = sunCoord.distance.value
+
+    # Get coordinate and brightness info for planets
+    planets = [] # empty list to store planet info
+    planetNames = ['venus','mars','jupiter','saturn']
+    for p in planetNames:
+
+        # Get planet apparent magnitude
+        planet_brightness(p, obsTime, obsSite, distEarthToSun)
+
+
 
 
     
@@ -245,16 +361,12 @@ def calculate_sky_quality(dnight,sets,filter):
         calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/{F['V']}"
         gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F['V']}"
 
-        # Get Zenith RA and Dec at dataset midpoint in time
-        midpointImage = f"{calsetp}ib022.fit"
-        lon,lat,date,time = get_site_info(midpointImage)
-
         # Calculate sky quality indices for each mask
         # sqiAllsky = calc_SQI(gridsetp, 'horizon')
         # sqiZ80 = calc_SQI(gridsetp, 'ZA80')
         # sqiZ70 = calc_SQI(gridsetp, 'ZA70')
 
         # Calculate SQM
-        skySQM = calc_sky_SQM(dnight, setnum, filter)
+        # skySQM = calc_sky_SQM(dnight, setnum, filter)
         starSQM = calc_star_SQM(dnight, setnum, filter)
 
