@@ -426,5 +426,10 @@ def calculate_sky_quality(dnight,sets,filter):
         # Calculate SQM
         skySQM = calc_sky_SQM(dnight, setnum, filter)
         synSQM = calc_star_SQM(dnight, setnum, filter, skySQM)
-        print(f'Sky Background SQM: {skySQM:.2f}')
-        print(f'Full Synthetic SQM: {synSQM:.2f}')
+
+        # Print out results
+        print(f'{PREFIX}SQI to Observed Horizon: {sqiAllsky:.2f}')
+        print(f'{PREFIX}SQI to Zenith Angle 80 : {sqiZ80:.2f}')
+        print(f'{PREFIX}SQI to Zenith Angle 70 : {sqiZ70:.2f}')
+        print(f'{PREFIX}Sky Background SQM     : {skySQM:.2f}')
+        print(f'{PREFIX}Full Synthetic SQM     : {synSQM:.2f}')
