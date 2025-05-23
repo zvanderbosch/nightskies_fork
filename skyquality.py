@@ -17,7 +17,7 @@
 #   (1) 
 #
 #History:
-#	Zach Vanderbosch -- Created script
+#	Zach Vanderbosch -- Created script (translated from sqiv4.vbs)
 #
 #-----------------------------------------------------------------------------#
 
@@ -180,6 +180,22 @@ def planet_brightness(planet, time, site, dEarthSun):
     return pmag, pTopoCoord.az.deg, pTopoCoord.alt.deg
 
 
+def calculate_airmass(altitude):
+    '''
+    Function to calculate airmass using Hardie (1962) equation
+    '''
+
+    # Use Hardie (1962) equation for airmass
+    za = 90. - altitude
+    secantZ = 1./n.cos(n.deg2rad(za))
+    am1 = 0.0018167 * (secantZ - 1.0)
+    am2 = 0.0028750 * (secantZ - 1.0)**2
+    am3 = 0.0008083 * (secantZ - 1.0)**3
+    airmass = secantZ - am1 - am2 - am3
+
+    return airmass
+
+
 def calc_SQI(gridPath,mask):
 
     # Set static weighting factors
@@ -317,6 +333,7 @@ def calc_star_SQM(dataNight, setNum, filterName):
     saoTopoCoord = saoCoord.transform_to(
         coord.AltAz(obstime=obsTime, location=obsSite)
     )
+    saoStars['altitude'] = saoTopoCoord.alt.deg
 
     # Shorten list to stars above horizon
     saoStarsOnSky = saoStars.loc[
@@ -346,9 +363,21 @@ def calc_star_SQM(dataNight, setNum, filterName):
         },index=[i])
         planets.append(pdf)
 
-    # Concatenate into single dataframe
+    # Concatenate into single dataframe and remove planets below horizon
     planets = pd.concat(planets)
-    print(planets)
+    planetsOnSky = planets.loc[
+        planets.altitude > 0
+    ].reset_index(drop=True)
+
+    # Calculate airmass for stars and planets
+    sAirmass = calculate_airmass(saoStarsOnSky.altitude.values)
+    pAirmass = calculate_airmass(planetsOnSky.altitude.values)
+    saoStarsOnSky['airmass'] = sAirmass
+    planetsOnSky['airmass'] = pAirmass
+
+    # Calculate extincted magnitudes
+    saoStarsOnSky['ext_Mag'] = saoStarsOnSky.Vmag + extCoeff * sAirmass
+    planetsOnSky['ext_Mag'] = planetsOnSky.Mag + extCoeff * pAirmass
 
 
 
