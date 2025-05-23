@@ -124,7 +124,7 @@ def measure_skybrightness(imgPath):
 def planet_brightness(planet, time, site, dEarthSun):
     '''
     Function to calculate apparent magnitude of a
-    solar system planet.
+    solar system planet at a given time and location.
     '''
 
     # Metadata for each planet
@@ -177,9 +177,7 @@ def planet_brightness(planet, time, site, dEarthSun):
     t2 = albedo * fluxFactor**exp
     pmag = 5.0 * n.log10(t1/t2) - zp
     
-    return pmag
-
-
+    return pmag, pTopoCoord.az.deg, pTopoCoord.alt.deg
 
 
 def calc_SQI(gridPath,mask):
@@ -332,10 +330,25 @@ def calc_star_SQM(dataNight, setNum, filterName):
     # Get coordinate and brightness info for planets
     planets = [] # empty list to store planet info
     planetNames = ['venus','mars','jupiter','saturn']
-    for p in planetNames:
+    for i,p in enumerate(planetNames):
 
-        # Get planet apparent magnitude
-        planet_brightness(p, obsTime, obsSite, distEarthToSun)
+        # Get planet apparent magnitude and Alt-Az coordinates
+        mag, az, alt = planet_brightness(
+            p, obsTime, obsSite, distEarthToSun
+        )
+
+        # Generate dataframe entry
+        pdf = pd.DataFrame({
+            'planet': p,
+            'azimuth': az,
+            'altitude': alt,
+            'Mag': mag
+        },index=[i])
+        planets.append(pdf)
+
+    # Concatenate into single dataframe
+    planets = pd.concat(planets)
+    print(planets)
 
 
 
