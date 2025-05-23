@@ -303,11 +303,7 @@ def calc_star_SQM(dataNight, setNum, filterName, skySQM):
     # Get zeropoint, extinction coeff, plate scale, & exposure time
     extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
     extData = n.loadtxt(extfile, ndmin=2)
-    zeropoint = extData[setNum-1,2]
     extCoeff = abs(extData[setNum-1,4])
-    platescale = extData[setNum-1,8]
-    exptime = extData[setNum-1,9]
-    psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
 
     # Get Site time and location for data set midpoint
     imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
@@ -378,14 +374,13 @@ def calc_star_SQM(dataNight, setNum, filterName, skySQM):
     saoStarsOnSky['extMag'] = saoStarsOnSky.Vmag + extCoeff * sAirmass
     planetsOnSky['extMag'] = planetsOnSky.Mag + extCoeff * pAirmass
 
-    # Calculate net flux to SQM
+    # Calculate net flux to SQM, setting values to 0 at Zenith Angles
     costermStars = n.cos(n.deg2rad(saoStarsOnSky.ZA))
     costermPlanets = n.cos(n.deg2rad(planetsOnSky.ZA))
     saoStarsOnSky['netflux_sqm'] = costermStars * 10**(-saoStarsOnSky.extMag/2.5)
     planetsOnSky['netflux_sqm'] = costermPlanets * 10**(-planetsOnSky.extMag/2.5)
-    saoStarsOnSky['netflux_sqm'][saoStarsOnSky.ZA < 60] = 0.0
-    planetsOnSky['netflux_sqm'][planetsOnSky.ZA < 60] = 0.0
-    print(saoStarsOnSky[['Vmag','ZA','airmass','extMag','netflux_sqm']])
+    saoStarsOnSky.loc[saoStarsOnSky.ZA > 60, 'netflux_sqm'] = 0.0
+    planetsOnSky.loc[planetsOnSky.ZA > 60, 'netflux_sqm'] = 0.0
 
     # Calculate total flux values
     totalFluxStars = saoStarsOnSky.netflux_sqm.sum()
@@ -396,18 +391,12 @@ def calc_star_SQM(dataNight, setNum, filterName, skySQM):
     arcsecOnSky = 2*n.pi*deg2sec*57.296*(57.296-57.3/n.sqrt(3))
     starFlux = totalFluxStars / arcsecOnSky
     planetFlux = totalFluxPlanets / arcsecOnSky
-    print(totalFluxStars)
-    print(starFlux)
 
     # Calculate synthetic SQM
-    print(skySQM,10**(-skySQM/2.5))
-    starSQM = -2.5 * n.log10(starFlux + 10**(-skySQM/2.5))
+    backgroundFlux = 10**(-skySQM/2.5)
+    sqm = -2.5 * n.log10(starFlux + planetFlux + backgroundFlux)
 
-
-    print(starSQM)
-
-
-
+    return sqm
 
     
 #------------------------------------------------------------------------------#
@@ -427,15 +416,15 @@ def calculate_sky_quality(dnight,sets,filter):
 
         # Set path for grid datasets
         setnum = int(s[0])
-        calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/{F['V']}"
         gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F['V']}"
 
         # Calculate sky quality indices for each mask
-        # sqiAllsky = calc_SQI(gridsetp, 'horizon')
-        # sqiZ80 = calc_SQI(gridsetp, 'ZA80')
-        # sqiZ70 = calc_SQI(gridsetp, 'ZA70')
+        sqiAllsky = calc_SQI(gridsetp, 'horizon')
+        sqiZ80 = calc_SQI(gridsetp, 'ZA80')
+        sqiZ70 = calc_SQI(gridsetp, 'ZA70')
 
         # Calculate SQM
         skySQM = calc_sky_SQM(dnight, setnum, filter)
-        starSQM = calc_star_SQM(dnight, setnum, filter, skySQM)
-
+        synSQM = calc_star_SQM(dnight, setnum, filter, skySQM)
+        print(f'Sky Background SQM: {skySQM:.2f}')
+        print(f'Full Synthetic SQM: {synSQM:.2f}')
