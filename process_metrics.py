@@ -167,6 +167,14 @@ def process_drawmaps(*args):
     print(f'{PREFIX}Processing Time (drawmaps): {t2-t1:.2f} seconds')
 
 
+def process_tables(*args):
+    '''Generate summary tables'''
+    t1 = time.time()
+    import savetables as ST
+    ST.generate_tables(*args[:-1])
+    t2 = time.time()
+    args[-1].put(t2-t1)
+    print(f'{PREFIX}Processing Time (savetables): {t2-t1:.2f} seconds')
 
 
 
@@ -247,6 +255,7 @@ if __name__ == '__main__':
         q5=Queue(); Q5=(q5,); p5 = Process(target=process_places,args=K0+Q5)
         q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K2+Q6)
         q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
+        q8=Queue(); Q8=(q8,); p8 = Process(target=process_tables,args=K1+Q8)
 
         # Execute each processing step
         # p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
@@ -261,10 +270,12 @@ if __name__ == '__main__':
         # p4.join() ; update_progressbar(4,i,q4.get())
         # p5.start(); update_progressbar(5,i)            # Places
         # p5.join() ; update_progressbar(5,i,q5.get())
-        p6.start(); update_progressbar(6,i)            # Sky quality metrics
-        p6.join() ; update_progressbar(6,i,q6.get())
+        # p6.start(); update_progressbar(6,i)            # Sky quality metrics
+        # p6.join() ; update_progressbar(6,i,q6.get())
         # p7.start(); update_progressbar(7,i)            # Draw maps
         # p7.join() ; update_progressbar(7,i,q7.get())
+        p8.start(); update_progressbar(8,i)            # Save tables
+        p8.join() ; update_progressbar(8,i,q8.get())
 
         # Save the timing records for running the script
         # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
