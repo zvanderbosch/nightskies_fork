@@ -22,20 +22,335 @@
 #
 #-----------------------------------------------------------------------------#
 
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
+
 import os
 import stat
 import numpy as n
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # Local Source
 import filepath
 import printcolors as pc
 
+
+#------------------------------------------------------------------------------#
+#-------------------         Define Global Variables        -------------------#
+#------------------------------------------------------------------------------#
+
+SHEETDATA = {
+    'NIGHT METADATA':{
+        'title':"DATA NIGHT ATTRIBUTES",
+        'colNames':[
+            'DNIGHT', 'NPS_UNIT', 'UNIT_CODE', 'LONGITUDE', 'LATITUDE', 
+            'ELEVATION', 'SITE_NAME', 'DATE_START_UT', 'TIME _START_UT', 
+            'AIR_TEMP_C', 'RH', 'WIND_SPEED_MPH', 'CAMERA', 'CAMERA_TEMP', 
+            'LENS', 'FILTER', 'INSTRUMENT', 'NUM_IMAGES', 'EXPTIME', 'ZEROPOINT', 
+            'IMG_SCALE_OFFSET', 'NUM_SETS', 'ZLM', 'BORTLE', 'ALBEDO', 'SQM', 
+            'OBS_1', 'OBS_2', 'OBS_3', 'OBS_4', 'NARRATIVE', 'PICTAZIMUTH'
+        ],
+        'colWidths':[
+            16.9, 36.0, 23.1, 15.9, 13.1, 14.9, 43.6, 18.7, 18.6, 17.3,  8.0, 
+            17.9, 12.4, 16.0,  8.7, 10.1, 17.0, 16.4,  9.6, 14.3, 20.7, 13.6, 
+            10.3, 15.0, 13.0,  9.6, 23.0, 22.3, 21.0, 23.4,176.3, 33.9
+        ]
+    },
+    'CITIES':{
+        'title':"NEARBY 40 CITIES BEARING AND DISTANCE (KM) ORDERED ACCORDING TO WALKER'S LAW",
+        'colNames':[
+            'DNIGHT', 'PLACE', 'STATE', 'WALKERS', 'POPULATION', 'DISTANCE', 
+            'BEARING', 'HALF_WIDTH_DEG'
+        ],
+        'colWidths':[
+            15.4, 37.0, 13.0, 11.9, 15.7, 11.7, 10.9, 20.9
+        ]
+    },
+    'SET METADATA':{
+        'title':"DATA SET ATTRIBUTES",
+        'colNames':[
+            'DNIGHT', 'DSET', 'SSTART_DATE_UT', 'SSTART_TIME_UT', 'MID_DATE_LMT', 
+            'MID_TIME_LMT', 'GLARE', 'ATMOSPHERE', 'COLLECTION', 'PROCESSING', 
+            'REFERENCE', 'USEABLE', 'CLOUDS', 'PLUMES', 'PCT20', 'COLLECTION_NOTES'
+        ],
+        'colWidths':[
+            14.1, 13.0, 17.9, 18.1, 16.0, 15.6, 10.0, 14.6, 
+            12.1, 13.0, 12.0, 11.4, 12.7, 13.0, 13.0, 56.7
+        ]
+    },
+    'CALIBRATION':{
+        'title':"IMAGE CALIBRATION INFORMATION",
+        'colNames':[
+            'DNIGHT', 'DSET', 'FLAT_NAME', 'CURVE_NAME', 'BIAS_DRIFT', 
+            'MAX_POINT_ERR', 'AVE_POINT_ERR', 'BAD_FRAMES', 'CALIB_NOTES'
+        ],
+        'colWidths':[
+            14.7, 13.0, 36.3, 13.7, 16.6, 18.0, 17.0, 16.1, 105.3
+        ]
+    },
+    'EXTINCTION':{
+        'title':"ALL SKY EXTINCTION REGRESSION INFORMATION",
+        'colNames':[
+            'DNIGHT', 'DSET', 'NUM_SOLVED', 'STARS_REG', 'STARS_REJ', 'STD_ERR_Y', 
+            'ZEROPOINT_FLOAT', 'COLOR_FLOAT', 'ZEROPOINT', 'COLOR', 'EXTCOEFF'
+        ],
+        'colWidths':[
+            16.3, 13.0, 17.9, 17.6, 15.0, 16.7, 20.0, 16.0, 15.4, 13.0, 15.3
+        ]
+    },
+    'IMG COORDS':{
+        'title':"COORDINATES OF CENTER OF EACH IMAGE",
+        'colNames':[
+            'DNIGHT', 'DSET', 'IMG_NUM', 'AZIMUTH', 'ALTITUDE', 'RA', 'DEC', 
+            'GALL', 'GALB', 'ECL', 'ECB'
+        ],
+        'colWidths':[
+            15.0, 9.1, 11.1, 10.4, 10.9, 9.1, 13.0, 13.0, 13.0, 13.0, 13.0
+        ]
+    },
+    'V2 PHOTOMETRY':{
+        'title':"ALL SKY PHOTOMETRY STATISTICS FROM VERSION 2 SPREADSHEET METHODS",
+        'colNames':[
+            'DNIGHT', 'DSET', 'ZENITH_MSA_V2', 'ALLSKY_MAGS_V2', 'ZA70_MAGS_V2', 
+            'BRIGHTEST_MSA_V2', 'DARKEST_MSA_V2', 'SYN_SQM', 'SCALAR_ILL_V2'
+        ],
+        'colWidths':[
+            16.0, 13.0, 17.7, 19.7, 17.9, 19.4, 18.3, 15.0, 14.0
+        ]
+    },
+    'V4 PHOTOMETRY':{
+        'title':"ALL SKY PHOTOMETRY STATISTICS FROM VERSION 4 GRID PROCESSING METHOD",
+        'colNames':[
+            'DNIGHT', 'DSET', 'AVE_LUM_MSA', 'AVE_LUM_MCCD', 'ZENITH_LUM_MSA', 
+            'ZENITH_LUM_MCCD', 'BRIGHTEST_LUM_MSA', 'BRIGHTEST_LUM_MCCD', 
+            'ALLSKY_MAGS', 'ALLSKY_MLX', 'HORIZ_MLX', 'MAXVERT_MLX', 'NSTARS_FLAT', 
+            'NSTARS_OBS', 'NSTARS_EXT', 'VISSTARS_NAT', 'VISSTARS_OBS', 'SCALAR_ILL_V4'
+        ],
+        'colWidths':[
+            16.3, 13.0, 20.0, 16.6, 20.6, 21.1, 22.4, 24.0, 19.4, 
+            15.1, 15.6, 17.1, 15.6, 14.9, 15.1, 15.3, 15.1, 16.6
+        ]
+    },
+    'GLARE':{
+        'title':"PHOTOMETRY OF GLARE SOURCES BY CCD CAMERA WITH ND FILTER",
+        'colNames':[
+            'DNIGHT', 'DSET', 'ALLSKY_GLARE_MAGS', 'ALLSKY_GLARE_MLX', 
+            'MAXVERT_GLARE_MLX', 'MEANVERT_GLARE_MLX', 'MINVERT_GLARE_MLX', 
+            'HORIZ_GLARE_MLX'
+        ],
+        'colWidths':[
+            16.1, 13.0, 20.9, 20.4, 24.3, 27.6, 22.9, 20.1
+        ]
+    },
+    'NATSKY':{
+        'title':"NATURAL SKY MODEL FIT INFORMATION",
+        'colNames':[
+            'DNIGHT', 'DSET', 'EM_LYR_HT_KM', 'SITE_ELEV', 'EXTCOEFF_USED', 
+            'ZENITH_AIRGLOW_MCCD', 'AIRGLOW_EXT_CONST', 'ADL_MULT', 'ZOD_EXT_CONST', 
+            'GAL_EXT_CONST', 'FIT_QUALITY', 'NATSKY_FIT_NOTES'
+        ],
+        'colWidths':[
+            15.1, 10.0, 17.7, 12.4, 17.1, 25.3, 
+            22.7, 13.0, 16.6, 18.1, 14.9, 80.9
+        ]
+    },
+    'LP':{
+        'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR THE WHOLE OBSERVABLE SKY",
+        'colNames':[
+            'DNIGHT', 'DSET', 'SQI_ALLSKY', 'ALR', 'ALLSKY_ART_MAGS', 
+            'ALLSKY_ART_MLX', 'MAXVERT_ART_MLX', 'MAXVERT_LPR', 
+            'MEANVERT_ART_MLX', 'MEANVERT_LPR', 'MINVERT_ART_MLX', 'MINVERT_LPR', 
+            'HORIZ_ART_MLX', 'HORIZ_LPR', 'BRIGHTEST_ART_MCCD', 'BRIGHTEST_LPR', 
+            'ZENITH_LUM_ART_MCCD', 'ZENITH_LUM_LPR', 'MEANLUM_ART_MCCD', 'MODEL_ALR'
+        ],
+        'colWidths':[
+            14.3, 13.0, 13.1,  9.7, 24.6, 23.1, 20.9, 20.1, 21.3, 17.1, 
+            21.6, 16.6, 18.4, 15.3, 25.3, 18.1, 25.0, 18.7, 23.3, 15.1
+        ]
+    },
+    'LP80':{
+        'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR SKY FROM ZENITH TO ZENITH ANGLE 80",
+        'colNames':[
+            'DNIGHT', 'DSET', 'SQI_ZA80', 'ZA80_ALR', 'ZA80_ART_MAGS', 
+            'ZA80_ART_MLX', 'ZA80_MAXVERT_ART_MLX', 'ZA80_MAXVERT_LPR', 
+            'ZA80_ MEANVERT_ART_MLX', 'ZA80_MEANVERT_LPR', 'ZA80_MINVERT_ART_MLX', 
+            'ZA80_MINVERT_LPR', 'ZA80_HORIZ_ART_MLX', 'ZA80_HORIZ_LPR', 
+            'ZA80_BRIGHTEST_ART_MCCD', 'ZA80_BRIGHTEST_LPR', 'ZA80_MEANLUM_ART_MCCD'
+        ],
+        'colWidths':[
+            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 26.3, 
+            22.6, 25.9, 21.3, 22.6, 20.4, 28.6, 22.4, 27.7
+        ]
+    },
+    'LP70':{
+        'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR SKY FROM ZENITH TO ZENITH ANGLE 70",
+        'colNames':[
+            'DNIGHT', 'DSET', 'SQI_ZA70', 'ZA70_ALR', 'ZA70_ART_MAGS', 
+            'ZA70_ART_MLX', 'ZA70_MAXVERT_ART_MLX', 'ZA70_MAXVERT_LPR', 
+            'ZA70_ MEANVERT_ART_MLX', 'ZA70_MEANVERT_LPR', 'ZA70_MINVERT_ART_MLX', 
+            'ZA70_MINVERT_LPR', 'ZA70_HORIZ_ART_MLX', 'ZA70_HORIZ_LPR', 
+            'ZA70_BRIGHTEST_ART_MCCD', 'ZA70_BRIGHTEST_LPR', 'ZA70_MEANLUM_ART_MCCD'
+        ],
+        'colWidths':[
+            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 26.3, 
+            22.6, 25.9, 21.3, 22.6, 20.4, 28.6, 22.4, 27.7
+        ]
+    },
+    'ZONES':{
+        'title':"LIGHT POLLUTION FROM SKYGLOW BY ZENITH ANGLE ZONE",
+        'colNames':[
+            'DNIGHT', 'DSET', 'ZONE1_MCCD', 'ZONE1_MLX', 'ZONE1_PCT', 'ZONE2_MCCD', 
+            'ZONE2_MLX', 'ZONE2_PCT', 'ZONE3_MCCD', 'ZONE3_MLX', 'ZONE3_PCT', 
+            'ZONE4_MCCD', 'ZONE4_MLX', 'ZONE4_PCT', 'ZONE5_MCCD', 'ZONE5_MLX', 
+            'ZONE5_PCT'
+        ],
+        'colWidths':[
+            16.0, 13.0, 16.6, 13.7, 14.0, 14.6, 15.4, 16.1, 16.9, 
+            17.3, 17.1, 17.7, 17.0, 13.7, 14.9, 16.7, 12.9
+        ]
+    },
+    'V4 PERCENTILES ALL':{
+        'title':"PERCENTILE STATISTICS HORIZON MASKED ALL SOURCES",
+        'colNames':[
+            'DNIGHT', 'DSET', 'P05DEG_ALL', 'P1DEG_ALL', 'P99_ALL', 'P98_ALL', 
+            'P95_ALL', 'P90_ALL', 'P80_ALL', 'P70_ALL', 'P60_ALL', 'P50_ALL', 
+            'P01_ALL', 'P0005_ALL'
+        ],
+        'colWidths':[
+            18.6, 9.1, 14.3, 13.0,  9.1, 13.0, 13.0, 
+            13.0, 9.4,  9.1, 13.0, 11.0, 13.3, 16.1
+        ]
+    },
+    'V4 PERCENTILES LP':{
+        'title':"PERCENTILE STATISTICS HORIZON MASKED ARTIFICIAL ONLY",
+        'colNames':[
+            'DNIGHT', 'DSET', 'P05DEG_ART', 'P1DEG_ART', 'P99_ART', 'P98_ART', 
+            'P95_ART', 'P90_ART', 'P80_ART', 'P70_ART', 'P60_ART', 'P50_ART', 
+            'P01_ART'
+        ],
+        'colWidths':[
+            18.6, 9.1, 14.3, 13.0, 9.1, 13.0, 13.0, 
+             9.0, 9.7,  9.1, 13.0, 9.4, 11.3
+        ]
+    }
+}
+
+
+SHEETSTYLES = {
+    'main_title': {
+        'font': Font(
+            name="Calibri", 
+            size=16, 
+            bold=True, 
+            color="000000"
+        )
+    },
+    'nightdata_headers': {
+        'font': Font(
+            name="Calibri", 
+            size=11, 
+            bold=True, 
+            color="000000"
+        )
+    },
+    'sheet_titles': {
+        'font': Font(
+            name="Calibri", 
+            size=11, 
+            bold=False, 
+            color="000000"
+        )
+    },
+    'column_headers': {
+        'font': Font(
+            name="Calibri", 
+            size=11, 
+            bold=True, 
+            color="000000"
+        ),
+        'border': Border(
+            bottom=Side(style='thin')
+        ),
+        'alignment': Alignment(
+            horizontal="center", 
+            vertical="bottom",
+            wrap_text=False
+        )
+    },
+    'data_fields': {
+        'font': Font(
+            name="Courier", 
+            size=10, 
+            bold=False, 
+            color="000000"
+        )
+    }
+}
+
+
 #------------------------------------------------------------------------------#
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
+def create_excel_template(filename):
+    '''
+    Function that creates the Excel template for storing output tables.
+    '''
+
+    # Initial creation and formatting of excel file
+    with pd.ExcelWriter(filename, engine='openpyxl', mode='w') as writer:
+
+        # Create an openpyxl workbook object
+        workbook = writer.book
+
+        # Create and format each sheet
+        for sheetname in SHEETDATA.keys():
+
+            # Create sheet
+            workbook.create_sheet(sheetname)
+            worksheet = writer.sheets[sheetname]
+
+            # Add sheet titles
+            if sheetname == "NIGHT METADATA":
+
+                # Add primary title for entire workbook
+                cell = worksheet.cell(row=1, column=1)
+                cell.value = "NPS Night Skies Program All Sky Imaging Data Report"
+                cell.font = SHEETSTYLES['main_title']['font']
+
+                # Add 'processed by' and 'date generated' fields
+                cell = worksheet.cell(row=1, column=7)
+                cell.value = "Processed by:"
+                cell.font = SHEETSTYLES['nightdata_headers']['font']
+                cell = worksheet.cell(row=1, column=8)
+                cell.value = "Date generated:"
+                cell.font = SHEETSTYLES['nightdata_headers']['font']
+
+                # Add sheet title
+                cell = worksheet.cell(row=2, column=1)
+                cell.value = SHEETDATA[sheetname]['title']
+                cell.font = SHEETSTYLES['sheet_titles']['font']
+            else:
+                # Add sheet title
+                cell = worksheet.cell(row=1, column=1)
+                cell.value = SHEETDATA[sheetname]['title']
+                cell.font = SHEETSTYLES['sheet_titles']['font']
+            
+
+            # Add column headers and set column widths
+            for i,colname in enumerate(SHEETDATA[sheetname]['colNames'],1):
+
+                # Get desired column width
+                colwidth = SHEETDATA[sheetname]['colWidths'][i-1]
+
+                # Set cell value and style
+                cell = worksheet.cell(row=4, column=i)
+                cell.value = colname
+                cell.font = SHEETSTYLES['column_headers']['font']
+                cell.border = SHEETSTYLES['column_headers']['border']
+                cell.alignment = SHEETSTYLES['column_headers']['alignment']
+                colLetter = get_column_letter(i)
+                worksheet.column_dimensions[colLetter].width = colwidth
 
 
 
@@ -43,30 +358,9 @@ import printcolors as pc
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def generate_tables(dnight):
+def generate_tables(dnight,sets):
 
     excelFile = f"{filepath.tables}{dnight}.xlsx"
 
-    # Initial creation of excel file
-    with pd.ExcelWriter(excelFile, engine='openpyxl', mode='w') as writer:
-
-        # Create an openpyxl workbook object
-        workbook = writer.book
-
-        # Add each sheet
-        workbook.create_sheet("NIGHT METADATA")
-        workbook.create_sheet("CITIES")
-        workbook.create_sheet("SET METADATA")
-        workbook.create_sheet("CALIBRATION")
-        workbook.create_sheet("EXTINCTION")
-        workbook.create_sheet("IMG COORDS")
-        workbook.create_sheet("V2 PHOTOMETRY")
-        workbook.create_sheet("V4 PHOTOMETRY")
-        workbook.create_sheet("GLARE")
-        workbook.create_sheet("NATSKY")
-        workbook.create_sheet("LP")
-        workbook.create_sheet("LP80")
-        workbook.create_sheet("LP70")
-        workbook.create_sheet("ZONES")
-        workbook.create_sheet("V4 PERCENTILES ALL")
-        workbook.create_sheet("V4 PERCENTILES LP")
+    # Create the excel template
+    create_excel_template(excelFile)
