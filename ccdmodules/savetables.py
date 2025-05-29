@@ -63,7 +63,7 @@ SHEETDATA = {
         ]
     },
     'CITIES':{
-        'title':"NEARBY 40 CITIES BEARING AND DISTANCE (KM) ORDERED ACCORDING TO WALKER'S LAW",
+        'title':"NEARBY 100 CITIES BEARING AND DISTANCE (KM) ORDERED ACCORDING TO WALKER'S LAW",
         'colNames':[
             'DNIGHT', 'PLACE', 'STATE', 'WALKERS', 'POPULATION', 'DISTANCE', 
             'BEARING', 'HALF_WIDTH_DEG'
@@ -308,8 +308,13 @@ SHEETSTYLES = {
             bold=False, 
             color="000000"
         ),
-        'alignment': Alignment(
+        'alignment_cb': Alignment(
             horizontal="center", 
+            vertical="bottom",
+            wrap_text=False
+        ),
+        'alignment_lb': Alignment(
+            horizontal="left", 
             vertical="bottom",
             wrap_text=False
         )
@@ -334,13 +339,13 @@ SHEETSTYLES = {
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
-def create_excel_template(filename):
+def create_excel_template(excelFile):
     '''
     Function that creates the Excel template for storing output tables.
     '''
 
     # Initial creation and formatting of excel file
-    with pd.ExcelWriter(filename, engine='openpyxl', mode='w') as writer:
+    with pd.ExcelWriter(excelFile, engine='openpyxl', mode='w') as writer:
 
         # Create an openpyxl workbook object
         workbook = writer.book
@@ -466,10 +471,10 @@ def get_site_info(imageFile):
     return siteInfo
 
 
-def append_night_metadata(filename, siteInfo, ):
+def append_night_metadata(excelFile, siteInfo, ):
 
-    # Add to Night Metadata sheet
-    with pd.ExcelWriter(filename, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+    # Add to NIGHT METADATA sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
 
         # Grab the relevant worksheet
         worksheet = writer.sheets['NIGHT METADATA']
@@ -528,12 +533,69 @@ def append_night_metadata(filename, siteInfo, ):
         ncol = len(SHEETDATA['NIGHT METADATA']['colNames'])
         for i in range(ncol):
             cell = worksheet.cell(row=5, column=i+1)
-            if SHEETDATA['NIGHT METADATA']['colNames'] == 'NARRATIVE':
+            if SHEETDATA['NIGHT METADATA']['colNames'][i] == 'NARRATIVE':
                 cell.font = SHEETSTYLES['narrative']['font']
                 cell.alignment = SHEETSTYLES['narrative']['alignment']
             else:
                 cell.font = SHEETSTYLES['data_fields']['font']
-                cell.alignment = SHEETSTYLES['data_fields']['alignment']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
+def append_cities(excelFile, dnight):
+    '''
+    Function to append top 100 cities ranked by
+    Walker Law values to CITIES sheet
+    '''
+
+    # Load in cities excel sheet
+    citiesFile = f"{filepath.calibdata}{dnight}/cities.xlsx"
+    cities = pd.read_excel(citiesFile)
+
+    # Add to CITIES sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets['CITIES']
+
+        # Iterate over each row
+        for i,row in cities.iterrows():
+
+            # Break after 100 rows
+            if i == 100:
+                break
+            
+            # Set cell data values
+            worksheet.cell(row=i+5, column=1, value=dnight)                       # Data night
+            worksheet.cell(row=i+5, column=2, value=row['Place'])                 # City
+            worksheet.cell(row=i+5, column=3, value=row['State'])                 # State
+            worksheet.cell(row=i+5, column=4, value=row['Walkers Law'])           # Walkers Law
+            worksheet.cell(row=i+5, column=5, value=row['Population'])            # Population
+            worksheet.cell(row=i+5, column=6, value=row['Distance'])              # Distance (km)
+            worksheet.cell(row=i+5, column=7, value=row['Bearing'])               # Bearing (deg)
+            worksheet.cell(row=i+5, column=8, value=row['Half Width (Degrees)'])  # Half-width (deg)
+
+            # Set some cell number formats
+            worksheet.cell(row=i+5, column=4).number_format = '0.0000' # Walkers Law
+            worksheet.cell(row=i+5, column=5).number_format = '#,###'  # Population
+            worksheet.cell(row=i+5, column=6).number_format = '####'   # Distance
+            worksheet.cell(row=i+5, column=7).number_format = '0.0'    # Bearing
+            worksheet.cell(row=i+5, column=8).number_format = '0.0'    # Half-width (deg)
+
+            # Set cell styles
+            ncol = len(SHEETDATA['CITIES']['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=i+5, column=j+1)
+                if SHEETDATA['CITIES']['colNames'][j] == 'PLACE':
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_lb']
+                else:
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
+            
+
+
 
 
 #------------------------------------------------------------------------------#
@@ -570,3 +632,6 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
 
     # Append data to NIGHT METADATA sheet
     append_night_metadata(excelFile,siteInfo)
+
+    # Append data to CITIES sheet
+    append_cities(excelFile,dnight)
