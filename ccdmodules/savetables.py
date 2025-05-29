@@ -25,10 +25,11 @@
 from astropy.io import fits
 from astropy.time import Time
 from openpyxl.utils import get_column_letter
-from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
+from openpyxl.styles import Alignment, Border, Side, Font
 
 import os
 import stat
+import datetime
 import numpy as n
 import pandas as pd
 import astropy.units as u
@@ -37,7 +38,7 @@ import astropy.coordinates as coord
 
 # Local Source
 import filepath
-import printcolors as pc
+import ccdmodules.printcolors as pc
 
 
 #------------------------------------------------------------------------------#
@@ -258,6 +259,24 @@ SHEETSTYLES = {
             color="000000"
         )
     },
+    'nightdata_entries': {
+        'font': Font(
+            name="Calibri", 
+            size=10, 
+            bold=True, 
+            color="000000"
+        ),
+        'alignment1': Alignment(
+            horizontal="left", 
+            vertical="bottom",
+            wrap_text=False
+        ),
+        'alignment2': Alignment(
+            horizontal="right", 
+            vertical="bottom",
+            wrap_text=False
+        )
+    },
     'sheet_titles': {
         'font': Font(
             name="Calibri", 
@@ -288,6 +307,24 @@ SHEETSTYLES = {
             size=10, 
             bold=False, 
             color="000000"
+        ),
+        'alignment': Alignment(
+            horizontal="center", 
+            vertical="bottom",
+            wrap_text=False
+        )
+    },
+    'narrative': {
+        'font': Font(
+            name="Calibri", 
+            size=11, 
+            bold=False, 
+            color="000000"
+        ),
+        'alignment': Alignment(
+            horizontal="left", 
+            vertical="bottom",
+            wrap_text=True
         )
     }
 }
@@ -376,22 +413,23 @@ def get_site_info(imageFile):
     latitude = H['LATITUDE']
     elevation = H['ELEVATIO']
     utc = H['DATE-OBS']
+    tempc = (H['AMTEMP_F'] - 32) * 5./9
+
+    # Convert observers string to list of observers and pad with empty strings
+    observers = [x.strip() for x in observers.split(",")]
+    while len(observers) < 4:
+        observers.append("")
 
     # Get UTC date and time
-    utcDate = utc.split("T")[0]
-    utcTime = utc.split("T")[1]
-
-    # Set observing time
-    t = Time(
-        H['DATE-OBS'], 
-        format='isot', 
-        scale='utc'#,
-    )
+    t = Time(utc, format='isot', scale='utc')
+    dt = t.datetime
+    utcDate = dt.strftime("%d-%b-%y").lstrip("0")
+    utcTime = utc.split("T")[1].lstrip("0")
 
     # Convert UTC to LMT using site longitude
     dayShift = 0
     hourfracUTC = t.ymdhms.hour + t.ymdhms.minute/60 + t.ymdhms.second/3600
-    hourfracLMT = hourfracUTC + H['LONGITUD']/15
+    hourfracLMT = hourfracUTC + longitude/15
     if hourfracLMT < 0:
         hourfracLMT += 24
         dayShift -= 1
@@ -404,15 +442,71 @@ def get_site_info(imageFile):
 
     # Apply day shift
     t = t + dayShift*u.day
+    lmtDate = t.isot.split("T")[0]
 
-    # Generate the full date-time string
-    dt = t.datetime
-    day = dt.strftime("%d").lstrip('0')
-    month = dt.strftime("%B")
-    year = dt.strftime("%Y")
-    dateString = f"{month} {day}, {year}  {midpointLMT:.1f} hours LMT"
+    # Create site info dict
+    siteInfo = {
+        'siteName': siteName,
+        'observers': observers,
+        'utcStartDate': utcDate,
+        'utcStartTime': utcTime,
+        'longitude': longitude,
+        'latitude': latitude,
+        'elevation': elevation,
+        'lmtMidDate': lmtDate,
+        'lmtMidTime': midpointLMT,
+        'humidity': H['HUMID'],
+        'windspeed': H['WIND_MPH'],
+        'tempcelsius': tempc,
+        'telescope': H['TELESCOP'],
+        'exptime': H['EXPTIME'],
+        'ccdtemp': H['CCD-TEMP']
+    }
 
-    return siteName, observers, longitude, latitude, elevation, utcDate, utcTime
+    return siteInfo
+
+
+def append_night_metadata(filename, siteInfo, ):
+
+    # Add to Night Metadata sheet
+    with pd.ExcelWriter(filename, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets['NIGHT METADATA']
+
+        # Add processor name and processing date
+        tnow = datetime.datetime.now()
+        procDatetime = tnow.strftime("%m/%d/%y %H:%M").lstrip("0")
+        pcell =  worksheet.cell(row=2, column=7)
+        tcell =  worksheet.cell(row=2, column=8)
+        pcell.value = siteInfo['processor']
+        tcell.value = procDatetime
+        pcell.font = SHEETSTYLES['nightdata_entries']['font']
+        tcell.font = SHEETSTYLES['nightdata_entries']['font']
+        pcell.alignment = SHEETSTYLES['nightdata_entries']['alignment1']
+        tcell.alignment = SHEETSTYLES['nightdata_entries']['alignment2']
+
+        # Set cell data values
+        worksheet.cell(row=5, column=1, value=siteInfo['datanight'])     # Data night
+        worksheet.cell(row=5, column=2, value=siteInfo['unitname'])      # NPS Unit Name
+        worksheet.cell(row=5, column=3, value=siteInfo['unitcode'])      # NPS Unit Code
+        worksheet.cell(row=5, column=4, value=siteInfo['longitude'])     # Longitude
+        worksheet.cell(row=5, column=5, value=siteInfo['latitude'])      # Latitude
+        worksheet.cell(row=5, column=6, value=siteInfo['elevation'])     # Elevation
+        worksheet.cell(row=5, column=7, value=siteInfo['siteName'])      # Site Name
+        worksheet.cell(row=5, column=8, value=siteInfo['utcStartDate'])  # UTC Start Date
+        worksheet.cell(row=5, column=9, value=siteInfo['utcStartTime'])  # UTC Start Time
+
+        # Set cell styles
+        ncol = len(SHEETDATA['NIGHT METADATA']['colNames'])
+        for i in range(ncol):
+            cell = worksheet.cell(row=5, column=i+1)
+            if SHEETDATA['NIGHT METADATA']['colNames'] == 'NARRATIVE':
+                cell.font = SHEETSTYLES['narrative']['font']
+                cell.alignment = SHEETSTYLES['narrative']['alignment']
+            else:
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment']
 
 
 #------------------------------------------------------------------------------#
@@ -424,32 +518,26 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
     # Get V-band calibdata path for first data set
     calsetp1 = f"{filepath.calibdata}{dnight}/S_01/"
 
-    # Out Excel file name
+    # Set the output Excel file name
     excelFile = f"{filepath.tables}{dnight}.xlsx"
 
-    # Get site metadata
-    firstImage = f"{calsetp1}zenith1.fit"
-    siteName, observers, lon, lat, elev, utcDate, utcTime = get_site_info(firstImage)
+    # Convert central azimuth of panoramas to string
+    centralAZ = int(n.floor(centralAZ))
+    centralAzString = f"{centralAZ:03d}"
+
+    # Get unit code from unit name
+    unitcode = dnight[:4]
+
+    # Get site metadata and add
+    firstImage = f"{calsetp1}ib001.fit"
+    siteInfo = get_site_info(firstImage)
+    siteInfo['datanight'] = dnight
+    siteInfo['unitname'] = unitName.replace("_"," ")
+    siteInfo['unitcode'] = unitcode
+    siteInfo['processor'] = processor.replace("_"," ")
 
     # Create the excel template
     create_excel_template(excelFile)
 
-    # Add to Night Metadata sheet
-    dfont = SHEETSTYLES['data_fields']['font']
-    unitcode = dnight[:4]
-    with pd.ExcelWriter(
-        excelFile, 
-        engine='openpyxl', 
-        if_sheet_exists='overlay', 
-        mode='a') as writer:
-
-        # Grab the relevant worksheet
-        worksheet = writer.sheets['NIGHT METADATA']
-
-        # Set cell values
-        worksheet.cell(row=5, column=1, value=dnight)    # Data night
-        worksheet.cell(row=5, column=2, value=unitName)  # NPS Unit Name
-        worksheet.cell(row=5, column=3, value=unitcode)  # NPS Unit Code
-        worksheet.cell(row=5, column=4, value=lon)       # Longitude
-        worksheet.cell(row=5, column=5, value=lat)       # Latitude
-        worksheet.cell(row=5, column=6, value=elev)      # Elevation
+    # Append data to NIGHT METADATA sheet
+    append_night_metadata(excelFile,siteInfo)
