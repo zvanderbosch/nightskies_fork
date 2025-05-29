@@ -266,12 +266,12 @@ SHEETSTYLES = {
             bold=True, 
             color="000000"
         ),
-        'alignment1': Alignment(
+        'alignment_lb': Alignment(
             horizontal="left", 
             vertical="bottom",
             wrap_text=False
         ),
-        'alignment2': Alignment(
+        'alignment_rb': Alignment(
             horizontal="right", 
             vertical="bottom",
             wrap_text=False
@@ -295,8 +295,13 @@ SHEETSTYLES = {
         'border': Border(
             bottom=Side(style='thin')
         ),
-        'alignment': Alignment(
+        'alignment_cb': Alignment(
             horizontal="center", 
+            vertical="bottom",
+            wrap_text=False
+        ),
+        'alignment_lb': Alignment(
+            horizontal="left", 
             vertical="bottom",
             wrap_text=False
         )
@@ -405,7 +410,10 @@ def create_excel_template(excelFile):
                 cell.value = colname
                 cell.font = SHEETSTYLES['column_headers']['font']
                 cell.border = SHEETSTYLES['column_headers']['border']
-                cell.alignment = SHEETSTYLES['column_headers']['alignment']
+                if colname in ['NARRATIVE','PLACE','COLLECTION_NOTES','CALIB_NOTES']:
+                    cell.alignment = SHEETSTYLES['column_headers']['alignment_lb']
+                else:
+                    cell.alignment = SHEETSTYLES['column_headers']['alignment_cb']
                 colLetter = get_column_letter(i)
                 worksheet.column_dimensions[colLetter].width = colwidth
 
@@ -501,8 +509,8 @@ def append_night_metadata(excelFile, siteInfo, ):
         tcell.value = procDatetime
         pcell.font = SHEETSTYLES['nightdata_entries']['font']
         tcell.font = SHEETSTYLES['nightdata_entries']['font']
-        pcell.alignment = SHEETSTYLES['nightdata_entries']['alignment1']
-        tcell.alignment = SHEETSTYLES['nightdata_entries']['alignment2']
+        pcell.alignment = SHEETSTYLES['nightdata_entries']['alignment_lb']
+        tcell.alignment = SHEETSTYLES['nightdata_entries']['alignment_rb']
 
         # Set cell data values
         worksheet.cell(row=5, column=1 , value=siteInfo['datanight'])     # Data night
@@ -680,7 +688,6 @@ def append_calibration(excelFile, dnight, sets):
     flatFile = FlatV[Dataset == dnight][0]
     flatPath = f"{filepath.flats}{flatFile}"
     curveName = Curve[Dataset == dnight][0]
-    print(flatPath,curveName)
 
      # Add to SET METADATA sheet
     with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
