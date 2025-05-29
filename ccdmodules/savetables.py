@@ -487,15 +487,42 @@ def append_night_metadata(filename, siteInfo, ):
         tcell.alignment = SHEETSTYLES['nightdata_entries']['alignment2']
 
         # Set cell data values
-        worksheet.cell(row=5, column=1, value=siteInfo['datanight'])     # Data night
-        worksheet.cell(row=5, column=2, value=siteInfo['unitname'])      # NPS Unit Name
-        worksheet.cell(row=5, column=3, value=siteInfo['unitcode'])      # NPS Unit Code
-        worksheet.cell(row=5, column=4, value=siteInfo['longitude'])     # Longitude
-        worksheet.cell(row=5, column=5, value=siteInfo['latitude'])      # Latitude
-        worksheet.cell(row=5, column=6, value=siteInfo['elevation'])     # Elevation
-        worksheet.cell(row=5, column=7, value=siteInfo['siteName'])      # Site Name
-        worksheet.cell(row=5, column=8, value=siteInfo['utcStartDate'])  # UTC Start Date
-        worksheet.cell(row=5, column=9, value=siteInfo['utcStartTime'])  # UTC Start Time
+        worksheet.cell(row=5, column=1 , value=siteInfo['datanight'])     # Data night
+        worksheet.cell(row=5, column=2 , value=siteInfo['unitname'])      # NPS Unit Name
+        worksheet.cell(row=5, column=3 , value=siteInfo['unitcode'])      # NPS Unit Code
+        worksheet.cell(row=5, column=4 , value=siteInfo['longitude'])     # Longitude
+        worksheet.cell(row=5, column=5 , value=siteInfo['latitude'])      # Latitude
+        worksheet.cell(row=5, column=6 , value=siteInfo['elevation'])     # Elevation
+        worksheet.cell(row=5, column=7 , value=siteInfo['siteName'])      # Site Name
+        worksheet.cell(row=5, column=8 , value=siteInfo['utcStartDate'])  # UTC Start Date
+        worksheet.cell(row=5, column=9 , value=siteInfo['utcStartTime'])  # UTC Start Time
+        worksheet.cell(row=5, column=10, value=siteInfo['tempcelsius'])   # Temperature (C)
+        worksheet.cell(row=5, column=11, value=siteInfo['humidity'])      # Relative Humidity (%)
+        worksheet.cell(row=5, column=12, value=siteInfo['windspeed'])     # Wind speed (mph)
+        # worksheet.cell(row=5, column=13, value=siteInfo['ccdname'])     # Camera Name
+        worksheet.cell(row=5, column=14, value=siteInfo['ccdtemp'])       # Camera Temp
+        # worksheet.cell(row=5, column=15, value=siteInfo['lenstype'])    # Lens type
+        # worksheet.cell(row=5, column=16, value=siteInfo['filter   '])   # Filter
+        worksheet.cell(row=5, column=17, value=siteInfo['telescope'])     # Instrument
+        # worksheet.cell(row=5, column=18, value=siteInfo['numimages'])   # Number of Images
+        worksheet.cell(row=5, column=19, value=siteInfo['exptime'])       # Exposure Time
+        # worksheet.cell(row=5, column=20, value=siteInfo['zeropoint'])   # Zeropoint
+        # worksheet.cell(row=5, column=21, value=siteInfo['psa'])         # Image Scale Offset
+        worksheet.cell(row=5, column=22, value=siteInfo['numsets'])       # Number of Sets
+        # worksheet.cell(row=5, column=23, value=siteInfo['zlm'])         # Zenith Limiting Mag
+        # worksheet.cell(row=5, column=24, value=siteInfo['bortle'])      # Bortle
+        # worksheet.cell(row=5, column=25, value=siteInfo['albedo'])      # Albedo
+        # worksheet.cell(row=5, column=26, value=siteInfo['sqm'])         # SQM
+        worksheet.cell(row=5, column=27, value=siteInfo['observers'][0])  # Observer 1
+        worksheet.cell(row=5, column=28, value=siteInfo['observers'][1])  # Observer 2
+        worksheet.cell(row=5, column=29, value=siteInfo['observers'][2])  # Observer 3
+        worksheet.cell(row=5, column=30, value=siteInfo['observers'][3])  # Observer 4
+        # worksheet.cell(row=5, column=31, value=siteInfo['narrative'])   # Narrative
+        worksheet.cell(row=5, column=32, value=siteInfo['centralAZ'])     # Central Azimuth
+
+        # Set some cell number formats
+        worksheet.cell(row=5, column=10).number_format = '0.0' # Air temperature
+        worksheet.cell(row=5, column=11).number_format = '0.0' # Relative humidity
 
         # Set cell styles
         ncol = len(SHEETDATA['NIGHT METADATA']['colNames'])
@@ -535,6 +562,8 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
     siteInfo['unitname'] = unitName.replace("_"," ")
     siteInfo['unitcode'] = unitcode
     siteInfo['processor'] = processor.replace("_"," ")
+    siteInfo['centralAZ'] = centralAzString
+    siteInfo['numsets'] = len(sets)
 
     # Create the excel template
     create_excel_template(excelFile)
