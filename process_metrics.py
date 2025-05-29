@@ -33,8 +33,8 @@ from multiprocessing import Process, Queue
 
 # Local source
 import filepath
-import progressbars
-import printcolors as pc
+import ccdmodules.progressbars as pb
+import ccdmodules.printcolors as pc
 
 # Define print status prefix
 scriptName = 'process_metrics.py'
@@ -78,7 +78,7 @@ def update_progressbar(x,y,t=0):
 def process_skyglow(*args):
     '''Calculate luminance/illuminance metrics for artificial skyglow'''
     t1 = time.time()
-    import skyglow as SG
+    import ccdmodules.skyglow as SG
     for filter in args[2]:
         if filter != "V":
             continue
@@ -91,7 +91,7 @@ def process_skyglow(*args):
 def process_illumall(*args):
     '''Calculate luminance/illuminance metrics for all light sources'''
     t1 = time.time()
-    import illumall as IA
+    import ccdmodules.illumall as IA
     for filter in args[2]:
         if filter != "V":
             continue
@@ -104,7 +104,7 @@ def process_illumall(*args):
 def process_starsvis(*args):
     '''Calculate visible stars'''
     t1 = time.time()
-    import starsvis as SV
+    import ccdmodules.starsvis as SV
     for filter in args[2]:
         if filter != "V":
             continue
@@ -117,7 +117,7 @@ def process_starsvis(*args):
 def process_alrmodel(*args):
     '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
     t1 = time.time()
-    import alrmodel as AM
+    import ccdmodules.alrmodel as AM
     AM.calculate_alr_model(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -127,7 +127,7 @@ def process_alrmodel(*args):
 def process_albedomodel(*args):
     '''Calculate albedo model'''
     t1 = time.time()
-    import albedomodel as BM
+    import ccdmodules.albedomodel as BM
     BM.calculate_albedo_model(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -137,7 +137,7 @@ def process_albedomodel(*args):
 def process_places(*args):
     '''Calculate distance & Walker's Law for places'''
     t1 = time.time()
-    import places as PL
+    import ccdmodules.places as PL
     PL.calculate_places(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -147,7 +147,7 @@ def process_places(*args):
 def process_skyquality(*args):
     '''Calculate SQI and SQM sky quality metrics'''
     t1 = time.time()
-    import skyquality as SQ
+    import ccdmodules.skyquality as SQ
     for filter in args[2]:
         if filter != "V":
             continue
@@ -160,7 +160,7 @@ def process_skyquality(*args):
 def process_drawmaps(*args):
     '''Generate panoramic graphics'''
     t1 = time.time()
-    import drawmaps as DM
+    import ccdmodules.drawmaps as DM
     DM.generate_graphics(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -170,7 +170,7 @@ def process_drawmaps(*args):
 def process_tables(*args):
     '''Generate summary tables'''
     t1 = time.time()
-    import savetables as ST
+    import ccdmodules.savetables as ST
     ST.generate_tables(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -214,7 +214,7 @@ if __name__ == '__main__':
             os.makedirs(filepath.calibdata+dnight)
 
     # Plot the progress bar template
-    barfig, barax = progressbars.bar_metrics(Dataset, nsets)
+    barfig, barax = pb.bar_metrics(Dataset, nsets)
     print('You have 5 seconds to adjust the position of the progress bar window')
     plt.pause(5) #users have 5 seconds to adjust the figure position
 
@@ -255,7 +255,7 @@ if __name__ == '__main__':
         q5=Queue(); Q5=(q5,); p5 = Process(target=process_places,args=K0+Q5)
         q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K2+Q6)
         q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
-        q8=Queue(); Q8=(q8,); p8 = Process(target=process_tables,args=K1+Q8)
+        q8=Queue(); Q8=(q8,); p8 = Process(target=process_tables,args=K3+Q8)
 
         # Execute each processing step
         # p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
