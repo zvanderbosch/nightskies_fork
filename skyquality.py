@@ -55,14 +55,9 @@ def get_site_info(imageFile):
     # Load image header
     H = fits.getheader(imageFile)
 
-    # Get site and time info
-    lon = H['LONGITUD']
-    lat = H['LATITUDE']
-    utc = H['DATE-OBS']
-
     # Set up site and time astropy objects
     obsTime = Time(
-        utc, format='isot', scale='utc'
+        H['DATE-OBS'], format='isot', scale='utc'
     )
     obsSite = coord.EarthLocation.from_geodetic(
         lon = H['LONGITUD']*u.deg,
