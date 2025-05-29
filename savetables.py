@@ -22,6 +22,8 @@
 #
 #-----------------------------------------------------------------------------#
 
+from astropy.io import fits
+from astropy.time import Time
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
 
@@ -29,6 +31,9 @@ import os
 import stat
 import numpy as n
 import pandas as pd
+import astropy.units as u
+import astropy.coordinates as coord
+
 
 # Local Source
 import filepath
@@ -353,14 +358,98 @@ def create_excel_template(filename):
                 worksheet.column_dimensions[colLetter].width = colwidth
 
 
+def get_site_info(imageFile):
+    '''
+    Function that computes the Local Mean Time (LMT)
+    and returns the site location name and observer
+    names along with a formatted string containing 
+    date and time info.
+    '''
+
+    # Load image header
+    H = fits.getheader(imageFile)
+
+    # Get site and observer names
+    siteName = H['LOCATION']
+    observers = H['OBSERVER']
+    longitude = H['LONGITUD']
+    latitude = H['LATITUDE']
+    elevation = H['ELEVATIO']
+    utc = H['DATE-OBS']
+
+    # Get UTC date and time
+    utcDate = utc.split("T")[0]
+    utcTime = utc.split("T")[1]
+
+    # Set observing time
+    t = Time(
+        H['DATE-OBS'], 
+        format='isot', 
+        scale='utc'#,
+    )
+
+    # Convert UTC to LMT using site longitude
+    dayShift = 0
+    hourfracUTC = t.ymdhms.hour + t.ymdhms.minute/60 + t.ymdhms.second/3600
+    hourfracLMT = hourfracUTC + H['LONGITUD']/15
+    if hourfracLMT < 0:
+        hourfracLMT += 24
+        dayShift -= 1
+
+    # Approximate LMT midpoint of dataset
+    midpointLMT = hourfracLMT + 0.16
+    if midpointLMT > 24:
+        midpointLMT -= 24
+        dayShift += 1
+
+    # Apply day shift
+    t = t + dayShift*u.day
+
+    # Generate the full date-time string
+    dt = t.datetime
+    day = dt.strftime("%d").lstrip('0')
+    month = dt.strftime("%B")
+    year = dt.strftime("%Y")
+    dateString = f"{month} {day}, {year}  {midpointLMT:.1f} hours LMT"
+
+    return siteName, observers, longitude, latitude, elevation, utcDate, utcTime
+
 
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def generate_tables(dnight,sets):
+def generate_tables(dnight,sets,processor,centralAZ,unitName):
 
+    # Get V-band calibdata path for first data set
+    calsetp1 = f"{filepath.calibdata}{dnight}/S_01/"
+
+    # Out Excel file name
     excelFile = f"{filepath.tables}{dnight}.xlsx"
+
+    # Get site metadata
+    firstImage = f"{calsetp1}zenith1.fit"
+    siteName, observers, lon, lat, elev, utcDate, utcTime = get_site_info(firstImage)
 
     # Create the excel template
     create_excel_template(excelFile)
+
+    # Add to Night Metadata sheet
+    dfont = SHEETSTYLES['data_fields']['font']
+    unitcode = dnight[:4]
+    with pd.ExcelWriter(
+        excelFile, 
+        engine='openpyxl', 
+        if_sheet_exists='overlay', 
+        mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets['NIGHT METADATA']
+
+        # Set cell values
+        worksheet.cell(row=5, column=1, value=dnight)    # Data night
+        worksheet.cell(row=5, column=2, value=unitName)  # NPS Unit Name
+        worksheet.cell(row=5, column=3, value=unitcode)  # NPS Unit Code
+        worksheet.cell(row=5, column=4, value=lon)       # Longitude
+        worksheet.cell(row=5, column=5, value=lat)       # Latitude
+        worksheet.cell(row=5, column=6, value=elev)      # Elevation
