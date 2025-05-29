@@ -33,7 +33,7 @@ import pandas as pd
 
 # Local Source
 import filepath
-import printcolors as pc
+import ccdmodules.printcolors as pc
 
 # Define print staus prefix
 scriptName = 'places.py'
@@ -118,8 +118,11 @@ def bearing_angle(lon1, lat1, lon2, lat2):
     bearing = n.rad2deg(n.arctan2(y,x))
 
     # Return in 0 --> 360 range
-    bearing = -bearing
+    bearing *= -1.0
     bearing[bearing < 0] += 360
+    for b in bearing:
+        if b < 0:
+            print(b)
 
     return bearing
 
@@ -188,7 +191,7 @@ def calculate_places(dnight):
     leftAzimuth = placesHighImpact['BEARING'] - halfWidth
     rightAzimuth = placesHighImpact['BEARING'] + halfWidth
     rightAzimuthCapped = n.maximum(rightAzimuth, 360*n.ones(len(rightAzimuth)))
-    geogAzimuth = placesHighImpact['BEARING'].values
+    geogAzimuth = placesHighImpact['BEARING'].copy(deep=True)
     geogAzimuth[geogAzimuth > 180] -= 360
 
     leftAzimuthCorr,rightAzimuthCorr = [],[]
