@@ -46,7 +46,7 @@ import os
 
 # Local Source
 import filepath
-import printcolors as pc
+import ccdmodules.printcolors as pc
 
 # Print status prefix
 PREFIX = f'{pc.GREEN}pointing.py    {pc.END}: '
@@ -211,6 +211,15 @@ def pointing_err(dnight, sets):
         altErr = pErr[2] - pErr[4]
         totErr = n.sqrt(n.power(azmErr,2) + n.power(altErr,2))
 
+        # Add error estimates to output
+        pterr = n.concatenate(
+            (pterr,
+             n.reshape(azmErr,(pterr.shape[0],1)),
+             n.reshape(altErr,(pterr.shape[0],1)),
+             n.reshape(totErr,(pterr.shape[0],1))),
+            axis=1
+        )
+
         #create a pointing error plot
         errorPlot = plt.figure('errplot',figsize=(20,10))
         ax = errorPlot.add_subplot(111)
@@ -236,8 +245,8 @@ def pointing_err(dnight, sets):
 
         #saving the output file        
         outfile = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
-        nformat = ['%4.f','%8.f','%8.1f','%8.2f','%8.2f']
-        H = 'file Input_AZ Input_ALT Obs_AZ Obs_ALT' #column names
+        nformat = ['%4.f','%8.f','%8.1f','%8.2f','%8.2f','%8.2f','%8.2f','%8.2f']
+        H = 'file Input_AZ Input_ALT Obs_AZ Obs_ALT   AZ_err  ALT_err  Tot_err' #column names
         n.savetxt(outfile,pterr,fmt=nformat,header=H)
 
         # Status update

@@ -22,14 +22,14 @@
 #
 #-----------------------------------------------------------------------------#
 
+from datetime import datetime, time
 from astropy.io import fits
 from astropy.time import Time
 from openpyxl.utils import get_column_letter
-from openpyxl.styles import Alignment, Border, Side, Font
+from openpyxl.styles import Alignment, Border, Side, Font, NamedStyle
 
 import os
 import stat
-import datetime
 import numpy as n
 import pandas as pd
 import astropy.units as u
@@ -331,6 +331,16 @@ SHEETSTYLES = {
             vertical="bottom",
             wrap_text=True
         )
+    },
+    'datetime':{
+        'datestyle': NamedStyle(
+            name='date_style', 
+            number_format='d-mmm-yy'
+        ),
+        'timestyle': NamedStyle(
+            name='time_style', 
+            number_format='h:mm:ss'
+        )
     }
 }
 
@@ -427,8 +437,8 @@ def get_site_info(imageFile):
 
     # Get UTC date and time
     t = Time(utc, format='isot', scale='utc')
-    dt = t.datetime
-    utcDate = dt.strftime("%d-%b-%y").lstrip("0")
+    utcDT = t.datetime
+    utcDate = utcDT.strftime("%d-%b-%Y").lstrip("0")
     utcTime = utc.split("T")[1].lstrip("0")
 
     # Convert UTC to LMT using site longitude
@@ -447,7 +457,8 @@ def get_site_info(imageFile):
 
     # Apply day shift
     t = t + dayShift*u.day
-    lmtDate = t.isot.split("T")[0]
+    lmtDT = t.datetime
+    lmtDate = lmtDT.strftime("%d-%b-%Y").lstrip("0")
 
     # Create site info dict
     siteInfo = {
@@ -455,11 +466,13 @@ def get_site_info(imageFile):
         'observers': observers,
         'utcStartDate': utcDate,
         'utcStartTime': utcTime,
+        'utcDT': utcDT,
         'longitude': longitude,
         'latitude': latitude,
         'elevation': elevation,
         'lmtMidDate': lmtDate,
         'lmtMidTime': midpointLMT,
+        'lmtDT': lmtDT,
         'humidity': H['HUMID'],
         'windspeed': H['WIND_MPH'],
         'tempcelsius': tempc,
@@ -480,7 +493,7 @@ def append_night_metadata(excelFile, siteInfo, ):
         worksheet = writer.sheets['NIGHT METADATA']
 
         # Add processor name and processing date
-        tnow = datetime.datetime.now()
+        tnow = datetime.now()
         procDatetime = tnow.strftime("%m/%d/%y %H:%M").lstrip("0")
         pcell =  worksheet.cell(row=2, column=7)
         tcell =  worksheet.cell(row=2, column=8)
@@ -499,8 +512,8 @@ def append_night_metadata(excelFile, siteInfo, ):
         worksheet.cell(row=5, column=5 , value=siteInfo['latitude'])      # Latitude
         worksheet.cell(row=5, column=6 , value=siteInfo['elevation'])     # Elevation
         worksheet.cell(row=5, column=7 , value=siteInfo['siteName'])      # Site Name
-        worksheet.cell(row=5, column=8 , value=siteInfo['utcStartDate'])  # UTC Start Date
-        worksheet.cell(row=5, column=9 , value=siteInfo['utcStartTime'])  # UTC Start Time
+        worksheet.cell(row=5, column=8 , value=siteInfo['utcDT'].date())  # UTC Start Date
+        worksheet.cell(row=5, column=9 , value=siteInfo['utcDT'].time())  # UTC Start Time
         worksheet.cell(row=5, column=10, value=siteInfo['tempcelsius'])   # Temperature (C)
         worksheet.cell(row=5, column=11, value=siteInfo['humidity'])      # Relative Humidity (%)
         worksheet.cell(row=5, column=12, value=siteInfo['windspeed'])     # Wind speed (mph)
@@ -509,7 +522,7 @@ def append_night_metadata(excelFile, siteInfo, ):
         # worksheet.cell(row=5, column=15, value=siteInfo['lenstype'])    # Lens type
         # worksheet.cell(row=5, column=16, value=siteInfo['filter   '])   # Filter
         worksheet.cell(row=5, column=17, value=siteInfo['telescope'])     # Instrument
-        # worksheet.cell(row=5, column=18, value=siteInfo['numimages'])   # Number of Images
+        worksheet.cell(row=5, column=18, value=45)                        # Number of Images
         worksheet.cell(row=5, column=19, value=siteInfo['exptime'])       # Exposure Time
         # worksheet.cell(row=5, column=20, value=siteInfo['zeropoint'])   # Zeropoint
         # worksheet.cell(row=5, column=21, value=siteInfo['psa'])         # Image Scale Offset
@@ -526,6 +539,10 @@ def append_night_metadata(excelFile, siteInfo, ):
         worksheet.cell(row=5, column=32, value=siteInfo['centralAZ'])     # Central Azimuth
 
         # Set some cell number formats
+        datestyle = SHEETSTYLES['datetime']['datestyle']
+        timestyle = SHEETSTYLES['datetime']['timestyle']
+        worksheet.cell(row=5, column=8).style = datestyle      # UTC Start Date
+        worksheet.cell(row=5, column=9).style = timestyle      # UTC Start Time
         worksheet.cell(row=5, column=10).number_format = '0.0' # Air temperature
         worksheet.cell(row=5, column=11).number_format = '0.0' # Relative humidity
 
@@ -593,9 +610,126 @@ def append_cities(excelFile, dnight):
                     cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
-            
+def append_set_metadata(excelFile, dnight, sets):
+
+    # Add to SET METADATA sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets['SET METADATA']
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+            calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/"
+
+            # Get site data for first zenith image
+            zenithImage = f"{calsetp}zenith1.fit"
+            siteInfo = get_site_info(zenithImage)
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)                    # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)                    # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=siteInfo['utcDT'].date())  # UTC Start Date
+            worksheet.cell(row=setnum+4, column=4 , value=siteInfo['utcDT'].time())  # UTC Start Time
+            worksheet.cell(row=setnum+4, column=5 , value=siteInfo['lmtDT'].date())  # LMT Mid Date
+            worksheet.cell(row=setnum+4, column=6 , value=siteInfo['lmtMidTime'])    # LMT Mid Time (hours)
+            # worksheet.cell(row=setnum+4, column=7 , value=dnight)                  # Glare quality
+            # worksheet.cell(row=setnum+4, column=8 , value=dnight)                  # Atmosphere quality
+            # worksheet.cell(row=setnum+4, column=9 , value=dnight)                  # Collection quality
+            # worksheet.cell(row=setnum+4, column=10, value=dnight)                  # Processing quality
+            # worksheet.cell(row=setnum+4, column=11, value=dnight)                  # Reference Set
+            # worksheet.cell(row=setnum+4, column=12, value=dnight)                  # Usable (Y/N)
+            # worksheet.cell(row=setnum+4, column=13, value=dnight)                  # Clouds
+            # worksheet.cell(row=setnum+4, column=14, value=dnight)                  # Plumes
+            # worksheet.cell(row=setnum+4, column=15, value=dnight)                  # PCT20
+            # worksheet.cell(row=setnum+4, column=16, value=dnight)                  # Collection Notes
+
+            # Set some cell number/date formats
+            datestyle = SHEETSTYLES['datetime']['datestyle']
+            timestyle = SHEETSTYLES['datetime']['timestyle']
+            worksheet.cell(row=setnum+4, column=3).style = datestyle       # UTC Start Date
+            worksheet.cell(row=setnum+4, column=4).style = timestyle       # UTC Start Time
+            worksheet.cell(row=setnum+4, column=5).style = datestyle       # LMT Start Date
+            worksheet.cell(row=setnum+4, column=6).number_format = '0.00'  # LMT Mid Time
+
+            # Set cell styles
+            ncol = len(SHEETDATA['SET METADATA']['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                if SHEETDATA['SET METADATA']['colNames'][j] == 'COLLECTION_NOTES':
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_lb']
+                else:
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
+def append_calibration(excelFile, dnight, sets):
+
+    # Sheet name
+    sheetName = "CALIBRATION"
+
+    # Load in calibration data from filelist
+    filelist = n.loadtxt(f"{filepath.processlist}filelist.txt", dtype=str, ndmin=2)
+    Dataset,_,_,FlatV,_,Curve,_,_,_ = filelist.T
+
+    # Set the flat and curve filenames and paths
+    flatFile = FlatV[Dataset == dnight][0]
+    flatPath = f"{filepath.flats}{flatFile}"
+    curveName = Curve[Dataset == dnight][0]
+    print(flatPath,curveName)
+
+     # Add to SET METADATA sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+            calsetp = f"{filepath.calibdata}{dnight}/"
+
+            # Load bias drift data
+            biasDriftFile = f"{calsetp}biasdrift_{setnum}.txt"
+            biasDriftData = n.loadtxt(biasDriftFile)
+            biasDrift = max(biasDriftData) - min(biasDriftData)
+
+            # Load pointing error data
+            pterrFile = f"{calsetp}pointerr_{setnum}.txt"
+            pterrData = n.loadtxt(pterrFile)
+            pterrMax = max(pterrData[:,7])
+            pterrAvg = n.mean(pterrData[:,7])
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1, value=dnight)     # Data night
+            worksheet.cell(row=setnum+4, column=2, value=setnum)     # Data set
+            worksheet.cell(row=setnum+4, column=3, value=flatPath)   # Flat File
+            worksheet.cell(row=setnum+4, column=4, value=curveName)  # Linearity Curve
+            worksheet.cell(row=setnum+4, column=5, value=biasDrift)  # Bias Drift
+            worksheet.cell(row=setnum+4, column=6, value=pterrMax)   # Max Pointing Err
+            worksheet.cell(row=setnum+4, column=7, value=pterrAvg)   # Avg Pointing Err
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=5).number_format = '0.0'   # Bias Drift
+            worksheet.cell(row=setnum+4, column=6).number_format = '0.00'  # Max Pointing Err
+            worksheet.cell(row=setnum+4, column=7).number_format = '0.00'  # Avg Pointing Err
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                if SHEETDATA[sheetName]['colNames'][j] == 'CALIB_NOTES':
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_lb']
+                else:
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
 #------------------------------------------------------------------------------#
@@ -635,3 +769,9 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
 
     # Append data to CITIES sheet
     append_cities(excelFile,dnight)
+
+    # Append data to SET METADATA sheet
+    append_set_metadata(excelFile, dnight, sets)
+
+    # Append data to CALIBRATION sheet
+    append_calibration(excelFile, dnight, sets)
