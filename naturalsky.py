@@ -36,15 +36,19 @@ from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
 from openpyxl.utils import get_column_letter
 from PIL import Image
 
+import os
+import sys
+import stat
 import arcpy
+import shutil
+import argparse
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as n
 import pandas as pd
-import os
-import stat
-import shutil
-import argparse
+
+# Add path to ccdmodules
+sys.path.append('./ccdmodules')
 
 # Local Source
 import filepath  

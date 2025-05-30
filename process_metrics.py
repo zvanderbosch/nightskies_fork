@@ -23,6 +23,7 @@
 #-----------------------------------------------------------------------------#
 
 import os
+import sys
 import time
 import warnings
 import numpy as n
@@ -31,10 +32,13 @@ import matplotlib.pyplot as plt
 from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
+# Add path to ccdmodules
+sys.path.append('./ccdmodules')
+
 # Local source
-import ccdmodules.filepath as filepath
-import ccdmodules.progressbars as pb
-import ccdmodules.printcolors as pc
+import filepath as filepath
+import progressbars as pb
+import printcolors as pc
 
 # Define print status prefix
 scriptName = 'process_metrics.py'
