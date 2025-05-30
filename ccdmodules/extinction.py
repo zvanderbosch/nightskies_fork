@@ -636,6 +636,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         extFixed_err = n.sqrt(covFixed.diagonal())[0]         # uncertainties
         colorCoeffFree_err = n.sqrt(ccov.diagonal())[0]       # uncertainties
         Nfit = sum(clipped_index)                             # Number of sources used in fit
+        Nrej = sum(~clipped_index)                            # Number of sources rejected in fit
 
 
         # Save the list of stars used for calculating the zeropoint
@@ -652,7 +653,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         
         # Save fit results to list
         fit_entry = [
-            int(s[0]), Nfit, 
+            int(s[0]), Nfit, Nrej,
             zpFree, zpFree_err, extFree, extFree_err, 
             zeropoint, extFixed, extFixed_err,
             colorCoeff, colorCoeffFree, colorCoeffFree_err,
@@ -701,13 +702,13 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     #save the bestfit zeropoint and extinction coefficient     
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
     fmt = [
-        '%5i'   , '%14i'  , '%15.3f',           # H1 columns
+        '%5i'   , '%14i'  , '%18i'  , '%15.3f', # H1 columns
         '%19.3f', '%16.3f', '%20.3f',           # H2 columns
         '%18.2f', '%18.3f', '%22.3f',           # H3 columns
         '%20.3f', '%17.3f', '%21.3f',           # H4 columns
         '%8.3f' , '%8.3f' , '%17.3f', '%11.1f'  # H5 columns
     ]
-    H1 = "set  num_star_used  zeropoint_free  "
+    H1 = "set  num_star_used  num_star_rejected  zeropoint_free  "
     H2 = "zeropoint_free_err  extinction_free  extinction_free_err  "
     H3 = "zeropoint_default  extinction_fixedZ  extinction_fixedZ_err  "
     H4 = "color_coeff_default  color_coeff_free  color_coeff_free_err  "
