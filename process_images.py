@@ -147,8 +147,8 @@ def register_coord(*args):
 def pointing_error(*args):
     '''Calculating the pointing error'''
     t1 = time.time()
-    import ccdmodules.pointing
-    pointing.pointing_err(*args[:-1])
+    import ccdmodules.pointing as PO
+    PO.pointing_err(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
 
@@ -175,10 +175,10 @@ def fit_zeropoint(*args):
 def apply_filter(*args):
     '''Apply ~1 degree (in diameter) median filter to the images'''
     t1 = time.time()
-    import ccdmodules.medianfilter
+    import ccdmodules.medianfilter as MF
     for filter in args[2]:
         # print('Applying median filter to %s-band images' %filter)
-        medianfilter.filter(args[0],args[1],filter)
+        MF.filter(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
 
@@ -195,8 +195,8 @@ def compute_coord(*args):
 def mosaic_galactic(*args):
     '''Creates the mosaic of the galactic model'''
     t1 = time.time()
-    import ccdmodules.galactic
-    galactic.mosaic(*args[:-1])
+    import ccdmodules.galactic as GA
+    GA.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
 
@@ -204,8 +204,8 @@ def mosaic_galactic(*args):
 def mosaic_zodiacal(*args):
     '''Creates the mosaic of the zodiacal model'''
     t1 = time.time()
-    import ccdmodules.zodiacal
-    zodiacal.mosaic(*args[:-1])
+    import ccdmodules.zodiacal as ZO
+    ZO.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
 
@@ -213,9 +213,9 @@ def mosaic_zodiacal(*args):
 def mosaic_full(*args):
     '''Creates the mosaic from the full-resolution data'''
     t1 = time.time()
-    import ccdmodules.fullmosaic
+    import ccdmodules.fullmosaic as FM
     for filter in args[2]:
-        fullmosaic.mosaic(args[0],args[1],filter)
+        FM.mosaic(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
 
@@ -223,9 +223,9 @@ def mosaic_full(*args):
 def mosaic_median(*args):
     '''Creates the mosaic from the median-filtered data'''
     t1 = time.time()
-    import ccdmodules.medianmosaic
+    import ccdmodules.medianmosaic as MM
     for filter in args[2]:
-        medianmosaic.mosaic(args[0],args[1],filter)
+        MM.mosaic(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
     
