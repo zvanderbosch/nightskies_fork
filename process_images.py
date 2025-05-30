@@ -41,6 +41,7 @@
 #-----------------------------------------------------------------------------#
 
 import os
+import sys
 import time
 import warnings
 import numpy as n
@@ -49,10 +50,13 @@ import matplotlib.pyplot as plt
 from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
-# Local source
-import ccdmodules.filepath as filepath
-import ccdmodules.progressbars as pb
-import ccdmodules.printcolors as pc
+# Add path to ccdmodules
+sys.path.append('./ccdmodules')
+
+# Local source (ccdmodules)
+import filepath
+import progressbars as pb
+import printcolors as pc
 
 # Define print status prefix
 PREFIX = f'{pc.GREEN}process_images.py  {pc.END}: '
@@ -245,7 +249,7 @@ if __name__ == '__main__':
 
     #Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, Flat_V, Flat_B, Curve, Processor, _, _ = filelist.T
+    Dataset, V_band, B_band, Flat_V, Flat_B, Curve, zeropoint, Processor, _, _ = filelist.T
     
     #Check the calibration files exist    
     for i in range(len(filelist)):
@@ -304,8 +308,9 @@ if __name__ == '__main__':
         
         sets = dnight_sets[Dataset[i]]
         K0 = (Dataset[i],sets,Filterset,Curve[i])
-        K1 = (Dataset[i],sets,Filter) 
-        K2 = (Dataset[i],sets)  
+        K1 = (Dataset[i],sets,Filter,zeropoint[i])
+        K2 = (Dataset[i],sets,Filter) 
+        K3 = (Dataset[i],sets)  
 
         # Status update
         print(
@@ -314,25 +319,25 @@ if __name__ == '__main__':
         )
 
         # Set up processes for each pipeline step
-        q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K2+Q2)
+        q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K3+Q2)
         q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
-        q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K1+Q4)
-        q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K2+Q5) 
-        q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K1+Q6)
-        q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K2+Q7)
-        q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K2+Q8)
-        q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K1+Q9)
+        q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K2+Q4)
+        q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K3+Q5) 
+        q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K2+Q6)
+        q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K3+Q7)
+        q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
+        q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # Run processes
         # reduce_images(*K0)                            #image reduction   
-        # register_coord(*K1)                           #pointing 
-        p2.start(); update_progressbar(2,i)           #pointing error
-        # p3.start(); update_progressbar(3,i)           #zeropoint & extinction
+        # register_coord(*K2)                           #pointing 
+        # p2.start(); update_progressbar(2,i)           #pointing error
+        p3.start(); update_progressbar(3,i)           #zeropoint & extinction
         # p4.start(); update_progressbar(4,i)           #median filter
-        p2.join() ; update_progressbar(2,i,q2.get())
+        # p2.join() ; update_progressbar(2,i,q2.get())
         # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         # p5.join() ; update_progressbar(5,i,q5.get())
-        # p3.join() ; update_progressbar(3,i,q3.get())
+        p3.join() ; update_progressbar(3,i,q3.get())
         # p6.start(); update_progressbar(6,i)           #full mosaic
         # p7.start(); update_progressbar(7,i)           #galactic mosaic
         # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
