@@ -50,7 +50,7 @@ from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
 # Local source
-import filepath
+import ccdmodules.filepath as filepath
 import ccdmodules.progressbars as pb
 import ccdmodules.printcolors as pc
 

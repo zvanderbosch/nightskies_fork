@@ -32,7 +32,7 @@ from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
 # Local source
-import filepath
+import ccdmodules.filepath as filepath
 import ccdmodules.progressbars as pb
 import ccdmodules.printcolors as pc
 
@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
     # Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, _, _, _, processor, centralAz, location = filelist.T
+    Dataset, V_band, B_band, _,_,_, processor, centralAz, location = filelist.T
     
     # Determine the number of data sets collected in each night 
     img_sets = set(['1st','2nd','3rd','4th','5th','6th','7th','8th'])
@@ -214,9 +214,9 @@ if __name__ == '__main__':
             os.makedirs(filepath.calibdata+dnight)
 
     # Plot the progress bar template
-    barfig, barax = pb.bar_metrics(Dataset, nsets)
-    print('You have 5 seconds to adjust the position of the progress bar window')
-    plt.pause(5) #users have 5 seconds to adjust the figure position
+    # barfig, barax = pb.bar_metrics(Dataset, nsets)
+    # print('You have 5 seconds to adjust the position of the progress bar window')
+    # plt.pause(5) #users have 5 seconds to adjust the figure position
 
     # Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -226,7 +226,7 @@ if __name__ == '__main__':
 
     # Looping through multiple data nights
     for i in range(len(filelist)):
-        
+
         # Generate inputs for each processing step
         Filter = []
         if V_band[i] == 'Yes': 
@@ -274,8 +274,8 @@ if __name__ == '__main__':
         # p6.join() ; update_progressbar(6,i,q6.get())
         # p7.start(); update_progressbar(7,i)            # Draw maps
         # p7.join() ; update_progressbar(7,i,q7.get())
-        p8.start(); update_progressbar(8,i)            # Save tables
-        p8.join() ; update_progressbar(8,i,q8.get())
+        p8.start(); #update_progressbar(8,i)            # Save tables
+        p8.join() ; #update_progressbar(8,i,q8.get())
 
         # Save the timing records for running the script
         # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
