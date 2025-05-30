@@ -200,8 +200,6 @@ def poly_sigfit(x,y,signum=5,niter=10,fixedZ=False):
         # Update number of data points being used in fit
         N = len(fit_x)
 
-        # Try fitting linear trend to data
-        # param, cov = n.polyfit(fit_x, fit_y, 1, cov=True)
 
         # Try fitting linear trend to data and calculate model
         if fixedZ:
@@ -214,7 +212,6 @@ def poly_sigfit(x,y,signum=5,niter=10,fixedZ=False):
             mod = linear_func_Zfree(fit_x, *param)
 
         # Calculate residuals
-        # mod = n.polyval(param, fit_x)
         sigma = n.sqrt(sum((mod-fit_y)**2)/(N-1))
         residual = fit_y - mod
 
@@ -239,8 +236,6 @@ def poly_sigfit(x,y,signum=5,niter=10,fixedZ=False):
     else:
         mod_fit = linear_func_Zfree(fit_x, *param)
         mod_full = linear_func_Zfree(x, *param)
-    # mod_fit = n.polyval(param, fit_x)
-    # mod_full = n.polyval(param, x)
     sigma = n.sqrt(sum((mod_fit-fit_y)**2)/(N-1))
     fit_indices = (
         (y-mod_full > -signum*sigma) & 
