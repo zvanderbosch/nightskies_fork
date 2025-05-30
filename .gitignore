@@ -2,3 +2,4 @@
 __pycache__/
 ccdmodules/*.pyc
 ccdmodules/__pycache__/
+.vscode/
