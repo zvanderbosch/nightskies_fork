@@ -35,6 +35,7 @@ This file tells the pipeline which data sets to process. It should be placed in 
    - `Flat_V`: Name of master flat file used to calibrate V-band images
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
+   - `Zeropoint`: The default zeropoint (mag) for the CCD camera used
    - `Processor`: Name of data processor with an **underscore** between first initial and last name (e.g. J_Doe)
    - `Central_AZ`: Azimuth coordinate to place at the center of final panoramic graphics
    - `Location`: Descriptive park name (e.g. Rocky_Mountain_NP), using **underscores** instead of spaces
