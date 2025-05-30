@@ -22,23 +22,19 @@
 #
 #-----------------------------------------------------------------------------#
 
-from datetime import datetime, time
+from datetime import datetime
 from astropy.io import fits
 from astropy.time import Time
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Border, Side, Font, NamedStyle
 
-import os
-import stat
 import numpy as n
 import pandas as pd
 import astropy.units as u
-import astropy.coordinates as coord
-
 
 # Local Source
 import filepath
-import ccdmodules.printcolors as pc
+import printcolors as pc
 
 # Define print status prefix
 scriptName = 'savetables.py'
