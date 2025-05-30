@@ -322,6 +322,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         # loop through each file in the set
         print(f'{PREFIX}Processing images for {filter}-band Set {s[0]}...')
         images = sorted(glob(calsetp+'ib???.fit'))
+        imagesSolved = 0
         for imnum in range(len(images)):
 
             # Get header and create WCS object
@@ -338,6 +339,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                 else: continue
             except KeyError:
                 continue
+            imagesSolved += 1
 
             # Convert RA/Dec to XY pix coords for stars covering the image
             seps = angular_separation(
@@ -653,7 +655,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         
         # Save fit results to list
         fit_entry = [
-            int(s[0]), Nfit, Nrej,
+            int(s[0]), imagesSolved, Nfit, Nrej,
             zpFree, zpFree_err, extFree, extFree_err, 
             zeropoint, extFixed, extFixed_err,
             colorCoeff, colorCoeffFree, colorCoeffFree_err,
@@ -702,14 +704,14 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     #save the bestfit zeropoint and extinction coefficient     
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
     fmt = [
-        '%5i'   , '%14i'  , '%18i'  , '%15.3f', # H1 columns
-        '%19.3f', '%16.3f', '%20.3f',           # H2 columns
+        '%5i'   , '%11i'  , '%14i'  , '%18i'  , # H1 columns
+        '%15.3f', '%19.3f', '%16.3f', '%20.3f', # H2 columns
         '%18.2f', '%18.3f', '%22.3f',           # H3 columns
         '%20.3f', '%17.3f', '%21.3f',           # H4 columns
         '%8.3f' , '%8.3f' , '%17.3f', '%11.1f'  # H5 columns
     ]
-    H1 = "set  num_star_used  num_star_rejected  zeropoint_free  "
-    H2 = "zeropoint_free_err  extinction_free  extinction_free_err  "
+    H1 = "set  img_solved  num_star_used  num_star_rejected  "
+    H2 = "zeropoint_free  zeropoint_free_err  extinction_free  extinction_free_err  "
     H3 = "zeropoint_default  extinction_fixedZ  extinction_fixedZ_err  "
     H4 = "color_coeff_default  color_coeff_free  color_coeff_free_err  "
     H5 = "x_scale  y_scale  avg_scale['/pix]  exptime[s]"
