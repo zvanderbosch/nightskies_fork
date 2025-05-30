@@ -689,7 +689,7 @@ def append_calibration(excelFile, dnight, sets):
     flatPath = f"{filepath.flats}{flatFile}"
     curveName = Curve[Dataset == dnight][0]
 
-     # Add to SET METADATA sheet
+    # Add to CALIBRATION sheet
     with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
 
         # Grab the relevant worksheet
@@ -757,7 +757,7 @@ def append_entinction(excelFile, dnight, sets):
     colorFixed = extinctionData[:,11]
     colorFree = extinctionData[:,12]
 
-     # Add to SET METADATA sheet
+    # Add to EXTINCTION sheet
     with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
 
         # Grab the relevant worksheet
@@ -797,6 +797,72 @@ def append_entinction(excelFile, dnight, sets):
                 cell = worksheet.cell(row=setnum+4, column=j+1)
                 cell.font = SHEETSTYLES['data_fields']['font']
                 cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
+def append_coordinates(excelFile, dnight, sets):
+
+    # Sheet name
+    sheetName = "IMG COORDS"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+            calsetp = f"{filepath.calibdata}{dnight}/"
+
+            # Loadin in pointing error file for Alt/Az coords
+            pterrFile = f"{calsetp}pointerr_{setnum}.txt"
+            pterr = n.loadtxt(pterrFile)
+
+            # Load in image coordinates file
+            coordFile = f"{calsetp}coordinates_{setnum}.txt"
+            coord = n.loadtxt(coordFile)
+            numImages = len(coord)
+
+            # Iterate over each image
+            for i in range(numImages):
+                
+                # Set image number
+                imgnum = i+1
+
+                # Set cell data values
+                row = (setnum-1) * numImages + imgnum + 4
+                print(row)
+                worksheet.cell(row=row, column=1 , value=dnight)           # Data night
+                worksheet.cell(row=row, column=2 , value=setnum)           # Data set
+                worksheet.cell(row=row, column=3 , value=imgnum)           # Image number
+                worksheet.cell(row=row, column=4 , value=pterr[i,3])       # Azimuth (deg)
+                worksheet.cell(row=row, column=5 , value=pterr[i,4])       # Altitude (deg)
+                worksheet.cell(row=row, column=6 , value=coord[i,7]/15)    # RA (hr)
+                worksheet.cell(row=row, column=7 , value=coord[i,8])       # Dec (deg)
+                worksheet.cell(row=row, column=8 , value=coord[i,2])       # Gal Longitude (deg)
+                worksheet.cell(row=row, column=9 , value=coord[i,3])       # Gal Latitude (deg)
+                worksheet.cell(row=row, column=10, value=coord[i,5])       # Ecl Longitude (deg)
+                worksheet.cell(row=row, column=11, value=coord[i,6])       # Ecl Latitude (deg)
+
+                # Set some cell number/date formats
+                worksheet.cell(row=row, column=4 ).number_format = '0.00'  # Azimuth (deg)
+                worksheet.cell(row=row, column=5 ).number_format = '0.00'  # Altitude (deg)
+                worksheet.cell(row=row, column=6 ).number_format = '0.00'  # RA (hr)
+                worksheet.cell(row=row, column=7 ).number_format = '0.00'  # Dec (deg)
+                worksheet.cell(row=row, column=8 ).number_format = '0.00'  # Gal Longitude (deg)
+                worksheet.cell(row=row, column=9 ).number_format = '0.00'  # Gal Latitude (deg)
+                worksheet.cell(row=row, column=10).number_format = '0.00'  # Ecl Longitude (deg)
+                worksheet.cell(row=row, column=11).number_format = '0.00'  # Ecl Latitude (deg)
+
+                # Set cell styles
+                ncol = len(SHEETDATA[sheetName]['colNames'])
+                for j in range(ncol):
+                    cell = worksheet.cell(row=row, column=j+1)
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
 
@@ -856,3 +922,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
     # Append data to EXTINCTION sheet
     print(f'{PREFIX}Appending Extinction/Zeropoint Data...')
     append_entinction(excelFile, dnight, sets)
+
+    # Append data to IMG COORDS sheet
+    print(f'{PREFIX}Appending Image Coordinates Data...')
+    append_coordinates(excelFile, dnight, sets)
