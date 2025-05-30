@@ -1,2 +1,4 @@
 *.pyc
 __pycache__/
+ccdmodules/*.pyc
+ccdmodules/__pycache__/
