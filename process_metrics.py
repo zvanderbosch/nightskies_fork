@@ -199,7 +199,7 @@ if __name__ == '__main__':
 
     # Read in the processing dataset list and the calibration file names 
     filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, _,_,_, processor, centralAz, location = filelist.T
+    Dataset, V_band, B_band, _,_,_,_, processor, centralAz, location = filelist.T
     
     # Determine the number of data sets collected in each night 
     img_sets = set(['1st','2nd','3rd','4th','5th','6th','7th','8th'])
