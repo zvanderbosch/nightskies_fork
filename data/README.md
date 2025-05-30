@@ -1,6 +1,6 @@
 # Data (NSNSD CCD Processing Pipeline)
 
-## [CCD.zip](./CCD.zip): The CCD Directory Structure
+## [CCD.zip](./CCD.zip)
 
 This ZIP file contains the directory structure assumed by the pipeline. The directory structure is shown below along with a description of the primary contents of each folder to the right:
 ```
@@ -26,7 +26,7 @@ CCD
      └─── Master                   -Master Flat/Bias/Thermal images per CCD camera
 ```
 
-## [filelist.txt](./filelist.txt): 
+## [filelist.txt](./filelist.txt)
 
 This file tells the pipeline which data sets to process. It should be placed in the `CCD --> Data` directory and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
