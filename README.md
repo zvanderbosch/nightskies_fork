@@ -88,6 +88,7 @@ CCD
 │    │    └─── scratch_natsky      -ArcGIS workspace for natural sky mosaics
 │    │    └─── scratch_zodiacal    -ArcGIS workspace for Zodiacal model mosaics
 │    └─── standards                -Standard star catalogs for photometric calibration
+│    └─── tables                   -Summary tables with metadata and light pollution metrics
 │ 
 └─── Images
      └─── Linearity Curves         -Master linearity curves per CCD camera
