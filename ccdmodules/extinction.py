@@ -154,7 +154,17 @@ def angular_separation(ra1, de1, ra2, de2):
     return sep
 
 
-def poly_sigfit(x,y,signum=5,niter=10):
+def linear_func_Zfree(x,slope,yint):
+    '''Linear model with slope and y-intercept as free parameters'''
+    return slope*x + yint
+
+
+def linear_func_Zfixed(x,slope):
+    '''Linear model with only slope as free parameter'''
+    return slope*x
+
+
+def poly_sigfit(x,y,signum=5,niter=10,fixedZ=False):
     '''
     Function to perform iterative sigma clipping while
     fitting a linear trend to M-m (mag) versus airmass.
@@ -191,10 +201,20 @@ def poly_sigfit(x,y,signum=5,niter=10):
         N = len(fit_x)
 
         # Try fitting linear trend to data
-        param, cov = n.polyfit(fit_x, fit_y, 1, cov=True)
+        # param, cov = n.polyfit(fit_x, fit_y, 1, cov=True)
 
-        # Calculate model values and residuals
-        mod = n.polyval(param, fit_x)
+        # Try fitting linear trend to data and calculate model
+        if fixedZ:
+            pguess = [-0.2]
+            param, cov = curve_fit(linear_func_Zfixed, fit_x, fit_y, p0=pguess)
+            mod = linear_func_Zfixed(fit_x, *param)
+        else:
+            pguess = [-0.2, 14.7]
+            param, cov = curve_fit(linear_func_Zfree, fit_x, fit_y, p0=pguess)
+            mod = linear_func_Zfree(fit_x, *param)
+
+        # Calculate residuals
+        # mod = n.polyval(param, fit_x)
         sigma = n.sqrt(sum((mod-fit_y)**2)/(N-1))
         residual = fit_y - mod
 
@@ -213,17 +233,19 @@ def poly_sigfit(x,y,signum=5,niter=10):
 
     # Get final indices of stars used for the fit
     N = len(fit_x)
-    mod_fit = n.polyval(param, fit_x)
-    mod_full = n.polyval(param, x)
+    if fixedZ:
+        mod_fit = linear_func_Zfixed(fit_x, *param)
+        mod_full = linear_func_Zfixed(x, *param)
+    else:
+        mod_fit = linear_func_Zfree(fit_x, *param)
+        mod_full = linear_func_Zfree(x, *param)
+    # mod_fit = n.polyval(param, fit_x)
+    # mod_full = n.polyval(param, x)
     sigma = n.sqrt(sum((mod_fit-fit_y)**2)/(N-1))
     fit_indices = (
         (y-mod_full > -signum*sigma) & 
         (y-mod_full <  signum*sigma)
     )
-    # print(
-    #     f'extinction.py: {nrej} out of {len(x)} stars '
-    #     f'clipped with signum={signum} and niter={niter}.'
-    # )
 
     return param, cov, fit_indices
 
@@ -236,7 +258,7 @@ def remove_readonly(func, path, excinfo):
     func(path)
 
 
-def extinction(dnight, sets, filter, plot_img=0):
+def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     '''
     This module computes the extinction coefficient and the instrumental zero
     point. It returns the number of stars used for the fit and the location of
@@ -244,7 +266,11 @@ def extinction(dnight, sets, filter, plot_img=0):
     their uncertainties. 
     '''
 
+    # List to save fit results for each dataset
     zeropoint_dnight = []
+
+    # Convert deafult zeropoint to float
+    zeropoint = float(zeropoint)
     
     #read in the standard star catalog
     # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
@@ -571,6 +597,7 @@ def extinction(dnight, sets, filter, plot_img=0):
         flux = n.float64(stars[:,9])         #Aperture flux, background subtracted [DN]
         m = -2.5*n.log10(flux)               #v_mag, apparent
         #airmass = 1/n.sin(n.deg2rad(elev))  #plane-parallel airmass
+        mdiffRaw = M - m                     #Magnitude difference (absolute - apparent)
 
         # Use Hardie (1962) equation for airmass
         za = 90. - elev
@@ -588,18 +615,38 @@ def extinction(dnight, sets, filter, plot_img=0):
         mcorr[offcenter > 340] = 0.0003 * (offcenter[offcenter > 340] - 340)
         m += mcorr
 
-        # Apply color correction
+        # Apply color correction with fixed color coefficient
+        colorCoeff = 0.04
         color = stars[:,4].astype(n.float64)
         mdiff = M - m
-        mdiff += 0.04 * color
+        mdiff += colorCoeff * color
         
-        # Perform fit with sigma-clipping
-        param, cov, clipped_index = poly_sigfit(
-            airmass, M-m, signum=5, niter=10
+        # Perform fit with zeropoint and extinction as free parameters
+        paramFree, covFree, clipped_index = poly_sigfit(
+            airmass, mdiff, signum=5, niter=10, fixedZ=False
         )
-        c, z = param                          # bestfit coefficient and zeropoint
-        c_err, z_err = n.sqrt(cov.diagonal()) # uncertainties
-        Nfit = sum(clipped_index)             # Number of sources used in fit
+        # Perform fit with fixed default zeropoint
+        paramFixed, covFixed, _ = poly_sigfit(
+            airmass, mdiff-zeropoint, signum=5, niter=10, fixedZ=True
+        )
+        # Perform fit with zeropoint and color-coefficient as free parameters
+        cparam, ccov, _ = poly_sigfit(
+            color, mdiffRaw, signum=5, niter=10, fixedZ=False
+        )
+
+        # Extract Parameters
+        extFree, zpFree = paramFree                           # bestfit extinction and zeropoint
+        extFixed = paramFixed[0]                              # bestfit extinction with fixed zeropoint
+        colorCoeffFree = cparam[0]                            # bestfit color coefficient
+        extFree_err, zpFree_err = n.sqrt(covFree.diagonal())  # uncertainties
+        extFixed_err = n.sqrt(covFixed.diagonal())[0]         # uncertainties
+        colorCoeffFree_err = n.sqrt(ccov.diagonal())[0]       # uncertainties
+        Nfit = sum(clipped_index)                             # Number of sources used in fit
+
+        # Extract parameters
+        # c, z = param                          # bestfit coefficient and zeropoint
+        # c_err, z_err = n.sqrt(cov.diagonal()) # uncertainties
+        # Nfit = sum(clipped_index)             # Number of sources used in fit
 
         # Save the list of stars used for calculating the zeropoint
         fmt = ['%7s','%8s','%7.2f','%9.2f','%7.2f','%7.1f','%6.1f','%5.2f','%8.f','%8.f']
@@ -608,11 +655,19 @@ def extinction(dnight, sets, filter, plot_img=0):
                   %(filter,s[0])
         n.savetxt(fileout,stars[clipped_index,:],fmt=fmt,header=H)
         
+        # Calculate average plate scales
         sx = n.mean(xscale) * 60             #x plate scale ['/pix]
         sy = n.mean(yscale) * 60             #y plate scale ['/pix]
         sa = n.mean(xscale+yscale) * 60      #average plate scale ['/pix]
         
-        fit_entry = [int(s[0]), Nfit, z, z_err, c, c_err, sx, sy, sa, exp]
+        # Save fit results to list
+        fit_entry = [
+            int(s[0]), Nfit, 
+            zpFree, zpFree_err, extFree, extFree_err, 
+            zeropoint, extFixed, extFixed_err,
+            colorCoeff, colorCoeffFree, colorCoeffFree_err,
+            sx, sy, sa, exp
+        ]
         zeropoint_dnight.append(fit_entry)
                 
         #plot the zeropoint and extinction coefficient fitting result
@@ -624,12 +679,20 @@ def extinction(dnight, sets, filter, plot_img=0):
             label=f'Hipparcos standard stars (N={Nfit})'
         )
         ax.plot(
-            a, c*a+z, '-', lw=2,
-            label='Best fit: %.3fx+%.3f' %(c,z)
+            a, extFree*a + zpFree, '-', lw=2, c='C1',
+            label='Best fit (ZP-Free): %.3fx+%.3f' %(extFree,zpFree)
+        )
+        ax.plot(
+            a, extFixed*a + zeropoint, '--', lw=2, c='k',
+            label='Best fit (ZP-Fixed): %.3fx+%.2f' %(extFree,zeropoint)
         )
         ax.errorbar(
-            0, z, z_err, fmt='o',
-            label='zeropoint: %.3f+-%.3f'%(z,z_err)
+            0, zpFree, zpFree_err, fmt='o', mfc='None', mec='C1',
+            label='Free Zeropoint: %.3f+-%.3f'%(zpFree,zpFree_err)
+        )
+        ax.errorbar(
+            0, zeropoint, 0, fmt='o', mfc='None', mec='k', ecolor='None',
+            label='Fixed Zeropoint: %.2f'%(zeropoint)
         )
         ax.set_axisbelow(True)
         ax.grid(ls=':',lw=0.5,c='silver')
@@ -647,11 +710,19 @@ def extinction(dnight, sets, filter, plot_img=0):
     
     #save the bestfit zeropoint and extinction coefficient     
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-    fmt = ['%4i', '%9i', '%13.3f', '%10.3f', '%12.3f', '%11.3f', '%11.3f', 
-           '%7.3f', '%11.3f', '%13.1f']
-    H1 = "set num_star_used zeropoint zeropoint_err extinction extinction_err "
-    H2 = "x_scale y_scale avg_scale['/pix], exptime[s]"
-    n.savetxt(fileout,n.array((zeropoint_dnight)),fmt=fmt,header=H1+H2)
+    fmt = [
+        '%5i'   , '%14i'  , '%15.3f',           # H1 columns
+        '%19.3f', '%16.3f', '%20.3f',           # H2 columns
+        '%18.2f', '%18.3f', '%22.3f',           # H3 columns
+        '%20.3f', '%17.3f', '%21.3f',           # H4 columns
+        '%8.3f' , '%8.3f' , '%17.3f', '%11.1f'  # H5 columns
+    ]
+    H1 = "set  num_star_used  zeropoint_free  "
+    H2 = "zeropoint_free_err  extinction_free  extinction_free_err  "
+    H3 = "zeropoint_default  extinction_fixedZ  extinction_fixedZ_err  "
+    H4 = "color_coeff_default  color_coeff_free  color_coeff_free_err  "
+    H5 = "x_scale  y_scale  avg_scale['/pix]  exptime[s]"
+    n.savetxt(fileout,n.array((zeropoint_dnight)),fmt=fmt,header=H1+H2+H3+H4+H5)
     
     return len(stars), fileout
 
