@@ -51,8 +51,8 @@ from multiprocessing import Process, Queue
 
 # Local source
 import filepath
-import progressbars
-import printcolors as pc
+import ccdmodules.progressbars as pb
+import ccdmodules.printcolors as pc
 
 # Define print status prefix
 PREFIX = f'{pc.GREEN}process_images.py  {pc.END}: '
@@ -116,7 +116,7 @@ def reduce_images(*args):
     '''Basic image reduction'''
     update_progressbar(0,i)
     t1 = time.time()
-    import reduce as R
+    import ccdmodules.reduce as R
     if 'V' in args[2]:
         R.reducev(args[0],args[1],args[2]['V'],args[3])
     if 'B' in args[2]:
@@ -130,7 +130,7 @@ def register_coord(*args):
     update_progressbar(1,i)
     t1 = time.time()
     m = ['Images are normally registered using full frames.','',]
-    import register as RE
+    import ccdmodules.register as RE
     for filter in args[2]:
         cropped_fn, failed_fn = RE.matchstars(args[0],args[1],filter)
         logm(m,'These %s images were registered using central 200 pix:'%filter)
@@ -147,7 +147,7 @@ def register_coord(*args):
 def pointing_error(*args):
     '''Calculating the pointing error'''
     t1 = time.time()
-    import pointing
+    import ccdmodules.pointing
     pointing.pointing_err(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -157,7 +157,7 @@ def fit_zeropoint(*args):
     '''Fitting for the extinction coefficient and zeropoint'''
     t1 = time.time()
     m = []
-    import extinction as EX
+    import ccdmodules.extinction as EX
     for filter in args[2]:
         arg = list(args[:-1])
         arg[2] = filter
@@ -175,7 +175,7 @@ def fit_zeropoint(*args):
 def apply_filter(*args):
     '''Apply ~1 degree (in diameter) median filter to the images'''
     t1 = time.time()
-    import medianfilter
+    import ccdmodules.medianfilter
     for filter in args[2]:
         # print('Applying median filter to %s-band images' %filter)
         medianfilter.filter(args[0],args[1],filter)
@@ -186,7 +186,7 @@ def apply_filter(*args):
 def compute_coord(*args):
     '''Computig the galactic and ecliptic coordinates of the images'''
     t1 = time.time()
-    import coordinates as CO
+    import ccdmodules.coordinates as CO
     CO.galactic_ecliptic_coords(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -195,7 +195,7 @@ def compute_coord(*args):
 def mosaic_galactic(*args):
     '''Creates the mosaic of the galactic model'''
     t1 = time.time()
-    import galactic
+    import ccdmodules.galactic
     galactic.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -204,7 +204,7 @@ def mosaic_galactic(*args):
 def mosaic_zodiacal(*args):
     '''Creates the mosaic of the zodiacal model'''
     t1 = time.time()
-    import zodiacal
+    import ccdmodules.zodiacal
     zodiacal.mosaic(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -213,7 +213,7 @@ def mosaic_zodiacal(*args):
 def mosaic_full(*args):
     '''Creates the mosaic from the full-resolution data'''
     t1 = time.time()
-    import fullmosaic
+    import ccdmodules.fullmosaic
     for filter in args[2]:
         fullmosaic.mosaic(args[0],args[1],filter)
     t2 = time.time()
@@ -223,7 +223,7 @@ def mosaic_full(*args):
 def mosaic_median(*args):
     '''Creates the mosaic from the median-filtered data'''
     t1 = time.time()
-    import medianmosaic
+    import ccdmodules.medianmosaic
     for filter in args[2]:
         medianmosaic.mosaic(args[0],args[1],filter)
     t2 = time.time()
@@ -273,7 +273,7 @@ if __name__ == '__main__':
     
     
     #Plot the progress bar template
-    barfig, barax = progressbars.bar_images(Dataset, nsets)
+    barfig, barax = pb.bar_images(Dataset, nsets)
     if all(Processor == 'L_Hung2'):
         barfig.canvas.manager.window.move(2755,0)  
     else:
@@ -324,24 +324,24 @@ if __name__ == '__main__':
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K1+Q9)
         
         # Run processes
-        reduce_images(*K0)                            #image reduction   
-        register_coord(*K1)                           #pointing 
+        # reduce_images(*K0)                            #image reduction   
+        # register_coord(*K1)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
-        p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        p4.start(); update_progressbar(4,i)           #median filter
+        # p3.start(); update_progressbar(3,i)           #zeropoint & extinction
+        # p4.start(); update_progressbar(4,i)           #median filter
         p2.join() ; update_progressbar(2,i,q2.get())
-        p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
-        p5.join() ; update_progressbar(5,i,q5.get())
-        p3.join() ; update_progressbar(3,i,q3.get())
-        p6.start(); update_progressbar(6,i)           #full mosaic
-        p7.start(); update_progressbar(7,i)           #galactic mosaic
-        p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        p9.start(); update_progressbar(9,i)           #median mosaic
-        p4.join() ; update_progressbar(4,i,q4.get())
-        p6.join() ; update_progressbar(6,i,q6.get())
-        p7.join() ; update_progressbar(7,i,q7.get())
-        p8.join() ; update_progressbar(8,i,q8.get())
-        p9.join() ; update_progressbar(9,i,q9.get())
+        # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+        # p5.join() ; update_progressbar(5,i,q5.get())
+        # p3.join() ; update_progressbar(3,i,q3.get())
+        # p6.start(); update_progressbar(6,i)           #full mosaic
+        # p7.start(); update_progressbar(7,i)           #galactic mosaic
+        # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
+        # p9.start(); update_progressbar(9,i)           #median mosaic
+        # p4.join() ; update_progressbar(4,i,q4.get())
+        # p6.join() ; update_progressbar(6,i,q6.get())
+        # p7.join() ; update_progressbar(7,i,q7.get())
+        # p8.join() ; update_progressbar(8,i,q8.get())
+        # p9.join() ; update_progressbar(9,i,q9.get())
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
