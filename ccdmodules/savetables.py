@@ -682,7 +682,7 @@ def append_calibration(excelFile, dnight, sets):
 
     # Load in calibration data from filelist
     filelist = n.loadtxt(f"{filepath.processlist}filelist.txt", dtype=str, ndmin=2)
-    Dataset,_,_,FlatV,_,Curve,_,_,_ = filelist.T
+    Dataset,_,_,FlatV,_,Curve,_,_,_,_ = filelist.T
 
     # Set the flat and curve filenames and paths
     flatFile = FlatV[Dataset == dnight][0]
@@ -739,6 +739,68 @@ def append_calibration(excelFile, dnight, sets):
                     cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
+def append_entinction(excelFile, dnight, sets):
+
+    # Sheet name
+    sheetName = "EXTINCTION"
+
+    # Load in extinction data
+    extinctionfile = f"{filepath.calibdata}{dnight}/extinction_fit_V.txt"
+    extinctionData  = n.loadtxt(extinctionfile, ndmin=2)
+    imgSolved = extinctionData[:,1]
+    starsFit = extinctionData[:,2]
+    starsRej = extinctionData[:,3]
+    zpFree = extinctionData[:,4]
+    zpFreeErr = extinctionData[:,5]
+    zpFixed = extinctionData[:,8]
+    extFixed = extinctionData[:,9]
+    colorFixed = extinctionData[:,11]
+    colorFree = extinctionData[:,12]
+
+     # Add to SET METADATA sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+            calsetp = f"{filepath.calibdata}{dnight}/"
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)                # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)                # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=imgSolved[setnum-1])   # Images solved
+            worksheet.cell(row=setnum+4, column=4 , value=starsFit[setnum-1])    # Stars used
+            worksheet.cell(row=setnum+4, column=5 , value=starsRej[setnum-1])    # Stars rejected
+            worksheet.cell(row=setnum+4, column=6 , value=zpFreeErr[setnum-1])   # Bestfit Zeropoint Error
+            worksheet.cell(row=setnum+4, column=7 , value=zpFree[setnum-1])      # Bestfit Zeropoint
+            worksheet.cell(row=setnum+4, column=8 , value=-colorFree[setnum-1])  # Bestfit Color Coeff
+            worksheet.cell(row=setnum+4, column=9 , value=zpFixed[setnum-1])     # Default Zeropoint
+            worksheet.cell(row=setnum+4, column=10, value=colorFixed[setnum-1])  # Default Color Coeff
+            worksheet.cell(row=setnum+4, column=11, value=-extFixed[setnum-1])   # Bestfit Ext Coeff (Fixed ZP)
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '0.000'  # Bestfit Zeropoint Error
+            worksheet.cell(row=setnum+4, column=7 ).number_format = '0.000'  # Bestfit Zeropoint
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'  # Bestfit Color Coeff
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.000'  # Default Zeropoint
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'  # Default Color Coeff
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.00'   # Bestfit Ext Coeff (Fixed ZP)
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
+
+
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
@@ -790,3 +852,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
     # Append data to CALIBRATION sheet
     print(f'{PREFIX}Appending Image Calibration Info...')
     append_calibration(excelFile, dnight, sets)
+
+    # Append data to EXTINCTION sheet
+    print(f'{PREFIX}Appending Extinction/Zeropoint Data...')
+    append_entinction(excelFile, dnight, sets)
