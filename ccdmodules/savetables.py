@@ -40,6 +40,10 @@ import astropy.coordinates as coord
 import filepath
 import ccdmodules.printcolors as pc
 
+# Define print status prefix
+scriptName = 'savetables.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
+
 
 #------------------------------------------------------------------------------#
 #-------------------         Define Global Variables        -------------------#
@@ -745,6 +749,9 @@ def append_calibration(excelFile, dnight, sets):
 
 def generate_tables(dnight,sets,processor,centralAZ,unitName):
 
+    # Initial status update for data set
+    print(f'{PREFIX}Saving summary tables for {dnight}...')
+
     # Get V-band calibdata path for first data set
     calsetp1 = f"{filepath.calibdata}{dnight}/S_01/"
 
@@ -769,16 +776,21 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
     siteInfo['numsets'] = len(sets)
 
     # Create the excel template
+    print(f'{PREFIX}Creating empty Excel template...')
     create_excel_template(excelFile)
 
     # Append data to NIGHT METADATA sheet
+    print(f'{PREFIX}Appending Night Metadata...')
     append_night_metadata(excelFile,siteInfo)
 
     # Append data to CITIES sheet
+    print(f'{PREFIX}Appending top 100 cities ranked by Walkers Law...')
     append_cities(excelFile,dnight)
 
     # Append data to SET METADATA sheet
+    print(f'{PREFIX}Appending Dataset Metadata...')
     append_set_metadata(excelFile, dnight, sets)
 
     # Append data to CALIBRATION sheet
+    print(f'{PREFIX}Appending Image Calibration Info...')
     append_calibration(excelFile, dnight, sets)
