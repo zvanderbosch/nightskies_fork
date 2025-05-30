@@ -596,7 +596,6 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         #flux = n.float64(stars[:,8])        #PSF flux, background subtracted [DN]
         flux = n.float64(stars[:,9])         #Aperture flux, background subtracted [DN]
         m = -2.5*n.log10(flux)               #v_mag, apparent
-        #airmass = 1/n.sin(n.deg2rad(elev))  #plane-parallel airmass
         mdiffRaw = M - m                     #Magnitude difference (absolute - apparent)
 
         # Use Hardie (1962) equation for airmass
@@ -643,10 +642,6 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         colorCoeffFree_err = n.sqrt(ccov.diagonal())[0]       # uncertainties
         Nfit = sum(clipped_index)                             # Number of sources used in fit
 
-        # Extract parameters
-        # c, z = param                          # bestfit coefficient and zeropoint
-        # c_err, z_err = n.sqrt(cov.diagonal()) # uncertainties
-        # Nfit = sum(clipped_index)             # Number of sources used in fit
 
         # Save the list of stars used for calculating the zeropoint
         fmt = ['%7s','%8s','%7.2f','%9.2f','%7.2f','%7.1f','%6.1f','%5.2f','%8.f','%8.f']
