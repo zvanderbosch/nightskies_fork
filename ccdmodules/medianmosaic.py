@@ -232,7 +232,9 @@ def mosaic(dnight, sets, filter):
         
         #read in the best-fit zeropoint and plate scale
         file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-        zeropoint, platescale, exptime = n.loadtxt(file, usecols=(2,8,9), unpack=True, ndmin=2)
+        zeropoint, platescale, exptime = n.loadtxt(
+            file, usecols=(3,15,16), unpack=True, ndmin=2
+        )
         
         # Status update
         print(f'{PREFIX}Generating median rasters for {filter}-Band Set {s[0]}...')
