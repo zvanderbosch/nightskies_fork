@@ -1163,7 +1163,7 @@ class MosaicAnalysis(_MosaicAnalysis):
         skyglowsetp = self.paths['skyglow']
 
         # Load zenith shapefile
-        inZoneData = f"{filepath.processlist}shapefiles/zenith_area.shp"
+        inZoneData = f"{filepath.rasters}shapefiles/zenith_area.shp"
 
         # Iterate through each mosaic
         stat_entries = []
