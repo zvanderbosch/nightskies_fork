@@ -27,6 +27,7 @@ from astropy.io import fits
 from astropy.time import Time
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Border, Side, Font, NamedStyle
+from openpyxl.worksheet.datavalidation import DataValidation
 
 import numpy as n
 import pandas as pd
@@ -350,6 +351,39 @@ SHEETSTYLES = {
 }
 
 
+DROPDOWNS = {
+    'CAMERA': [
+        'IMG1','ML 1','ML 2','ML 3','ML 4',
+        'ML 5','ML 6','ML 7', 'SBIG 1','Proline'
+    ],
+    'LENS': [
+        'Nikon 1.2', 'Nikon 1.8'
+    ],
+    'FILTER': [
+        '5541','5728','6084','7706','8582','8525','9047','9776'
+    ],
+    'INSTRUMENT': [
+        'NexStar 1','NexStar 2','NexStar 3','NexStar 4','NexStar 5',
+        'NexStar 6','NexStar 7','NexStar 8','NexStar 9','NexStar 10',
+        'NexStar 11','NexStar SE1'
+    ],
+    'OBSERVERS': [
+        'B Banet',
+        'D Duriscoe',
+        'S Hummel',
+        'L Hung',
+        'T Jiles',
+        'K Magargal',
+        'B Meadows',
+        'B Miller',
+        'C Moore',
+        'A Pipkin',
+        'Z Vanderbosch',
+        'J White'
+    ]
+}
+
+
 #------------------------------------------------------------------------------#
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
@@ -392,6 +426,43 @@ def create_excel_template(excelFile):
                 cell = worksheet.cell(row=2, column=1)
                 cell.value = SHEETDATA[sheetname]['title']
                 cell.font = SHEETSTYLES['sheet_titles']['font']
+
+                # Add dropdown menus
+
+                # Create data validation objects
+                dvCamera = DataValidation(
+                    type="list", formula1=f'"{",".join(DROPDOWNS["CAMERA"])}"'
+                )
+                dvLens = DataValidation(
+                    type="list", formula1=f'"{",".join(DROPDOWNS["LENS"])}"'
+                )
+                dvFilter = DataValidation(
+                    type="list", formula1=f'"{",".join(DROPDOWNS["FILTER"])}"'
+                )
+                dvInstrument = DataValidation(
+                    type="list", formula1=f'"{",".join(DROPDOWNS["INSTRUMENT"])}"'
+                )
+                dvObservers = DataValidation(
+                    type="list", formula1=f'"{",".join(DROPDOWNS["OBSERVERS"])}"'
+                )
+
+                # Add data validation objects to sheets
+                worksheet.add_data_validation(dvCamera)
+                worksheet.add_data_validation(dvLens)
+                worksheet.add_data_validation(dvFilter)
+                worksheet.add_data_validation(dvInstrument)
+                worksheet.add_data_validation(dvObservers)
+
+                # Set cell locations for each dropdown menu
+                dvCamera.add(worksheet['M5'])
+                dvLens.add(worksheet['O5'])
+                dvFilter.add(worksheet['P5'])
+                dvInstrument.add(worksheet['Q5'])
+                dvObservers.add(worksheet['AA5'])
+                dvObservers.add(worksheet['AB5'])
+                dvObservers.add(worksheet['AC5'])
+                dvObservers.add(worksheet['AD5'])
+
             else:
                 # Add sheet title
                 cell = worksheet.cell(row=1, column=1)
@@ -834,7 +905,6 @@ def append_coordinates(excelFile, dnight, sets):
 
                 # Set cell data values
                 row = (setnum-1) * numImages + imgnum + 4
-                print(row)
                 worksheet.cell(row=row, column=1 , value=dnight)           # Data night
                 worksheet.cell(row=row, column=2 , value=setnum)           # Data set
                 worksheet.cell(row=row, column=3 , value=imgnum)           # Image number
