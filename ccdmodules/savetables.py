@@ -484,7 +484,7 @@ def create_excel_template(excelFile):
                 cell.value = colname
                 cell.font = SHEETSTYLES['column_headers']['font']
                 cell.border = SHEETSTYLES['column_headers']['border']
-                if colname in ['NARRATIVE','PLACE','COLLECTION_NOTES','CALIB_NOTES']:
+                if colname in ['NARRATIVE','PLACE','COLLECTION_NOTES','CALIB_NOTES','NATSKY_FIT_NOTES']:
                     cell.alignment = SHEETSTYLES['column_headers']['alignment_lb']
                 else:
                     cell.alignment = SHEETSTYLES['column_headers']['alignment_cb']
@@ -947,6 +947,76 @@ def append_coordinates(excelFile, dnight, sets):
                     cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
+def append_natsky_params(excelFile, dnight, sets):
+
+    # Sheet name
+    sheetName = "NATSKY"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+            calsetp = f"{filepath.calibdata}{dnight}/"
+
+            # Load in natural sky model parameters
+            natskyFile = f"{calsetp}natsky_model_params.xlsx"
+            natskyParams = pd.read_excel(natskyFile)
+            airglowHeight = natskyParams['Emitting Layer Height (km)'].iloc[0]
+            siteElevation = natskyParams['Site Elevation (m)'].iloc[0]
+            extCoeff = natskyParams['Extinction Coefficient'].iloc[0]
+            airglowZenithNl = natskyParams['Zenith Airglow (nL)'].iloc[0]
+
+            airglowExt = natskyParams['Airglow Extinction Constant'].iloc[0]
+            adlFactor = natskyParams['A.D.L. Multiplier'].iloc[0]
+            zodiacalExt = natskyParams['Zodiacal Extinction Constant'].iloc[0]
+            galacticExt = natskyParams['Galactic Extinction Constant'].iloc[0]
+            fitQuality = natskyParams['Quality Flag (0-5)'].iloc[0]
+            natskyNotes = natskyParams['Notes'].iloc[0]
+
+            # Unit conversions
+            airglowZenithMccd = 3.1831 * airglowZenithNl  # nano-Lambert to micro-Candela
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)             # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)             # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=airglowHeight)      # Flat File
+            worksheet.cell(row=setnum+4, column=4 , value=siteElevation)      # Linearity Curve
+            worksheet.cell(row=setnum+4, column=5 , value=extCoeff)           # Extinction Coeff
+            worksheet.cell(row=setnum+4, column=6 , value=airglowZenithMccd)  # Max Pointing Err
+            worksheet.cell(row=setnum+4, column=7 , value=airglowExt)         # Airglow extinction constant
+            worksheet.cell(row=setnum+4, column=8 , value=adlFactor)          # A.D.L. multiplier
+            worksheet.cell(row=setnum+4, column=9 , value=zodiacalExt)        # Zodiacal extinction constant
+            worksheet.cell(row=setnum+4, column=10, value=galacticExt)        # Galactic extinction constant
+            worksheet.cell(row=setnum+4, column=11, value=fitQuality)         # Fit quality rating (0-5)
+            worksheet.cell(row=setnum+4, column=12, value=natskyNotes)        # Notes
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=5 ).number_format = '0.000'   # Extinction Coeff
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '#,###'   # Max Pointing Err
+            worksheet.cell(row=setnum+4, column=7 ).number_format = '0.0'     # Airglow extinction constant
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.0'     # A.D.L. multiplier
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.0'     # Zodiacal extinction constant
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.0'     # Galactic extinction constant
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                if SHEETDATA[sheetName]['colNames'][j] == 'NATSKY_FIT_NOTES':
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_lb']
+                else:
+                    cell.font = SHEETSTYLES['data_fields']['font']
+                    cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
 
 
 #------------------------------------------------------------------------------#
@@ -1010,3 +1080,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
     # Append data to IMG COORDS sheet
     print(f'{PREFIX}Appending Image Coordinates Data...')
     append_coordinates(excelFile, dnight, sets)
+
+    # Append natural sky model params to NATSKY
+    print(f'{PREFIX}Appending natural sky model parameters...')
+    append_natsky_params(excelFile, dnight, sets)
