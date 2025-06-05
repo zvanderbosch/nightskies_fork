@@ -129,4 +129,5 @@ def calculate_albedo_model(dnight):
     row = rows.next()
     siteAlbedo = row.getValue("albedo")
     clear_memory([row,rows])
-    print(f'{PREFIX}Site Albedo = {siteAlbedo}')
+    
+    return siteAlbedo

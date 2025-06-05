@@ -122,9 +122,9 @@ def process_alrmodel(*args):
     '''Calculate All-Sky Light Pollution Ratio (ALR) model'''
     t1 = time.time()
     import ccdmodules.alrmodel as AM
-    AM.calculate_alr_model(*args[:-1])
+    alr = AM.calculate_alr_model(*args[:-1])
     t2 = time.time()
-    args[-1].put(t2-t1)
+    args[-1].put([t2-t1, alr])
     print(f'{PREFIX}Processing Time (alrmodel): {t2-t1:.2f} seconds')
 
 
@@ -132,9 +132,9 @@ def process_albedomodel(*args):
     '''Calculate albedo model'''
     t1 = time.time()
     import ccdmodules.albedomodel as BM
-    BM.calculate_albedo_model(*args[:-1])
+    albedo = BM.calculate_albedo_model(*args[:-1])
     t2 = time.time()
-    args[-1].put(t2-t1)
+    args[-1].put([t2-t1, albedo])
     print(f'{PREFIX}Processing Time (albedomodel): {t2-t1:.2f} seconds')
 
 
@@ -259,7 +259,6 @@ if __name__ == '__main__':
         q5=Queue(); Q5=(q5,); p5 = Process(target=process_places,args=K0+Q5)
         q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K2+Q6)
         q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
-        q8=Queue(); Q8=(q8,); p8 = Process(target=process_tables,args=K3+Q8)
 
         # Execute each processing step
         # p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
@@ -268,17 +267,36 @@ if __name__ == '__main__':
         # p1.join() ; update_progressbar(1,i,q1.get())
         # p2.start(); update_progressbar(2,i)            # Number/fraction of visible stars
         # p2.join() ; update_progressbar(2,i,q2.get())
-        # p3.start(); update_progressbar(3,i)            # All-sky Light Pollution Ratio (ALR) model
-        # p3.join() ; update_progressbar(3,i,q3.get())
-        # p4.start(); update_progressbar(4,i)            # Albedo model
-        # p4.join() ; update_progressbar(4,i,q4.get())
+        p3.start(); #update_progressbar(3,i)            # All-sky Light Pollution Ratio (ALR) model
+        p3.join() ; #update_progressbar(3,i,q3.get()[0])
+        p4.start(); #update_progressbar(4,i)            # Albedo model
+        p4.join() ; #update_progressbar(4,i,q4.get()[0])
         # p5.start(); update_progressbar(5,i)            # Places
         # p5.join() ; update_progressbar(5,i,q5.get())
         # p6.start(); update_progressbar(6,i)            # Sky quality metrics
         # p6.join() ; update_progressbar(6,i,q6.get())
         # p7.start(); update_progressbar(7,i)            # Draw maps
         # p7.join() ; update_progressbar(7,i,q7.get())
-        p8.start(); #update_progressbar(8,i)            # Save tables
+
+        # Combine light pollution metrics in a single dict
+        alrResult = q3.get()[1]
+        albedoResult = q4.get()[1]
+        metricResults = {
+            'alr': alrResult,
+            'albedo': albedoResult
+        }
+
+        # Execute save tables process
+        tableArgs = (
+            Dataset[i], 
+            sets, 
+            processor[0],
+            int(centralAz[0]),
+            location[0], 
+            metricResults
+        )
+        q8=Queue(); Q8=(q8,); p8 = Process(target=process_tables,args=tableArgs+Q8)
+        p8.start(); #update_progressbar(8,i)
         p8.join() ; #update_progressbar(8,i,q8.get())
 
         # Save the timing records for running the script

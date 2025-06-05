@@ -46,6 +46,7 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 #-------------------         Define Global Variables        -------------------#
 #------------------------------------------------------------------------------#
 
+# Titles, column names, and columns widths for each sheet
 SHEETDATA = {
     'NIGHT METADATA':{
         'title':"DATA NIGHT ATTRIBUTES",
@@ -243,6 +244,7 @@ SHEETDATA = {
 }
 
 
+# Style definitions applied to various cell types
 SHEETSTYLES = {
     'main_title': {
         'font': Font(
@@ -351,6 +353,7 @@ SHEETSTYLES = {
 }
 
 
+# Dropdown menu options for some NIGHT METADATA cells
 DROPDOWNS = {
     'CAMERA': [
         'IMG1','ML 1','ML 2','ML 3','ML 4',
@@ -563,13 +566,23 @@ def get_site_info(imageFile):
     return siteInfo
 
 
-def append_night_metadata(excelFile, siteInfo, ):
+def append_night_metadata(excelFile, siteInfo):
 
     # Add to NIGHT METADATA sheet
     with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
 
         # Grab the relevant worksheet
         worksheet = writer.sheets['NIGHT METADATA']
+
+        # Load in zeropoint and platescale values
+        calsetp = f"{filepath.calibdata}{siteInfo['datanight']}/"
+        extinctionfile = f"{calsetp}extinction_fit_V.txt"
+        extinctionData  = n.loadtxt(extinctionfile, ndmin=2)
+        zeropoint = extinctionData[0,8]
+        platescale = n.mean(extinctionData[:,16])
+
+        # Calculate image scale offset
+        scaleOffset = 2.5*n.log10((platescale*60)**2)
 
         # Add processor name and processing date
         tnow = datetime.now()
@@ -596,19 +609,15 @@ def append_night_metadata(excelFile, siteInfo, ):
         worksheet.cell(row=5, column=10, value=siteInfo['tempcelsius'])   # Temperature (C)
         worksheet.cell(row=5, column=11, value=siteInfo['humidity'])      # Relative Humidity (%)
         worksheet.cell(row=5, column=12, value=siteInfo['windspeed'])     # Wind speed (mph)
-        # worksheet.cell(row=5, column=13, value=siteInfo['ccdname'])     # Camera Name
         worksheet.cell(row=5, column=14, value=siteInfo['ccdtemp'])       # Camera Temp
-        # worksheet.cell(row=5, column=15, value=siteInfo['lenstype'])    # Lens type
-        # worksheet.cell(row=5, column=16, value=siteInfo['filter   '])   # Filter
-        worksheet.cell(row=5, column=17, value=siteInfo['telescope'])     # Instrument
         worksheet.cell(row=5, column=18, value=45)                        # Number of Images
         worksheet.cell(row=5, column=19, value=siteInfo['exptime'])       # Exposure Time
-        # worksheet.cell(row=5, column=20, value=siteInfo['zeropoint'])   # Zeropoint
-        # worksheet.cell(row=5, column=21, value=siteInfo['psa'])         # Image Scale Offset
+        worksheet.cell(row=5, column=20, value=zeropoint)                 # Zeropoint
+        worksheet.cell(row=5, column=21, value=scaleOffset)               # Image Scale Offset
         worksheet.cell(row=5, column=22, value=siteInfo['numsets'])       # Number of Sets
         # worksheet.cell(row=5, column=23, value=siteInfo['zlm'])         # Zenith Limiting Mag
         # worksheet.cell(row=5, column=24, value=siteInfo['bortle'])      # Bortle
-        # worksheet.cell(row=5, column=25, value=siteInfo['albedo'])      # Albedo
+        worksheet.cell(row=5, column=25, value=siteInfo['siteAlbedo'])    # Albedo
         # worksheet.cell(row=5, column=26, value=siteInfo['sqm'])         # SQM
         worksheet.cell(row=5, column=27, value=siteInfo['observers'][0])  # Observer 1
         worksheet.cell(row=5, column=28, value=siteInfo['observers'][1])  # Observer 2
@@ -620,10 +629,13 @@ def append_night_metadata(excelFile, siteInfo, ):
         # Set some cell number formats
         datestyle = SHEETSTYLES['datetime']['datestyle']
         timestyle = SHEETSTYLES['datetime']['timestyle']
-        worksheet.cell(row=5, column=8).style = datestyle      # UTC Start Date
-        worksheet.cell(row=5, column=9).style = timestyle      # UTC Start Time
-        worksheet.cell(row=5, column=10).number_format = '0.0' # Air temperature
-        worksheet.cell(row=5, column=11).number_format = '0.0' # Relative humidity
+        worksheet.cell(row=5, column=8).style = datestyle         # UTC Start Date
+        worksheet.cell(row=5, column=9).style = timestyle         # UTC Start Time
+        worksheet.cell(row=5, column=10).number_format = '0.0'    # Air temperature
+        worksheet.cell(row=5, column=11).number_format = '0.0'    # Relative humidity
+        worksheet.cell(row=5, column=20).number_format = '0.000'  # Zeropoint
+        worksheet.cell(row=5, column=21).number_format = '0.000'  # Image Scale Offset
+        worksheet.cell(row=5, column=25).number_format = '0.000'  # Albedo
 
         # Set cell styles
         ncol = len(SHEETDATA['NIGHT METADATA']['colNames'])
@@ -810,7 +822,7 @@ def append_calibration(excelFile, dnight, sets):
                     cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
-def append_entinction(excelFile, dnight, sets):
+def append_extinction(excelFile, dnight, sets):
 
     # Sheet name
     sheetName = "EXTINCTION"
@@ -941,7 +953,7 @@ def append_coordinates(excelFile, dnight, sets):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def generate_tables(dnight,sets,processor,centralAZ,unitName):
+def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
 
     # Initial status update for data set
     print(f'{PREFIX}Saving summary tables for {dnight}...')
@@ -968,6 +980,8 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
     siteInfo['processor'] = processor.replace("_"," ")
     siteInfo['centralAZ'] = centralAzString
     siteInfo['numsets'] = len(sets)
+    siteInfo['siteAlbedo'] = metrics['albedo']
+    siteInfo['siteALR'] = metrics['alr']
 
     # Create the excel template
     print(f'{PREFIX}Creating empty Excel template...')
@@ -991,7 +1005,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName):
 
     # Append data to EXTINCTION sheet
     print(f'{PREFIX}Appending Extinction/Zeropoint Data...')
-    append_entinction(excelFile, dnight, sets)
+    append_extinction(excelFile, dnight, sets)
 
     # Append data to IMG COORDS sheet
     print(f'{PREFIX}Appending Image Coordinates Data...')

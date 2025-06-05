@@ -130,3 +130,5 @@ def calculate_alr_model(dnight):
     siteALR = row.getValue("alr")
     clear_memory([row,rows])
     print(f'{PREFIX}Site ALR = {siteALR}')
+
+    return siteALR
