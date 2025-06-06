@@ -160,7 +160,7 @@ def process_skyquality(*args):
     for filter in args[2]:
         if filter != "V":
             continue
-        sqEntry = SQ.calculate_sky_quality(args[0],args[1],filter)
+        sqEntry = SQ.calculate_sky_quality(args[0],args[1],filter,args[3])
         sqResults.append(sqEntry)
     sqResults = pd.concat(sqResults,ignore_index=True)
     t2 = time.time()
@@ -257,57 +257,78 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # Create multiprocessing objects for each step
-        q0=Queue(); Q0=(q0,); p0 = Process(target=process_skyglow,args=K2+Q0)
-        q1=Queue(); Q1=(q1,); p1 = Process(target=process_illumall,args=K2+Q1)
-        q2=Queue(); Q2=(q2,); p2 = Process(target=process_starsvis,args=K2+Q2)
-        q3=Queue(); Q3=(q3,); p3 = Process(target=process_alrmodel,args=K0+Q3)
-        q4=Queue(); Q4=(q4,); p4 = Process(target=process_albedomodel,args=K0+Q4)
-        q5=Queue(); Q5=(q5,); p5 = Process(target=process_places,args=K0+Q5)
-        q6=Queue(); Q6=(q6,); p6 = Process(target=process_skyquality,args=K2+Q6)
-        q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
-
-        # Execute each processing step
-        # p0.start(); update_progressbar(0,i)              # Anthropogenic skyglow luminance & illuminance
+        # Anthropogenic skyglow luminance & illuminance
+        q0=Queue(); args=(Dataset[i],sets,Filter,q0)
+        p0 = Process(target=process_skyglow,args=args)
+        # p0.start(); update_progressbar(0,i)
         # p0.join() ; update_progressbar(0,i,q0.get())
-        # p1.start(); update_progressbar(1,i)              # All sources skyglow luminance & illuminance
+        
+        # All sources skyglow luminance & illuminance
+        q1=Queue(); args=(Dataset[i],sets,Filter,q1)
+        p1 = Process(target=process_illumall,args=args)
+        # p1.start(); update_progressbar(1,i)
         # p1.join() ; update_progressbar(1,i,q1.get())
-        p2.start(); #update_progressbar(2,i)              # Number/fraction of visible stars
+
+        # Number/fraction of visible stars
+        q2=Queue(); args=(Dataset[i],sets,Filter,q2)
+        p2 = Process(target=process_starsvis,args=args)
+        p2.start(); #update_progressbar(2,i)
         p2.join() ; #update_progressbar(2,i,q2.get()[0])
-        p3.start(); #update_progressbar(3,i)              # All-sky Light Pollution Ratio (ALR) model
+        numstars = q2.get()[1]
+
+        # All-sky Light Pollution Ratio (ALR) model
+        q3=Queue(); args=(Dataset[i],q3)
+        p3 = Process(target=process_alrmodel,args=args)
+        p3.start(); #update_progressbar(3,i)
         p3.join() ; #update_progressbar(3,i,q3.get()[0])
-        p4.start(); #update_progressbar(4,i)              # Albedo model
+        siteALR = q3.get()[1]
+
+        # Calculate Site Albedo
+        q4=Queue(); args=(Dataset[i], q4); 
+        p4 = Process(target=process_albedomodel,args=args)
+        p4.start(); #update_progressbar(4,i)
         p4.join() ; #update_progressbar(4,i,q4.get()[0])
-        # p5.start(); update_progressbar(5,i)              # Places
+        siteAlbedo = q4.get()[1]
+
+        # Places
+        q5=Queue(); args=(Dataset[i], q5)
+        p5 = Process(target=process_places,args=args)
+        # p5.start(); update_progressbar(5,i)
         # p5.join() ; update_progressbar(5,i,q5.get())
-        p6.start(); #update_progressbar(6,i)              # Sky quality metrics
+
+        # Sky quality metrics
+        q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
+        p6 = Process(target=process_skyquality,args=args)
+        p6.start(); #update_progressbar(6,i)
         p6.join() ; #update_progressbar(6,i,q6.get()[0])
-        # p7.start(); update_progressbar(7,i)              # Draw maps
+        sqMetrics = q6.get()[1]
+
+        # Draw maps
+        q7=Queue(); args=(Dataset[i],sets,processor[0],int(centralAz[0]),location[0],q7)
+        p7 = Process(target=process_drawmaps,args=args)
+        # p7.start(); update_progressbar(7,i)
         # p7.join() ; update_progressbar(7,i,q7.get())
 
         # Combine light pollution metrics in a single dict
-        starsvisResult = q2.get()[1]
-        alrResult = q3.get()[1]
-        albedoResult = q4.get()[1]
-        skyqualityResult = q6.get()[1]
         metricResults = {
-            'starsvis': starsvisResult,
-            'alr': alrResult,
-            'albedo': albedoResult,
-            'skyquality': skyqualityResult
+            'starsvis': numstars,
+            'alr': siteALR,
+            'albedo': siteAlbedo,
+            'skyquality': sqMetrics
         }
-        print(starsvisResult)
 
         # Execute save tables process
+        q8=Queue()
         tableArgs = (
             Dataset[i], 
             sets, 
             processor[0],
             int(centralAz[0]),
             location[0], 
-            metricResults
+            metricResults,
+            q8
         )
-        q8=Queue(); Q8=(q8,); p8 = Process(target=process_tables,args=tableArgs+Q8)
+        p8 = Process(target=process_tables,args=tableArgs)
         p8.start(); #update_progressbar(8,i)
         p8.join() ; #update_progressbar(8,i,q8.get())
 
