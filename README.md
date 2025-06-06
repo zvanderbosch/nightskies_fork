@@ -144,7 +144,7 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > python process_images.py
 > ```
 > ### Step 2: Edit the Terrain Mask
-> Create the terrain mask in Adobe Photoshop by opening and editing the **mask.tif** file saved in `CCD --> Data --> griddata --> ROMO241004 --> mask`.
+> Use Adobe Photoshop to edit the **mask.tif** file saved in `CCD --> Data --> griddata --> ROMO241004 --> mask`, refining the horizon boundary and setting all above-horizon pixels to be white and all below-horizon pixels to be black.
 > ### Step 3: Generate the Natural Sky Model
 > ```powershell
 > python naturalsky.py ROMO241004 1 V --airglowzenith=45
@@ -156,13 +156,14 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > python process_metrics.py
 > ```
 > ### Step 6: Final Data Entry
-> The `process_metrics.py` script will save a summary of the data processing results into an Excel file named `ROMO241004.xlsx`, located in the `CCD --> Data --> tables` folder. A few data fields, listed below, require manual entry:
+> The `process_metrics.py` script will save a summary of the data processing results into an Excel file named `ROMO241004.xlsx`, located in the `CCD --> Data --> tables` folder. A few data fields, listed below, require manual entry and/or checking to make sure values are correct:
 > ```
 > NIGHT METADATA Sheet:
-> └─── CAMERA
-> └─── LENS
-> └─── FILTER
-> └─── INSTRUMENT
+> └─── CAMERA           -Camera type
+> └─── LENS             -Lens type
+> └─── FILTER           -Filter ID code
+> └─── INSTRUMENT       -Instrument name
+> └─── OBS_1 - OBS_4    -Observer names
 > ```
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
