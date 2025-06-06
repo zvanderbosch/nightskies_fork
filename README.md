@@ -156,7 +156,14 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > python process_metrics.py
 > ```
 > ### Step 6: Final Data Entry
-> The `process_metrics.py` script will save a summary of the data processing results into an Excel file named ROMO241004.xlsx, located in the `tables` folder. 
+> The `process_metrics.py` script will save a summary of the data processing results into an Excel file named `ROMO241004.xlsx`, located in the `CCD --> Data --> tables` folder. A few data fields, listed below, require manual entry:
+> ```
+> NIGHT METADATA Sheet:
+> -- CAMERA
+> -- LENS
+> -- FILTER
+> -- INSTRUMENT
+> ```
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
 
