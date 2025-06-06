@@ -27,6 +27,7 @@ import sys
 import time
 import warnings
 import numpy as n
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from datetime import datetime as Dtime
@@ -152,12 +153,15 @@ def process_skyquality(*args):
     '''Calculate SQI and SQM sky quality metrics'''
     t1 = time.time()
     import ccdmodules.skyquality as SQ
+    sqResults = []
     for filter in args[2]:
         if filter != "V":
             continue
-        SQ.calculate_sky_quality(args[0],args[1],filter)
+        sqEntry = SQ.calculate_sky_quality(args[0],args[1],filter)
+        sqResults.append(sqEntry)
+    sqResults = pd.concat(sqResults,ignore_index=True)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    args[-1].put([t2-t1,sqResults])
     print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
 
 
@@ -273,18 +277,21 @@ if __name__ == '__main__':
         p4.join() ; #update_progressbar(4,i,q4.get()[0])
         # p5.start(); update_progressbar(5,i)            # Places
         # p5.join() ; update_progressbar(5,i,q5.get())
-        # p6.start(); update_progressbar(6,i)            # Sky quality metrics
-        # p6.join() ; update_progressbar(6,i,q6.get())
+        p6.start(); #update_progressbar(6,i)            # Sky quality metrics
+        p6.join() ; #update_progressbar(6,i,q6.get()[0])
         # p7.start(); update_progressbar(7,i)            # Draw maps
         # p7.join() ; update_progressbar(7,i,q7.get())
 
         # Combine light pollution metrics in a single dict
         alrResult = q3.get()[1]
         albedoResult = q4.get()[1]
+        skyqualityResult = q6.get()[1]
         metricResults = {
             'alr': alrResult,
-            'albedo': albedoResult
+            'albedo': albedoResult,
+            'skyquality': skyqualityResult
         }
+        print(skyqualityResult)
 
         # Execute save tables process
         tableArgs = (

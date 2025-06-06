@@ -249,18 +249,18 @@ def calc_SQI(gridPath,mask):
     return sqi    
 
 
-def calc_sky_SQM(dataNight, setNum, filterName):
+def calc_skyonly_SQM(dataNight, setNum, filterName):
     '''
     Function to calculate synthetic Sky Quality Meter (SQM)
-    metric using measured sky brightness.
+    metric using just the measured background sky brightness.
     '''
     
     # Get zeropoint, extinction coeff, plate scale, & exposure time
     extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
     extData = n.loadtxt(extfile, ndmin=2)
-    zeropoint = extData[setNum-1,2]
-    platescale = extData[setNum-1,8]
-    exptime = extData[setNum-1,9]
+    zeropoint = extData[setNum-1,4]
+    platescale = extData[setNum-1,16]
+    exptime = extData[setNum-1,17]
     psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
 
     # Perform sky brightness measurements
@@ -289,16 +289,17 @@ def calc_sky_SQM(dataNight, setNum, filterName):
     return sqm
 
 
-def calc_star_SQM(dataNight, setNum, filterName, skySQM):
+def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
     '''
     Function to calculate synthetic Sky Quality Meter (SQM)
-    metric using number of visible stars and planets.
+    metric using measured background sky brightness and
+    including flux contributed from visible stars and planets.
     '''
 
     # Get zeropoint, extinction coeff, plate scale, & exposure time
     extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
     extData = n.loadtxt(extfile, ndmin=2)
-    extCoeff = abs(extData[setNum-1,4])
+    extCoeff = abs(extData[setNum-1,6])
 
     # Get Site time and location for data set midpoint
     imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
@@ -389,6 +390,7 @@ def calc_star_SQM(dataNight, setNum, filterName, skySQM):
 
     # Calculate synthetic SQM
     backgroundFlux = 10**(-skySQM/2.5)
+    print(starFlux + planetFlux + backgroundFlux)
     sqm = -2.5 * n.log10(starFlux + planetFlux + backgroundFlux)
 
     return sqm
@@ -407,6 +409,7 @@ def calculate_sky_quality(dnight,sets,filter):
     F = {'V':'', 'B':'B/'}
 
     # Loop through each data set
+    sqOutput = []
     for s in sets:
 
         # Set path for grid datasets
@@ -419,8 +422,8 @@ def calculate_sky_quality(dnight,sets,filter):
         sqiZ70 = calc_SQI(gridsetp, 'ZA70')
 
         # Calculate SQM
-        skySQM = calc_sky_SQM(dnight, setnum, filter)
-        synSQM = calc_star_SQM(dnight, setnum, filter, skySQM)
+        skySQM = calc_skyonly_SQM(dnight, setnum, filter)
+        synSQM = calc_synthetic_SQM(dnight, setnum, filter, skySQM)
 
         # Print out results
         print(f'{PREFIX}SQI to Observed Horizon = {sqiAllsky:.2f}')
@@ -428,3 +431,24 @@ def calculate_sky_quality(dnight,sets,filter):
         print(f'{PREFIX}SQI to Zenith Angle 70  = {sqiZ70:.2f}')
         print(f'{PREFIX}Sky Background SQM      = {skySQM:.2f}')
         print(f'{PREFIX}Full Synthetic SQM      = {synSQM:.2f}')
+
+        # Generate dataframe entry for given dataset
+        sqEntry = pd.DataFrame(
+            {
+                'datanight': dnight,
+                'dataset': setnum,
+                'filter': filter,
+                'SQI_allsky': sqiAllsky,
+                'SQI_ZA80': sqiZ80,
+                'SQI_ZA70': sqiZ70,
+                'SQM_sky': skySQM,
+                'SQM_synthetic': synSQM
+            },
+            index = [setnum-1]
+        )
+        sqOutput.append(sqEntry)
+
+    # Create final outout
+    sqOutput = pd.concat(sqOutput)
+
+    return sqOutput
