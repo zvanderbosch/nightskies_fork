@@ -137,17 +137,26 @@ Pipeline operation is broken down into four main steps:
 
 Assuming you are working from a command line interface, such as Windows Terminal or Powershell, and have completed the [conda environment setup](#setting-up-a-conda-environment) and [data preparation steps](#before-running-the-processing-pipeline-you-will-need-to) above, an example pipeline processing workflow for a dataset named **ROMO241004** would look like the following:
 
-> ### Step 1: Activate conda environment and process images
+> ### Step 1: Activate conda Environment and Process Images
 > ```powershell
 > conda activate ccd
 > cd "\path\to\pipeline\code"
 > python process_images.py
 > ```
+> ### Step 2: Edit the Terrain Mask
 > Create the terrain mask in Adobe Photoshop by opening and editing the **mask.tif** file saved in `CCD --> Data --> griddata --> ROMO241004 --> mask`.
+> ### Step 3: Generate the Natural Sky Model
 > ```powershell
 > python naturalsky.py ROMO241004 1 V --airglowzenith=45
+> ```
+> ### Step 4: Record 
+> The `naturalsky.py` script will generate an Excel file `natsky_model_params.xlsx` located in the `calibdata` folder for the given data night. Edit the **Quality Flag** and **Notes** columns for each data set, indicating the quality of the natural sky model subtraction on a scale of 0 (bad) to 5 (excellent) and using the Notes column to describe any problems.
+> ### Set 5: Generate Light Pollution Metrics 
+> ```powershell
 > python process_metrics.py
 > ```
+> ### Step 6: Final Data Entry
+> The `process_metrics.py` script will save a summary of the data processing results into an Excel file named ROMO241004.xlsx, located in the `tables` folder. 
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
 
