@@ -1017,6 +1017,64 @@ def append_natsky_params(excelFile, dnight, sets):
                     cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
+def append_photometryV2(excelFile, dnight, sets, metrics):
+
+    # Sheet name
+    sheetName = "V2 PHOTOMETRY"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+
+            # Get the needed sky quality metrics
+            sqMetrics = metrics['skyquality']
+            sqIndex = (
+                (sqMetrics['dataset'] == setnum) &
+                (sqMetrics['filter'] == 'V')
+            )
+            zenithMag = sqMetrics[sqIndex]['zenith_mag'].iloc[0]
+            allskyMag = sqMetrics[sqIndex]['allsky_mag'].iloc[0]
+            za70Mag = sqMetrics[sqIndex]['za70_mag'].iloc[0]
+            brightestMag = sqMetrics[sqIndex]['brightest_mag'].iloc[0]
+            faintestMag = sqMetrics[sqIndex]['faintest_mag'].iloc[0]
+            sqm = sqMetrics[sqIndex]['SQM_synthetic'].iloc[0]
+            scalarIllum = sqMetrics[sqIndex]['scalar_illum'].iloc[0]
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1, value=dnight)         # Data night
+            worksheet.cell(row=setnum+4, column=2, value=setnum)         # Data set
+            worksheet.cell(row=setnum+4, column=3, value=zenithMag)      # Zenith Mag
+            worksheet.cell(row=setnum+4, column=4, value=allskyMag)      # Allsky Total Mag
+            worksheet.cell(row=setnum+4, column=5, value=za70Mag)        # ZA70 Total Mag
+            worksheet.cell(row=setnum+4, column=6, value=brightestMag)   # Brightest Mag
+            worksheet.cell(row=setnum+4, column=7, value=faintestMag)    # Faintest Mag
+            worksheet.cell(row=setnum+4, column=8, value=sqm)            # Synthetic SQM
+            worksheet.cell(row=setnum+4, column=9, value=scalarIllum)    # Scalar illuminance
+
+            # # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=3).number_format = '0.00'   # Zenith Mag
+            worksheet.cell(row=setnum+4, column=4).number_format = '0.00'   # Allsky Total Mag
+            worksheet.cell(row=setnum+4, column=5).number_format = '0.00'   # ZA70 Total Mag
+            worksheet.cell(row=setnum+4, column=6).number_format = '0.00'   # Brightest Mag
+            worksheet.cell(row=setnum+4, column=7).number_format = '0.00'   # Faintest Mag
+            worksheet.cell(row=setnum+4, column=8).number_format = '0.00'   # Synthetic SQM
+            worksheet.cell(row=setnum+4, column=9).number_format = '0.000'  # Scalar illuminance
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
 
 
 #------------------------------------------------------------------------------#
@@ -1084,3 +1142,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
     # Append natural sky model params to NATSKY
     print(f'{PREFIX}Appending natural sky model parameters...')
     append_natsky_params(excelFile, dnight, sets)
+
+    # Append data to V2 Photometry sheet
+    print(f'{PREFIX}Appending V2 photometric data...')
+    append_photometryV2(excelFile, dnight, sets, metrics)
