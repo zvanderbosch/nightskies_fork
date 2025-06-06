@@ -144,7 +144,7 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > python process_images.py
 > ```
 > ### Step 2: Edit the Terrain Mask
-> Use Adobe Photoshop to edit the **mask.tif** file saved in `CCD --> Data --> griddata --> ROMO241004 --> mask`, refining the horizon boundary and setting all above-horizon pixels to be white and all below-horizon pixels to be black.
+> Use Adobe Photoshop to edit the `mask.tif` file saved in `CCD --> Data --> griddata --> ROMO241004 --> mask`, refining the horizon boundary and setting all above-horizon pixels as white and all below-horizon pixels as black.
 > ### Step 3: Generate the Natural Sky Model
 > ```powershell
 > python naturalsky.py ROMO241004 1 V --airglowzenith=45
