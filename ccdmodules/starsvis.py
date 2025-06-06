@@ -27,6 +27,7 @@ import os
 import stat
 import arcpy
 import numpy as n
+import pandas as pd
 import astropy.units as u
 import astropy.coordinates as coord
 
@@ -189,6 +190,7 @@ def calculate_stars_visible(dnight,sets,filter):
 
 
     # Loop through each data set
+    numstarsOutput = []
     for s in sets:
 
         # Set path for grid datasets
@@ -206,7 +208,7 @@ def calculate_stars_visible(dnight,sets,filter):
         
         # Get extinction coefficient
         extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.txt"
-        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[setnum-1,4])
+        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[setnum-1,6])
 
         # Load in median sky brightness and natural sky rasters
         brightRasterMag = arcpy.sa.Raster(f"{gridsetp}median/skybrightmags")
@@ -350,3 +352,25 @@ def calculate_stars_visible(dnight,sets,filter):
         print(f'{PREFIX}Number of stars visible without any background brightness : {numstarse}')
         print(f'{PREFIX}Number of stars visible in polluted sky                   : {numstars}')
         print(f'{PREFIX}Number of stars visible in natural sky                    : {numstarsn}')
+
+        # Generate dataframe entry for given dataset
+        numstarsEntry = pd.DataFrame(
+            {
+                'datanight': dnight,
+                'dataset': setnum,
+                'filter': filter,
+                'Nstar_flat_horizon': numstarsf,
+                'Nstar_obs_horizon': numstarsm,
+                'Nstar_vis_noBkg': numstarse,
+                'Nstar_vis_polluted': numstars,
+                'Nstar_vis_natsky': numstarsn,
+                'Nstar_vis_fraction': numstars / numstarsn
+            },
+            index = [setnum-1]
+        )
+        numstarsOutput.append(numstarsEntry)
+
+    # Create final dataframe output
+    numstarsOutput = pd.concat(numstarsOutput)
+
+    return numstarsOutput

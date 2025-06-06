@@ -110,12 +110,15 @@ def process_starsvis(*args):
     '''Calculate visible stars'''
     t1 = time.time()
     import ccdmodules.starsvis as SV
+    svResults = []
     for filter in args[2]:
         if filter != "V":
             continue
-        SV.calculate_stars_visible(args[0],args[1],filter)
+        svEntry = SV.calculate_stars_visible(args[0],args[1],filter)
+        svResults.append(svEntry)
+    svResults = pd.concat(svResults, ignore_index=True)
     t2 = time.time()
-    args[-1].put(t2-t1)
+    args[-1].put([t2-t1,svResults])
     print(f'{PREFIX}Processing Time (starsvis): {t2-t1:.2f} seconds')
 
 
@@ -265,33 +268,35 @@ if __name__ == '__main__':
         q7=Queue(); Q7=(q7,); p7 = Process(target=process_drawmaps,args=K3+Q7)
 
         # Execute each processing step
-        # p0.start(); update_progressbar(0,i)            # Anthropogenic skyglow luminance & illuminance
+        # p0.start(); update_progressbar(0,i)              # Anthropogenic skyglow luminance & illuminance
         # p0.join() ; update_progressbar(0,i,q0.get())
-        # p1.start(); update_progressbar(1,i)            # All sources skyglow luminance & illuminance
+        # p1.start(); update_progressbar(1,i)              # All sources skyglow luminance & illuminance
         # p1.join() ; update_progressbar(1,i,q1.get())
-        # p2.start(); update_progressbar(2,i)            # Number/fraction of visible stars
-        # p2.join() ; update_progressbar(2,i,q2.get())
-        p3.start(); #update_progressbar(3,i)            # All-sky Light Pollution Ratio (ALR) model
+        p2.start(); #update_progressbar(2,i)              # Number/fraction of visible stars
+        p2.join() ; #update_progressbar(2,i,q2.get()[0])
+        p3.start(); #update_progressbar(3,i)              # All-sky Light Pollution Ratio (ALR) model
         p3.join() ; #update_progressbar(3,i,q3.get()[0])
-        p4.start(); #update_progressbar(4,i)            # Albedo model
+        p4.start(); #update_progressbar(4,i)              # Albedo model
         p4.join() ; #update_progressbar(4,i,q4.get()[0])
-        # p5.start(); update_progressbar(5,i)            # Places
+        # p5.start(); update_progressbar(5,i)              # Places
         # p5.join() ; update_progressbar(5,i,q5.get())
-        p6.start(); #update_progressbar(6,i)            # Sky quality metrics
+        p6.start(); #update_progressbar(6,i)              # Sky quality metrics
         p6.join() ; #update_progressbar(6,i,q6.get()[0])
-        # p7.start(); update_progressbar(7,i)            # Draw maps
+        # p7.start(); update_progressbar(7,i)              # Draw maps
         # p7.join() ; update_progressbar(7,i,q7.get())
 
         # Combine light pollution metrics in a single dict
+        starsvisResult = q2.get()[1]
         alrResult = q3.get()[1]
         albedoResult = q4.get()[1]
         skyqualityResult = q6.get()[1]
         metricResults = {
+            'starsvis': starsvisResult,
             'alr': alrResult,
             'albedo': albedoResult,
             'skyquality': skyqualityResult
         }
-        print(skyqualityResult)
+        print(starsvisResult)
 
         # Execute save tables process
         tableArgs = (
