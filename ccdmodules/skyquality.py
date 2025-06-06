@@ -6,7 +6,9 @@
 #Last updated: 2025/05/22
 #
 #This script computes sky quality index (SQI) and synthetic
-#sky quality meter (SQM) values.
+#sky quality meter (SQM) values, alogn with a few photometric
+#indicators using simple sky brightness aperture photometry
+#measurements.
 #
 #Note: 
 #
@@ -79,7 +81,7 @@ def measure_skybrightness(imgPath):
         f"{filepath.spreadsheets}skybright_positions.xlsx"
     )
 
-    # Iterate over each image
+    # Iterate over each mosaic image
     allPhot = []
     for i in range(45):
 
@@ -109,6 +111,40 @@ def measure_skybrightness(imgPath):
 
         # Save photometry to list
         allPhot.append(imgPositions)
+
+    # Concatenate photometry into single dataframe
+    allPhot = pd.concat(allPhot,ignore_index=True)
+    
+    return allPhot
+
+
+def measure_zenith_images(imgPath):
+
+    # Measure sky brightness at center of zenith images
+    allPhot = []
+    for i in range(2):
+    
+        # Get image data
+        imgFile = f"{imgPath}zenith{i+1}.fit"
+        if not os.path.isfile(imgFile):
+            continue
+        with fits.open(imgFile) as hdul:
+            imgData = hdul[0].data
+            imgHdr = hdul[0].header
+
+        # Perform aperture photometry on image
+        apRadius = 20.
+        apertures = CircularAperture([(511,511)], r=apRadius)
+        photTable = aperture_photometry(imgData, apertures)
+        photTable = photTable.to_pandas()
+
+        # Calculate aperture median
+        sigclip = SigmaClip(sigma=5.0, maxiters=10)
+        aperStats = ApertureStats(imgData, apertures, sigma_clip=sigclip)
+        photTable['aperture_median'] = aperStats.median
+        photTable['inst_mag'] = 2.5 * n.log10(photTable['aperture_median'] / imgHdr['EXPTIME'])
+        photTable['image'] = [f'zenith{i+1}']
+        allPhot.append(photTable)
 
     # Concatenate photometry into single dataframe
     allPhot = pd.concat(allPhot,ignore_index=True)
@@ -286,7 +322,7 @@ def calc_skyonly_SQM(dataNight, setNum, filterName):
     mags = zeropoint - 2.5 * n.log10(aduSum * psaADU / exptime)
     sqm = sqmScaleFactor + mags
 
-    return sqm
+    return sqm, photometry
 
 
 def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
@@ -390,7 +426,6 @@ def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
 
     # Calculate synthetic SQM
     backgroundFlux = 10**(-skySQM/2.5)
-    print(starFlux + planetFlux + backgroundFlux)
     sqm = -2.5 * n.log10(starFlux + planetFlux + backgroundFlux)
 
     return sqm
@@ -400,13 +435,25 @@ def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def calculate_sky_quality(dnight,sets,filter):
+def calculate_sky_quality(dnight,sets,filter,albedo):
     '''
-    Main program for computing SQI and SQM metrics
+    Main program for computing SQI and SQM metrics and simple
+    aperture photometry metrics.
     '''
 
     # Filter paths
     F = {'V':'', 'B':'B/'}
+
+    # Load in zeropoint, platescale, and exposure time values
+    calsetp = f"{filepath.calibdata}{dnight}/"
+    extinctionfile = f"{calsetp}extinction_fit_V.txt"
+    extinctionData  = n.loadtxt(extinctionfile, ndmin=2)
+    zeropoint = extinctionData[0,8]
+    platescale = n.mean(extinctionData[:,16])
+    exptime = extinctionData[:,17]
+
+    # Calculate image scale offset
+    scaleOffset = 2.5*n.log10((platescale*60)**2)
 
     # Loop through each data set
     sqOutput = []
@@ -421,9 +468,33 @@ def calculate_sky_quality(dnight,sets,filter):
         sqiZ80 = calc_SQI(gridsetp, 'ZA80')
         sqiZ70 = calc_SQI(gridsetp, 'ZA70')
 
-        # Calculate SQM
-        skySQM = calc_skyonly_SQM(dnight, setnum, filter)
+        # Calculate sky background photometry and synthetic SQMs
+        skySQM, imgPhot = calc_skyonly_SQM(dnight, setnum, filter)
         synSQM = calc_synthetic_SQM(dnight, setnum, filter, skySQM)
+
+        # Measure brightness at center of zenith images
+        zenithPhot = measure_zenith_images(f"{calsetp}/S_{setnum:02d}/")
+        zenithPhot['mag'] = zeropoint + scaleOffset - zenithPhot['inst_mag']
+        magZenith2 = zenithPhot[zenithPhot.image == 'zenith2'].mag.iloc[0]
+
+        # Measure All-sky and above ZA-70 total magnitudes
+        aduSum = imgPhot.ADU.sum()
+        aduSumZA70 = imgPhot[imgPhot.Pany >= 20].ADU.sum()
+        scaleFactor = 4 * 3600 * 3600 / (platescale*60)**2
+        allskyMag = zeropoint - 2.5*n.log10(aduSum * scaleFactor / exptime[setnum-1])
+        za70Mag = zeropoint - 2.5*n.log10(aduSumZA70 * scaleFactor / exptime[setnum-1])
+
+        # Get brightest and faintest magnitudes measured
+        imgPhot['mag'] = zeropoint + scaleOffset - 2.5*n.log10(imgPhot['ADU'] / exptime[setnum-1])
+        faintestMag = imgPhot[imgPhot.Pany >= 46].mag.quantile(0.98)
+        brightestMag = imgPhot.mag.min()
+
+        # Calculate scalar illuminance
+        scalarIllum = 0.00254 * 10**(-0.4*allskyMag) * albedo / 4
+
+        print(scalarIllum)
+
+
 
         # Print out results
         print(f'{PREFIX}SQI to Observed Horizon = {sqiAllsky:.2f}')
@@ -442,7 +513,13 @@ def calculate_sky_quality(dnight,sets,filter):
                 'SQI_ZA80': sqiZ80,
                 'SQI_ZA70': sqiZ70,
                 'SQM_sky': skySQM,
-                'SQM_synthetic': synSQM
+                'SQM_synthetic': synSQM,
+                'zenith_mag': magZenith2,
+                'allsky_mag': allskyMag,
+                'za70_mag': za70Mag,
+                'brightest_mag': brightestMag,
+                'faintest_mag': faintestMag,
+                'scalar_illum': scalarIllum
             },
             index = [setnum-1]
         )
