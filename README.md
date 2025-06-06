@@ -149,8 +149,8 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > ```powershell
 > python naturalsky.py ROMO241004 1 V --airglowzenith=45
 > ```
-> ### Step 4: Record 
-> The `naturalsky.py` script will generate an Excel file `natsky_model_params.xlsx` located in the `calibdata` folder for the given data night. Edit the **Quality Flag** and **Notes** columns for each data set, indicating the quality of the natural sky model subtraction on a scale of 0 (bad) to 5 (excellent) and using the Notes column to describe any problems.
+> ### Step 4: Data Entry for Natural Sky Model
+> The `naturalsky.py` script will generate an Excel file `natsky_model_params.xlsx` located in the `CCD --> Data --> calibdata --> ROMO241004` folder. Edit the **Quality Flag** and **Notes** columns for each data set, indicating the quality of the natural sky model subtraction on a scale of 0 (bad) to 5 (excellent) and using the Notes column to describe any problems encountered.
 > ### Set 5: Generate Light Pollution Metrics 
 > ```powershell
 > python process_metrics.py
@@ -159,10 +159,10 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > The `process_metrics.py` script will save a summary of the data processing results into an Excel file named `ROMO241004.xlsx`, located in the `CCD --> Data --> tables` folder. A few data fields, listed below, require manual entry:
 > ```
 > NIGHT METADATA Sheet:
-> -- CAMERA
-> -- LENS
-> -- FILTER
-> -- INSTRUMENT
+> └─── CAMERA
+> └─── LENS
+> └─── FILTER
+> └─── INSTRUMENT
 > ```
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
