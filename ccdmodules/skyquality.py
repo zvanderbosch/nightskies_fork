@@ -492,10 +492,6 @@ def calculate_sky_quality(dnight,sets,filter,albedo):
         # Calculate scalar illuminance
         scalarIllum = 0.00254 * 10**(-0.4*allskyMag) * albedo / 4
 
-        print(scalarIllum)
-
-
-
         # Print out results
         print(f'{PREFIX}SQI to Observed Horizon = {sqiAllsky:.2f}')
         print(f'{PREFIX}SQI to Zenith Angle 80  = {sqiZ80:.2f}')
