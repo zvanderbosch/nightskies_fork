@@ -448,7 +448,7 @@ def calculate_sky_quality(dnight,sets,filter):
         )
         sqOutput.append(sqEntry)
 
-    # Create final outout
+    # Create final dataframe output
     sqOutput = pd.concat(sqOutput)
 
     return sqOutput
