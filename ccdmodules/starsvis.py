@@ -347,11 +347,12 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.ApplySymbologyFromLayer_management (natStarsLayerFile, symbologyNatStars)
 
         # Print out results
-        print(f'{PREFIX}Number of stars to flat horizon                           : {numstarsf}')
-        print(f'{PREFIX}Number of stars to observed horizon                       : {numstarsm}')
-        print(f'{PREFIX}Number of stars visible without any background brightness : {numstarse}')
-        print(f'{PREFIX}Number of stars visible in polluted sky                   : {numstars}')
-        print(f'{PREFIX}Number of stars visible in natural sky                    : {numstarsn}')
+        print(f'{PREFIX}Number of stars to flat horizon            : {numstarsf}')
+        print(f'{PREFIX}Number of stars to observed horizon        : {numstarsm}')
+        print(f'{PREFIX}Number of stars visible without background : {numstarse}')
+        print(f'{PREFIX}Number of stars visible in polluted sky    : {numstars}')
+        print(f'{PREFIX}Number of stars visible in natural sky     : {numstarsn}')
+        print(f'{PREFIX}Percent of stars visible in polluted sky   : {numstars/numstarsn*100:.1f} %')
 
         # Generate dataframe entry for given dataset
         numstarsEntry = pd.DataFrame(
