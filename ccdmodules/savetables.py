@@ -412,6 +412,13 @@ def mags_to_mccd(x):
     return 3.1831 * (34.08 * n.exp(20.7233 - 0.92104*x))
 
 
+def mlux_to_mag(x):
+    '''
+    Convert milli-lux to magnitudes
+    '''
+    return -13.98 - 2.5*n.log10(x/1000)
+
+
 def create_excel_template(excelFile):
     '''
     Function that creates the Excel template for storing output tables.
@@ -1115,30 +1122,64 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             setnum = int(s[0])
 
             # Get the needed photometric statistics
+            iaMetrics = metrics['illumall']
             sqMetrics = metrics['skyquality']
             sgMetrics = metrics['skyglow']
             svMetrics = metrics['starsvis']
+            iaIndex = (
+                (iaMetrics['dataset'] == setnum) &
+                (iaMetrics['filter'] == 'V'))
             sqIndex = (
                 (sqMetrics['dataset'] == setnum) &
-                (sqMetrics['filter'] == 'V')
-            )
+                (sqMetrics['filter'] == 'V'))
             sgIndex = (
                 (sgMetrics['dataset'] == setnum) &
-                (sgMetrics['filter'] == 'V')
-            )
+                (sgMetrics['filter'] == 'V'))
             svIndex = (
                 (svMetrics['dataset'] == setnum) &
-                (svMetrics['filter'] == 'V')
-            )
-            meanLumAllskyNl = sgMetrics[sgIndex]['skyave0'].iloc[0]
+                (svMetrics['filter'] == 'V'))
+            meanLumAllskyNl = iaMetrics[iaIndex]['skyave1'].iloc[0]
             zenithLumMag = sqMetrics[sqIndex]['zenith_mag'].iloc[0]
+            brightestLumNl = iaMetrics[iaIndex]['skymax0'].iloc[0]
+            totalIllumMlux = iaMetrics[iaIndex]['totalill0'].iloc[0]
 
 
             # Unit conversions
             meanLumAllskyMccd = nl_to_mccd(meanLumAllskyNl)  # nL to uCd
             meanLumAllskyMag =  nl_to_mags(meanLumAllskyNl)  # nL to mag/arcsec^2
             zenithLumMccd = mags_to_mccd(zenithLumMag)       # mag/arcsec^2 to uCd
+            brightestLumMccd = nl_to_mccd(brightestLumNl)    # nL to uCd
+            brightestLumMag = nl_to_mags(brightestLumNl)     # nL to mag/arcsec^2
+            totalIllumMag = mlux_to_mag(totalIllumMlux)      # mlux to mag
 
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)             # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)             # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=meanLumAllskyMag)   # Mean Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=4 , value=meanLumAllskyMccd)  # Mean Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 , value=zenithLumMag)       # Zenith Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=6 , value=zenithLumMccd)      # Zenith Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 , value=brightestLumMag)    # Brightest Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=8 , value=brightestLumMccd)   # Brightest Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 , value=totalIllumMag)      # All-sky luminous emittance (mag)
+            worksheet.cell(row=setnum+4, column=10, value=totalIllumMlux)     # All-sky luminous emittance (milli-Lux)
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=3 ).number_format = '0.00'    # Mean Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=4 ).number_format = '0.0'     # Mean Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 ).number_format = '0.00'    # Zenith Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '0.0'     # Zenith Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 ).number_format = '0.00'    # Brightest Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.0'     # Brightest Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.00'    # All-sky luminous emittance (mag)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'   # All-sky luminous emittance (milli-Lux)
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
 #------------------------------------------------------------------------------#
