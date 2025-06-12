@@ -391,6 +391,27 @@ DROPDOWNS = {
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
+def nl_to_mccd(x):
+    '''
+    Convert nano-Lambert to micro-Candela units
+    '''
+    return 3.1831 * x
+
+
+def nl_to_mags(x):
+    '''
+    Convert nano-Lambert to mag/arcsecond^2
+    '''
+    return 26.3308 - 2.5*n.log10(x)
+
+
+def mags_to_mccd(x):
+    '''
+    Convert mag/arcsecond^2 to micro-Candela
+    '''
+    return 3.1831 * (34.08 * n.exp(20.7233 - 0.92104*x))
+
+
 def create_excel_template(excelFile):
     '''
     Function that creates the Excel template for storing output tables.
@@ -981,7 +1002,7 @@ def append_natsky_params(excelFile, dnight, sets):
             natskyNotes = natskyParams['Notes'].iloc[0]
 
             # Unit conversions
-            airglowZenithMccd = 3.1831 * airglowZenithNl  # nano-Lambert to micro-Candela
+            airglowZenithMccd = nl_to_mccd(airglowZenithNl)  # nL to uCd
 
             # Set cell data values
             worksheet.cell(row=setnum+4, column=1 , value=dnight)             # Data night
@@ -1076,6 +1097,49 @@ def append_photometryV2(excelFile, dnight, sets, metrics):
                 cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
+def append_photometryV4(excelFile, dnight, sets, metrics):
+
+    # Sheet name
+    sheetName = "V4 PHOTOMETRY"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+
+            # Get the needed photometric statistics
+            sqMetrics = metrics['skyquality']
+            sgMetrics = metrics['skyglow']
+            svMetrics = metrics['starsvis']
+            sqIndex = (
+                (sqMetrics['dataset'] == setnum) &
+                (sqMetrics['filter'] == 'V')
+            )
+            sgIndex = (
+                (sgMetrics['dataset'] == setnum) &
+                (sgMetrics['filter'] == 'V')
+            )
+            svIndex = (
+                (svMetrics['dataset'] == setnum) &
+                (svMetrics['filter'] == 'V')
+            )
+            meanLumAllskyNl = sgMetrics[sgIndex]['skyave0'].iloc[0]
+            zenithLumMag = sqMetrics[sqIndex]['zenith_mag'].iloc[0]
+
+
+            # Unit conversions
+            meanLumAllskyMccd = nl_to_mccd(meanLumAllskyNl)  # nL to uCd
+            meanLumAllskyMag =  nl_to_mags(meanLumAllskyNl)  # nL to mag/arcsec^2
+            zenithLumMccd = mags_to_mccd(zenithLumMag)       # mag/arcsec^2 to uCd
+
+
 
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
@@ -1146,3 +1210,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
     # Append data to V2 Photometry sheet
     print(f'{PREFIX}Appending V2 photometric data...')
     append_photometryV2(excelFile, dnight, sets, metrics)
+
+    # Append data to V4 Photometry sheet
+    print(f'{PREFIX}Appending V4 photometric data...')
+    append_photometryV4(excelFile, dnight, sets, metrics)

@@ -26,6 +26,7 @@ import os
 import stat
 import arcpy
 import numpy as n
+import pandas as pd
 
 # Local Source
 import filepath
@@ -319,6 +320,7 @@ def calculate_statistics(dnight,sets,filter):
     hemiRaster = arcpy.sa.Raster(f"{filepath.rasters}hemirasterf")
 
     # Loop through each data set
+    illumallOutput = []
     for s in sets:
 
         # Set path for grid datasets
@@ -366,3 +368,21 @@ def calculate_statistics(dnight,sets,filter):
         # Calculate vertical illuminance
         print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
         resultDict = calc_vertical_illuminance(brightRaster, areaRaster, gridsetp, resultDict)
+
+        # Generate dataframe entry for given dataset
+        illumallEntry = pd.DataFrame(
+            {
+                'datanight': dnight,
+                'dataset': setnum,
+                'filter': filter,
+                **resultDict
+            },
+            index = [setnum-1]
+        )
+        illumallOutput.append(illumallEntry)
+
+
+    # Create final dataframe output
+    illumallOutput = pd.concat(illumallOutput)
+
+    return illumallOutput
