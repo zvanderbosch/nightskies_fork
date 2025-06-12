@@ -1197,7 +1197,7 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=15).number_format = '####'    # Num Stars after Extinction
             worksheet.cell(row=setnum+4, column=16).number_format = '####'    # Num Stars Visible, Natural Sky
             worksheet.cell(row=setnum+4, column=17).number_format = '####'    # Num Stars Visible, Polluted Sky
-            worksheet.cell(row=setnum+4, column=18).number_format = '0.000'   # Scalar Illuminance
+            worksheet.cell(row=setnum+4, column=18).number_format = '0.0000'  # Scalar Illuminance
 
             # Set cell styles
             ncol = len(SHEETDATA[sheetName]['colNames'])
