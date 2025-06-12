@@ -275,7 +275,7 @@ if __name__ == '__main__':
         p1 = Process(target=process_illumall,args=args)
         p1.start(); #update_progressbar(1,i)
         p1.join() ; #update_progressbar(1,i,q1.get()[0])
-        illumammMetrics = q1.get()[1]
+        illumallMetrics = q1.get()[1]
 
         # # Number/fraction of visible stars
         # q2=Queue(); args=(Dataset[i],sets,Filter,q2)
