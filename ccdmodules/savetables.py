@@ -1124,25 +1124,34 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             # Get the needed photometric statistics
             iaMetrics = metrics['illumall']
             sqMetrics = metrics['skyquality']
-            sgMetrics = metrics['skyglow']
             svMetrics = metrics['starsvis']
             iaIndex = (
                 (iaMetrics['dataset'] == setnum) &
-                (iaMetrics['filter'] == 'V'))
+                (iaMetrics['filter'] == 'V')
+            )
             sqIndex = (
                 (sqMetrics['dataset'] == setnum) &
-                (sqMetrics['filter'] == 'V'))
-            sgIndex = (
-                (sgMetrics['dataset'] == setnum) &
-                (sgMetrics['filter'] == 'V'))
+                (sqMetrics['filter'] == 'V')
+            )
             svIndex = (
                 (svMetrics['dataset'] == setnum) &
-                (svMetrics['filter'] == 'V'))
+                (svMetrics['filter'] == 'V')
+            )
             meanLumAllskyNl = iaMetrics[iaIndex]['skyave1'].iloc[0]
             zenithLumMag = sqMetrics[sqIndex]['zenith_mag'].iloc[0]
             brightestLumNl = iaMetrics[iaIndex]['skymax0'].iloc[0]
             totalIllumMlux = iaMetrics[iaIndex]['totalill0'].iloc[0]
+            horizontalIllumMlux = iaMetrics[iaIndex]['horizs'].iloc[0]
+            numStarsFlat = svMetrics[svIndex]['Nstar_flat_horizon'].iloc[0]
+            numStarsOnSky = svMetrics[svIndex]['Nstar_obs_horizon'].iloc[0]
+            numStarsExtincted = svMetrics[svIndex]['Nstar_vis_noBkg'].iloc[0]
+            numStarsVisNatsky = svMetrics[svIndex]['Nstar_vis_natsky'].iloc[0]
+            numStarsVisPolluted = svMetrics[svIndex]['Nstar_vis_polluted'].iloc[0]
+            scalarIllum = iaMetrics[iaIndex]['skyscalar'].iloc[0] * metrics['albedo'] / 4
 
+            # Find maximum vertical illuminance
+            vertColumns = [col for col in iaMetrics.columns if 'vert-' in col]
+            maxVertIllumMlux = max(iaMetrics[iaIndex][vertColumns].values[0])
 
             # Unit conversions
             meanLumAllskyMccd = nl_to_mccd(meanLumAllskyNl)  # nL to uCd
@@ -1153,16 +1162,24 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             totalIllumMag = mlux_to_mag(totalIllumMlux)      # mlux to mag
 
             # Set cell data values
-            worksheet.cell(row=setnum+4, column=1 , value=dnight)             # Data night
-            worksheet.cell(row=setnum+4, column=2 , value=setnum)             # Data set
-            worksheet.cell(row=setnum+4, column=3 , value=meanLumAllskyMag)   # Mean Luminance (mag/arcesc^2)
-            worksheet.cell(row=setnum+4, column=4 , value=meanLumAllskyMccd)  # Mean Luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=5 , value=zenithLumMag)       # Zenith Luminance (mag/arcesc^2)
-            worksheet.cell(row=setnum+4, column=6 , value=zenithLumMccd)      # Zenith Luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=7 , value=brightestLumMag)    # Brightest Luminance (mag/arcesc^2)
-            worksheet.cell(row=setnum+4, column=8 , value=brightestLumMccd)   # Brightest Luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=9 , value=totalIllumMag)      # All-sky luminous emittance (mag)
-            worksheet.cell(row=setnum+4, column=10, value=totalIllumMlux)     # All-sky luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)               # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)               # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=meanLumAllskyMag)     # Mean Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=4 , value=meanLumAllskyMccd)    # Mean Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 , value=zenithLumMag)         # Zenith Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=6 , value=zenithLumMccd)        # Zenith Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 , value=brightestLumMag)      # Brightest Luminance (mag/arcesc^2)
+            worksheet.cell(row=setnum+4, column=8 , value=brightestLumMccd)     # Brightest Luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 , value=totalIllumMag)        # All-sky luminous emittance (mag)
+            worksheet.cell(row=setnum+4, column=10, value=totalIllumMlux)       # All-sky luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11, value=horizontalIllumMlux)  # Horizontal Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=12, value=maxVertIllumMlux)     # Max Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13, value=numStarsFlat)         # Num Stars to Flat Horizon
+            worksheet.cell(row=setnum+4, column=14, value=numStarsOnSky)        # Num Stars to Observed Horizon
+            worksheet.cell(row=setnum+4, column=15, value=numStarsExtincted)    # Num Stars after Extinction
+            worksheet.cell(row=setnum+4, column=16, value=numStarsVisNatsky)    # Num Stars Visible, Natural Sky
+            worksheet.cell(row=setnum+4, column=17, value=numStarsVisPolluted)  # Num Stars Visible, Polluted Sky
+            worksheet.cell(row=setnum+4, column=18, value=scalarIllum)          # Scalar Illuminance
 
             # Set some cell number/date formats
             worksheet.cell(row=setnum+4, column=3 ).number_format = '0.00'    # Mean Luminance (mag/arcesc^2)
@@ -1173,6 +1190,14 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=8 ).number_format = '0.0'     # Brightest Luminance (micro-Candela)
             worksheet.cell(row=setnum+4, column=9 ).number_format = '0.00'    # All-sky luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=10).number_format = '0.000'   # All-sky luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'   # Horizontal Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'   # Max Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13).number_format = '####'    # Num Stars to Flat Horizon
+            worksheet.cell(row=setnum+4, column=14).number_format = '####'    # Num Stars to Observed Horizon
+            worksheet.cell(row=setnum+4, column=15).number_format = '####'    # Num Stars after Extinction
+            worksheet.cell(row=setnum+4, column=16).number_format = '####'    # Num Stars Visible, Natural Sky
+            worksheet.cell(row=setnum+4, column=17).number_format = '####'    # Num Stars Visible, Polluted Sky
+            worksheet.cell(row=setnum+4, column=18).number_format = '0.000'   # Scalar Illuminance
 
             # Set cell styles
             ncol = len(SHEETDATA[sheetName]['colNames'])
