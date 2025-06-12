@@ -269,14 +269,13 @@ if __name__ == '__main__':
         p0.start(); #update_progressbar(0,i)
         p0.join() ; #update_progressbar(0,i,q0.get()[0])
         skyglowMetrics = q0.get()[1]
-
-        print(skyglowMetrics)
         
-        # # All sources skyglow luminance & illuminance
-        # q1=Queue(); args=(Dataset[i],sets,Filter,q1)
-        # p1 = Process(target=process_illumall,args=args)
-        # # p1.start(); update_progressbar(1,i)
-        # # p1.join() ; update_progressbar(1,i,q1.get())
+        # All sources skyglow luminance & illuminance
+        q1=Queue(); args=(Dataset[i],sets,Filter,q1)
+        p1 = Process(target=process_illumall,args=args)
+        p1.start(); #update_progressbar(1,i)
+        p1.join() ; #update_progressbar(1,i,q1.get()[0])
+        illumammMetrics = q1.get()[1]
 
         # # Number/fraction of visible stars
         # q2=Queue(); args=(Dataset[i],sets,Filter,q2)
