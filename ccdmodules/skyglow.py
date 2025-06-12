@@ -27,6 +27,7 @@ import os
 import stat
 import arcpy
 import numpy as n
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # Local Source
@@ -359,6 +360,7 @@ def calculate_statistics(dnight,sets,filter):
     axList = [axAll,axZ80,axZ70]
 
     # Loop through each data set
+    skyglowOutput = []
     for s in sets:
 
         # Set path for grid datasets
@@ -418,6 +420,18 @@ def calculate_statistics(dnight,sets,filter):
         # Calculate zonal histograms
         print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
         calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
+
+        # Generate dataframe entry for given dataset
+        skyglowEntry = pd.DataFrame(
+            {
+                'datanight': dnight,
+                'dataset': setnum,
+                'filter': filter,
+                **resultDict
+            },
+            index = [setnum-1]
+        )
+        skyglowOutput.append(skyglowEntry)
 
 
         ''' Add horizontal/vertical illuminance data to figures '''
@@ -497,4 +511,9 @@ def calculate_statistics(dnight,sets,filter):
     figZ70.savefig(
         f"{filepath.calibdata}{dnight}/illuminance_za70.png",
         dpi=200, bbox_inches='tight'
-    ) 
+    )
+
+    # Create final dataframe output
+    skyglowOutput = pd.concat(skyglowOutput)
+
+    return skyglowOutput
