@@ -321,11 +321,11 @@ if __name__ == '__main__':
 
         # Load statistics from natsky_model_params.xlsx
         natskyAllSources = pd.read_excel(
-            f"{filepath.calibdata}{dnight}natsky_model_params.xlsx",
+            f"{filepath.calibdata}{dnight}/natsky_model_params.xlsx",
             sheet_name="Sky_Brightness_All_Sources"
         )
         natskyArtificial = pd.read_excel(
-            f"{filepath.calibdata}{dnight}natsky_model_params.xlsx",
+            f"{filepath.calibdata}{dnight}/natsky_model_params.xlsx",
             sheet_name="Sky_Brightness_Artificial_Only"
         )
 
