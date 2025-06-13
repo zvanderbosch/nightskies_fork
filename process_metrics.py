@@ -3,22 +3,43 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/14
+#Last updated: 2025/06/13
 #
-#This script...
-#	(1) 
+#This script executes the final steps of the NSNSD CCD data processing
+#pipeline, analyzing the observed sky brightness and inferred artificial
+#light mosaics and generating a variety of light pollution metrics. The 
+#final outputs are a table containing a summary of the metrics and metadata
+#associated with data collection and calibration, and graphics displaying
+#panoramic images of the observed sky conditions, the natural sky model,
+#and the inferred contribution to sky brightness from artificial light.
+#
 #
 #Note: 
 #
 #
 #Input: 
-#   (1) 
+#   (1) filelist.txt
+#   (2) Sky brightness mosaic (skybrightnl)
+#   (2) Anthropogenic light mosaic (anthlightnl)
 #
 #Output:
-#   (1) 
+#   (1) List of nearby cities ranked by Walker's Law values (calibdata)
+#       a. cities.xlsx
+#   (2) Vertical & Horizontal Illuminance plots (calibdata)
+#       a. illuminance_horizon.png
+#       b. illuminance_za80.png
+#       c. illuminance_za70.png
+#   (3) Panoramic graphics (graphics)
+#       a. <DATANIGHT>_fullres_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
+#       b. <DATANIGHT>_skybright_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
+#       c. <DATANIGHT>_natsky_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
+#       d. <DATANIGHT>_artificial_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
+#   (4) Sky Brightness and Light Pollution Metrics (tables)
+#       a. <DATANIGHT>.xlsx
+#
 #
 #History:
-#	Zach Vanderbosch -- Created script
+#	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
 #
 #-----------------------------------------------------------------------------#
 
@@ -171,7 +192,7 @@ def process_skyquality(*args):
     sqResults = pd.concat(sqResults,ignore_index=True)
     t2 = time.time()
     args[-1].put([t2-t1,sqResults])
-    print(f'{PREFIX}Processing Time (places): {t2-t1:.2f} seconds')
+    print(f'{PREFIX}Processing Time (skyquality): {t2-t1:.2f} seconds')
 
 
 def process_drawmaps(*args):
@@ -253,11 +274,8 @@ if __name__ == '__main__':
         if B_band[i] == 'Yes': 
             Filter.append('B')
         
+        # Get available datasets for the given night
         sets = dnight_sets[Dataset[i]]
-        K0 = (Dataset[i],)
-        K1 = (Dataset[i],sets)
-        K2 = (Dataset[i],sets,Filter)
-        K3 = (Dataset[i],sets,processor[0],int(centralAz[0]),location[0])
 
         # Status update
         print(
@@ -269,55 +287,63 @@ if __name__ == '__main__':
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
         p0 = Process(target=process_skyglow,args=args)
         p0.start(); update_progressbar(0,i)
-        p0.join() ; update_progressbar(0,i,q0.get()[0])
-        skyglowMetrics = q0.get()[1]
+        p0.join() ; r0 = q0.get()
+        update_progressbar(0,i,r0[0])
+        skyglowMetrics = r0[1]
         
         # All sources skyglow luminance & illuminance
         q1=Queue(); args=(Dataset[i],sets,Filter,q1)
         p1 = Process(target=process_illumall,args=args)
         p1.start(); update_progressbar(1,i)
-        p1.join() ; update_progressbar(1,i,q1.get()[0])
-        illumallMetrics = q1.get()[1]
+        p1.join() ; r1 = q1.get()
+        update_progressbar(1,i,r1[0])
+        illumallMetrics = r1[1]
 
         # Number/fraction of visible stars
         q2=Queue(); args=(Dataset[i],sets,Filter,q2)
         p2 = Process(target=process_starsvis,args=args)
         p2.start(); update_progressbar(2,i)
-        p2.join() ; update_progressbar(2,i,q2.get()[0])
-        numstars = q2.get()[1]
+        p2.join() ; r2 = q2.get()
+        update_progressbar(2,i,r2[0])
+        numstars = r2[1]
 
         # All-sky Light Pollution Ratio (ALR) model
         q3=Queue(); args=(Dataset[i],q3)
         p3 = Process(target=process_alrmodel,args=args)
         p3.start(); update_progressbar(3,i)
-        p3.join() ; update_progressbar(3,i,q3.get()[0])
-        siteALR = q3.get()[1]
+        p3.join() ; r3 = q3.get()
+        update_progressbar(3,i,r3[0])
+        siteALR = r3[1]
 
         # Calculate Site Albedo
         q4=Queue(); args=(Dataset[i], q4); 
         p4 = Process(target=process_albedomodel,args=args)
         p4.start(); update_progressbar(4,i)
-        p4.join() ; update_progressbar(4,i,q4.get()[0])
-        siteAlbedo = q4.get()[1]
+        p4.join() ; r4 = q4.get()
+        update_progressbar(4,i,r4[0])
+        siteAlbedo = r4[1]
 
         # Places
         q5=Queue(); args=(Dataset[i], q5)
         p5 = Process(target=process_places,args=args)
         p5.start(); update_progressbar(5,i)
-        p5.join() ; update_progressbar(5,i,q5.get())
+        p5.join() ; r5 = q5.get()
+        update_progressbar(5,i,r5)
 
         # Sky quality metrics
         q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
         p6 = Process(target=process_skyquality,args=args)
         p6.start(); update_progressbar(6,i)
-        p6.join() ; update_progressbar(6,i,q6.get()[0])
-        sqMetrics = q6.get()[1]
+        p6.join() ; r6 = q6.get()
+        update_progressbar(6,i,r6[0])
+        skyqualityMetrics = r6[1]
 
         # Draw maps
         q7=Queue(); args=(Dataset[i],sets,processor[0],int(centralAz[0]),location[0],q7)
         p7 = Process(target=process_drawmaps,args=args)
         p7.start(); update_progressbar(7,i)
-        p7.join() ; update_progressbar(7,i,q7.get())
+        p7.join() ; r7 = q7.get()
+        update_progressbar(7,i,r7)
 
         # Load statistics from natsky_model_params.xlsx
         natskyAllSources = pd.read_excel(
@@ -336,7 +362,7 @@ if __name__ == '__main__':
             'starsvis': numstars,
             'alr': siteALR,
             'albedo': siteAlbedo,
-            'skyquality': sqMetrics,
+            'skyquality': skyqualityMetrics,
             'natsky_all': natskyAllSources,
             'natsky_art': natskyArtificial
         }
@@ -354,7 +380,8 @@ if __name__ == '__main__':
         )
         p8 = Process(target=process_tables,args=tableArgs)
         p8.start(); update_progressbar(8,i)
-        p8.join() ; update_progressbar(8,i,q8.get())
+        p8.join() ; r8 = q8.get()
+        update_progressbar(8,i,r8)
 
         # Save the timing records for running the script
         n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
