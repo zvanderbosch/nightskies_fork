@@ -1859,3 +1859,11 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
     # Append data to ZONES sheet
     print(f'{PREFIX}Appending Zonal light pollution stats...')
     append_zones(excelFile, dnight, sets, metrics)
+
+    # Append data to V4 PERCENTILES ALL sheet
+    print(f'{PREFIX}Appending percentile stats for all sources...')
+    append_percentiles_all(excelFile, dnight, sets, metrics)
+
+    # Append data to V4 PERCENTILES LP sheet
+    print(f'{PREFIX}Appending percentile stats for artificial sources only...')
+    append_percentiles_lp(excelFile, dnight, sets, metrics)
