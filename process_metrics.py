@@ -226,9 +226,11 @@ if __name__ == '__main__':
                 dnight_sets[dnight].append(f)
         nsets.append(len(dnight_sets[dnight]))
         
-        #Make calibration folders
-        if not os.path.exists(filepath.calibdata+dnight):
-            os.makedirs(filepath.calibdata+dnight)
+        #Alert if calibdata directory not found
+        calsetp = f"{filepath.calibdata}{dnight}"
+        if not os.path.exists(calsetp):
+            print(f'ERROR: Calibdata directory not found at {calsetp}')
+            sys.exit(1)
 
     # Plot the progress bar template
     # barfig, barax = pb.bar_metrics(Dataset, nsets)
@@ -317,6 +319,16 @@ if __name__ == '__main__':
         p7.start(); #update_progressbar(7,i)
         p7.join() ; #update_progressbar(7,i,q7.get())
 
+        # Load statistics from natsky_model_params.xlsx
+        natskyAllSources = pd.read_excel(
+            f"{filepath.calibdata}{dnight}natsky_model_params.xlsx",
+            sheet_name="Sky_Brightness_All_Sources"
+        )
+        natskyArtificial = pd.read_excel(
+            f"{filepath.calibdata}{dnight}natsky_model_params.xlsx",
+            sheet_name="Sky_Brightness_Artificial_Only"
+        )
+
         # Combine light pollution metrics in a single parameter
         metricResults = {
             'skyglow': skyglowMetrics,
@@ -324,7 +336,9 @@ if __name__ == '__main__':
             'starsvis': numstars,
             'alr': siteALR,
             'albedo': siteAlbedo,
-            'skyquality': sqMetrics
+            'skyquality': sqMetrics,
+            'natsky_all': natskyAllSources,
+            'natsky_art': natskyArtificial
         }
 
         # Execute save tables process
