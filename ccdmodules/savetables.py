@@ -405,6 +405,13 @@ def nl_to_mags(x):
     return 26.3308 - 2.5*n.log10(x)
 
 
+def nl_to_mlux(raster):
+    '''
+    Unit conversion from nano-Lamberts to milli-Lux
+    '''
+    return (0.000000761544 * raster) / 314.159
+
+
 def mags_to_mccd(x):
     '''
     Convert mag/arcsecond^2 to micro-Candela
@@ -895,7 +902,6 @@ def append_extinction(excelFile, dnight, sets):
 
             # Set path for grid datasets
             setnum = int(s[0])
-            calsetp = f"{filepath.calibdata}{dnight}/"
 
             # Set cell data values
             worksheet.cell(row=setnum+4, column=1 , value=dnight)                # Data night
@@ -1528,6 +1534,242 @@ def append_lp_za70(excelFile, dnight, sets, metrics):
                 cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
 
 
+def append_zones(excelFile, dnight, sets, metrics):
+
+    # Sheet name
+    sheetName = "ZONES"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+
+            # Get the needed photometric statistics
+            sgMetrics = metrics['skyglow']
+            sgIndex = (
+                (sgMetrics['dataset'] == setnum) &
+                (sgMetrics['filter'] == 'V')
+            )
+            meanLumNlZone1 = sgMetrics[sgIndex]['zoneAve0'].iloc[0]
+            meanLumNlZone2 = sgMetrics[sgIndex]['zoneAve1'].iloc[0]
+            meanLumNlZone3 = sgMetrics[sgIndex]['zoneAve2'].iloc[0]
+            meanLumNlZone4 = sgMetrics[sgIndex]['zoneAve3'].iloc[0]
+            meanLumNlZone5 = sgMetrics[sgIndex]['zoneAve4'].iloc[0]
+            countsZone1 = sgMetrics[sgIndex]['zoneMax0'].iloc[0]
+            countsZone2 = sgMetrics[sgIndex]['zoneMax1'].iloc[0]
+            countsZone3 = sgMetrics[sgIndex]['zoneMax2'].iloc[0]
+            countsZone4 = sgMetrics[sgIndex]['zoneMax3'].iloc[0]
+            countsZone5 = sgMetrics[sgIndex]['zoneMax4'].iloc[0]
+
+            # Unit conversions
+            lumEmitMluxZone1 = nl_to_mlux(meanLumNlZone1) * countsZone1   # nL to mlux
+            lumEmitMluxZone2 = nl_to_mlux(meanLumNlZone2) * countsZone2   # nL to mlux
+            lumEmitMluxZone3 = nl_to_mlux(meanLumNlZone3) * countsZone3   # nL to mlux
+            lumEmitMluxZone4 = nl_to_mlux(meanLumNlZone4) * countsZone4   # nL to mlux
+            lumEmitMluxZone5 = nl_to_mlux(meanLumNlZone5) * countsZone5   # nL to mlux
+
+            # Calculate percentage of sky luminous emittance in each zone
+            zoneSum = lumEmitMluxZone1 + lumEmitMluxZone2 + lumEmitMluxZone3 + lumEmitMluxZone4 + lumEmitMluxZone5
+            pctZone1 = 100 * lumEmitMluxZone1 / zoneSum
+            pctZone2 = 100 * lumEmitMluxZone2 / zoneSum
+            pctZone3 = 100 * lumEmitMluxZone3 / zoneSum
+            pctZone4 = 100 * lumEmitMluxZone4 / zoneSum
+            pctZone5 = 100 * lumEmitMluxZone5 / zoneSum
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)            # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)            # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=meanLumNlZone1)    # Zone 1 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=4 , value=lumEmitMluxZone1)  # Zone 1 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=5 , value=pctZone1)          # Zone 1 Sky Percentage
+            worksheet.cell(row=setnum+4, column=6 , value=meanLumNlZone2)    # Zone 2 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=7 , value=lumEmitMluxZone2)  # Zone 2 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=8 , value=pctZone2)          # Zone 2 Sky Percentage
+            worksheet.cell(row=setnum+4, column=9 , value=meanLumNlZone3)    # Zone 3 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=10, value=lumEmitMluxZone3)  # Zone 3 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11, value=pctZone3)          # Zone 3 Sky Percentage
+            worksheet.cell(row=setnum+4, column=12, value=meanLumNlZone4)    # Zone 4 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=13, value=lumEmitMluxZone4)  # Zone 4 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=14, value=pctZone4)          # Zone 4 Sky Percentage
+            worksheet.cell(row=setnum+4, column=15, value=meanLumNlZone5)    # Zone 5 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=16, value=lumEmitMluxZone5)  # Zone 5 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=17, value=pctZone5)          # Zone 5 Sky Percentage
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=3 ).number_format = '####'   # Zone 1 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=4 ).number_format = '0.000'  # Zone 1 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=5 ).number_format = '0.0'    # Zone 1 Sky Percentage
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '####'   # Zone 2 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=7 ).number_format = '0.000'  # Zone 2 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.0'    # Zone 2 Sky Percentage
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '####'   # Zone 3 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'  # Zone 3 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.0'    # Zone 3 Sky Percentage
+            worksheet.cell(row=setnum+4, column=12).number_format = '####'   # Zone 4 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'  # Zone 4 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=14).number_format = '0.0'    # Zone 4 Sky Percentage
+            worksheet.cell(row=setnum+4, column=15).number_format = '####'   # Zone 5 mean Luminance (nL)
+            worksheet.cell(row=setnum+4, column=16).number_format = '0.000'  # Zone 5 luminous emittance (milli-Lux)
+            worksheet.cell(row=setnum+4, column=17).number_format = '0.0'    # Zone 5 Sky Percentage
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
+def append_percentiles_all(excelFile, dnight, sets, metrics):
+
+    # Sheet name
+    sheetName = "V4 PERCENTILES ALL"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+
+            # Get the needed photometric statistics
+            nsMetrics = metrics['natsky_all']
+            nsIndex = (
+                (nsMetrics['Data Set'] == setnum)
+            )
+            pctDeg0p5 = nl_to_mccd(nsMetrics[nsIndex]['0.5 Degree Percentile'].iloc[0])
+            pctDeg1p0 = nl_to_mccd(nsMetrics[nsIndex]['1.0 Degree Percentile'].iloc[0])
+            pct99 = nl_to_mccd(nsMetrics[nsIndex]['99th Percentile'].iloc[0])
+            pct98 = nl_to_mccd(nsMetrics[nsIndex]['98th Percentile'].iloc[0])
+            pct95 = nl_to_mccd(nsMetrics[nsIndex]['95th Percentile'].iloc[0])
+            pct90 = nl_to_mccd(nsMetrics[nsIndex]['90th Percentile'].iloc[0])
+            pct80 = nl_to_mccd(nsMetrics[nsIndex]['80th Percentile'].iloc[0])
+            pct70 = nl_to_mccd(nsMetrics[nsIndex]['70th Percentile'].iloc[0])
+            pct60 = nl_to_mccd(nsMetrics[nsIndex]['60th Percentile'].iloc[0])
+            pct50 = nl_to_mccd(nsMetrics[nsIndex]['50th Percentile'].iloc[0])
+            pct1 = nl_to_mccd(nsMetrics[nsIndex]['1st Percentile'].iloc[0])
+            pctMin = nl_to_mccd(nsMetrics[nsIndex]['Minimum (0.05 Percentile)'].iloc[0])
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)           # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)           # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=pctDeg0p5)        # 0.5 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=4 , value=pctDeg1p0)        # 1.0 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 , value=pct99)            # 99th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=6 , value=pct98)            # 98th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 , value=pct95)            # 95th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 , value=pct90)            # 90th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 , value=pct80)            # 80th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=10, value=pct70)            # 70th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=11, value=pct60)            # 60th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=12, value=pct50)            # 50th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=13, value=pct1)             #  1st Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=14, value=pctMin)           # 0.05 Percentile (micro-Candela)
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=3 ).number_format = '0.00'  # 0.5 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=4 ).number_format = '0.00'  # 1.0 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 ).number_format = '0.00'  # 99th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '0.00'  # 98th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 ).number_format = '0.00'  # 95th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.00'  # 90th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.00'  # 80th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.00'  # 70th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.00'  # 60th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=12).number_format = '0.00'  # 50th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=13).number_format = '0.00'  #  1st Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=14).number_format = '0.00'  # 0.05 Percentile (micro-Candela)
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
+def append_percentiles_lp(excelFile, dnight, sets, metrics):
+
+    # Sheet name
+    sheetName = "V4 PERCENTILES LP"
+
+    # Add to IMG COORDS sheet
+    with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+
+        # Grab the relevant worksheet
+        worksheet = writer.sheets[sheetName]
+
+        # Loop through each data set
+        for s in sets:
+
+            # Set path for grid datasets
+            setnum = int(s[0])
+
+            # Get the needed photometric statistics
+            nsMetrics = metrics['natsky_art']
+            nsIndex = (
+                (nsMetrics['Data Set'] == setnum)
+            )
+            pctDeg0p5 = nl_to_mccd(nsMetrics[nsIndex]['0.5 Degree Percentile'].iloc[0])
+            pctDeg1p0 = nl_to_mccd(nsMetrics[nsIndex]['1.0 Degree Percentile'].iloc[0])
+            pct99 = nl_to_mccd(nsMetrics[nsIndex]['99th Percentile'].iloc[0])
+            pct98 = nl_to_mccd(nsMetrics[nsIndex]['98th Percentile'].iloc[0])
+            pct95 = nl_to_mccd(nsMetrics[nsIndex]['95th Percentile'].iloc[0])
+            pct90 = nl_to_mccd(nsMetrics[nsIndex]['90th Percentile'].iloc[0])
+            pct80 = nl_to_mccd(nsMetrics[nsIndex]['80th Percentile'].iloc[0])
+            pct70 = nl_to_mccd(nsMetrics[nsIndex]['70th Percentile'].iloc[0])
+            pct60 = nl_to_mccd(nsMetrics[nsIndex]['60th Percentile'].iloc[0])
+            pct50 = nl_to_mccd(nsMetrics[nsIndex]['50th Percentile'].iloc[0])
+            pct1 = nl_to_mccd(nsMetrics[nsIndex]['1st Percentile'].iloc[0])
+
+            # Set cell data values
+            worksheet.cell(row=setnum+4, column=1 , value=dnight)           # Data night
+            worksheet.cell(row=setnum+4, column=2 , value=setnum)           # Data set
+            worksheet.cell(row=setnum+4, column=3 , value=pctDeg0p5)        # 0.5 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=4 , value=pctDeg1p0)        # 1.0 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 , value=pct99)            # 99th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=6 , value=pct98)            # 98th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 , value=pct95)            # 95th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 , value=pct90)            # 90th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 , value=pct80)            # 80th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=10, value=pct70)            # 70th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=11, value=pct60)            # 60th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=12, value=pct50)            # 50th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=13, value=pct1)             #  1st Percentile (micro-Candela)
+
+            # Set some cell number/date formats
+            worksheet.cell(row=setnum+4, column=3 ).number_format = '0.00'  # 0.5 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=4 ).number_format = '0.00'  # 1.0 Degree Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=5 ).number_format = '0.00'  # 99th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '0.00'  # 98th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=7 ).number_format = '0.00'  # 95th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.00'  # 90th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.00'  # 80th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.00'  # 70th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.00'  # 60th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=12).number_format = '0.00'  # 50th Percentile (micro-Candela)
+            worksheet.cell(row=setnum+4, column=13).number_format = '0.00'  #  1st Percentile (micro-Candela)
+
+            # Set cell styles
+            ncol = len(SHEETDATA[sheetName]['colNames'])
+            for j in range(ncol):
+                cell = worksheet.cell(row=setnum+4, column=j+1)
+                cell.font = SHEETSTYLES['data_fields']['font']
+                cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+
+
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
@@ -1613,3 +1855,7 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
     # Append data to LP70 sheet
     print(f'{PREFIX}Appending ZA-70 light pollution stats...')
     append_lp_za70(excelFile, dnight, sets, metrics)
+
+    # Append data to ZONES sheet
+    print(f'{PREFIX}Appending Zonal light pollution stats...')
+    append_zones(excelFile, dnight, sets, metrics)
