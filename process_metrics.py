@@ -233,9 +233,9 @@ if __name__ == '__main__':
             sys.exit(1)
 
     # Plot the progress bar template
-    # barfig, barax = pb.bar_metrics(Dataset, nsets)
-    # print('You have 5 seconds to adjust the position of the progress bar window')
-    # plt.pause(5) #users have 5 seconds to adjust the figure position
+    barfig, barax = pb.bar_metrics(Dataset, nsets)
+    print('You have 5 seconds to adjust the position of the progress bar window')
+    plt.pause(5) #users have 5 seconds to adjust the figure position
 
     # Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -268,56 +268,56 @@ if __name__ == '__main__':
         # Anthropogenic skyglow luminance & illuminance
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
         p0 = Process(target=process_skyglow,args=args)
-        p0.start(); #update_progressbar(0,i)
-        p0.join() ; #update_progressbar(0,i,q0.get()[0])
+        p0.start(); update_progressbar(0,i)
+        p0.join() ; update_progressbar(0,i,q0.get()[0])
         skyglowMetrics = q0.get()[1]
         
         # All sources skyglow luminance & illuminance
         q1=Queue(); args=(Dataset[i],sets,Filter,q1)
         p1 = Process(target=process_illumall,args=args)
-        p1.start(); #update_progressbar(1,i)
-        p1.join() ; #update_progressbar(1,i,q1.get()[0])
+        p1.start(); update_progressbar(1,i)
+        p1.join() ; update_progressbar(1,i,q1.get()[0])
         illumallMetrics = q1.get()[1]
 
         # Number/fraction of visible stars
         q2=Queue(); args=(Dataset[i],sets,Filter,q2)
         p2 = Process(target=process_starsvis,args=args)
-        p2.start(); #update_progressbar(2,i)
-        p2.join() ; #update_progressbar(2,i,q2.get()[0])
+        p2.start(); update_progressbar(2,i)
+        p2.join() ; update_progressbar(2,i,q2.get()[0])
         numstars = q2.get()[1]
 
         # All-sky Light Pollution Ratio (ALR) model
         q3=Queue(); args=(Dataset[i],q3)
         p3 = Process(target=process_alrmodel,args=args)
-        p3.start(); #update_progressbar(3,i)
-        p3.join() ; #update_progressbar(3,i,q3.get()[0])
+        p3.start(); update_progressbar(3,i)
+        p3.join() ; update_progressbar(3,i,q3.get()[0])
         siteALR = q3.get()[1]
 
         # Calculate Site Albedo
         q4=Queue(); args=(Dataset[i], q4); 
         p4 = Process(target=process_albedomodel,args=args)
-        p4.start(); #update_progressbar(4,i)
-        p4.join() ; #update_progressbar(4,i,q4.get()[0])
+        p4.start(); update_progressbar(4,i)
+        p4.join() ; update_progressbar(4,i,q4.get()[0])
         siteAlbedo = q4.get()[1]
 
         # Places
         q5=Queue(); args=(Dataset[i], q5)
         p5 = Process(target=process_places,args=args)
-        p5.start(); #update_progressbar(5,i)
-        p5.join() ; #update_progressbar(5,i,q5.get())
+        p5.start(); update_progressbar(5,i)
+        p5.join() ; update_progressbar(5,i,q5.get())
 
         # Sky quality metrics
         q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
         p6 = Process(target=process_skyquality,args=args)
-        p6.start(); #update_progressbar(6,i)
-        p6.join() ; #update_progressbar(6,i,q6.get()[0])
+        p6.start(); update_progressbar(6,i)
+        p6.join() ; update_progressbar(6,i,q6.get()[0])
         sqMetrics = q6.get()[1]
 
         # Draw maps
         q7=Queue(); args=(Dataset[i],sets,processor[0],int(centralAz[0]),location[0],q7)
         p7 = Process(target=process_drawmaps,args=args)
-        p7.start(); #update_progressbar(7,i)
-        p7.join() ; #update_progressbar(7,i,q7.get())
+        p7.start(); update_progressbar(7,i)
+        p7.join() ; update_progressbar(7,i,q7.get())
 
         # Load statistics from natsky_model_params.xlsx
         natskyAllSources = pd.read_excel(
@@ -353,11 +353,11 @@ if __name__ == '__main__':
             q8
         )
         p8 = Process(target=process_tables,args=tableArgs)
-        p8.start(); #update_progressbar(8,i)
-        p8.join() ; #update_progressbar(8,i,q8.get())
+        p8.start(); update_progressbar(8,i)
+        p8.join() ; update_progressbar(8,i,q8.get())
 
-        # # Save the timing records for running the script
-        # # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
-        # # barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_metrics.png')
+        # Save the timing records for running the script
+        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_metrics.txt', Z, fmt='%4.1f')
+        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_metrics.png')
 
     
