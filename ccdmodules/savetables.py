@@ -1658,7 +1658,7 @@ def append_percentiles_all(excelFile, dnight, sets, metrics):
             pct80 = nl_to_mccd(nsMetrics[nsIndex]['80th Percentile'].iloc[0])
             pct70 = nl_to_mccd(nsMetrics[nsIndex]['70th Percentile'].iloc[0])
             pct60 = nl_to_mccd(nsMetrics[nsIndex]['60th Percentile'].iloc[0])
-            pct50 = nl_to_mccd(nsMetrics[nsIndex]['50th Percentile'].iloc[0])
+            pct50 = nl_to_mccd(nsMetrics[nsIndex]['Median'].iloc[0])
             pct1 = nl_to_mccd(nsMetrics[nsIndex]['1st Percentile'].iloc[0])
             pctMin = nl_to_mccd(nsMetrics[nsIndex]['Minimum (0.05 Percentile)'].iloc[0])
 
@@ -1731,7 +1731,7 @@ def append_percentiles_lp(excelFile, dnight, sets, metrics):
             pct80 = nl_to_mccd(nsMetrics[nsIndex]['80th Percentile'].iloc[0])
             pct70 = nl_to_mccd(nsMetrics[nsIndex]['70th Percentile'].iloc[0])
             pct60 = nl_to_mccd(nsMetrics[nsIndex]['60th Percentile'].iloc[0])
-            pct50 = nl_to_mccd(nsMetrics[nsIndex]['50th Percentile'].iloc[0])
+            pct50 = nl_to_mccd(nsMetrics[nsIndex]['Median'].iloc[0])
             pct1 = nl_to_mccd(nsMetrics[nsIndex]['1st Percentile'].iloc[0])
 
             # Set cell data values
