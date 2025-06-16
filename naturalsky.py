@@ -234,7 +234,7 @@ class Model(object):
         """
         d,s,f = self.dnight, self.set, self.filter
         extinctionfile = f"{filepath.calibdata}{d}/extinction_fit_{f}.txt"
-        self.extinction = abs(n.loadtxt(extinctionfile, ndmin=2)[s-1,6])
+        self.extinction = abs(n.loadtxt(extinctionfile, ndmin=2)[s-1,9])
         
     def get_1d_za(self,):
         """
