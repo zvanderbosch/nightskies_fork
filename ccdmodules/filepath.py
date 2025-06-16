@@ -65,6 +65,3 @@ spreadsheets = f"{base}/Data/spreadsheets/"
 
 # Directory for output tables
 tables = f"{base}/Data/tables/"
-
-# Directory for scripts
-scripts = f"{base}/Scripts/"
