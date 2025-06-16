@@ -28,7 +28,8 @@ from email.encoders import encode_noop
 import printcolors as pc
 
 # Define print status prefix
-PREFIX = f'{pc.GREEN}client.py      {pc.END}: '
+scriptName = 'client.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 
 def json2python(data):

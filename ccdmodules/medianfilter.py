@@ -40,7 +40,8 @@ import filepath
 import printcolors as pc
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}medianfilter.py{pc.END}: '
+scriptName = 'medianfilter.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#    
 def FilterImage(arg):

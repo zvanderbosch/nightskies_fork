@@ -22,7 +22,7 @@
 
 
 # Base directory for CCD data products
-base = "C:/Users/zvanderbosch/data/CCD"
+base = "G:/CCD"
 
 # Astrometry.net API key
 apikey = 'kdvqtjbqkbkbuyzb'

@@ -49,7 +49,8 @@ import filepath
 import ccdmodules.printcolors as pc
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}pointing.py    {pc.END}: '
+scriptName = 'pointing.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
     

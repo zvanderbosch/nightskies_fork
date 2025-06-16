@@ -48,7 +48,8 @@ import filepath
 import printcolors as pc
 
 # Define print staus prefix
-PREFIX = f'{pc.GREEN}register.py    {pc.END}: '
+scriptName = 'register.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
 

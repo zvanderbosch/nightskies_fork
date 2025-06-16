@@ -69,7 +69,8 @@ import printcolors as pc
 import filepath
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}extinction.py  {pc.END}: '
+scriptName = 'extinction.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 ZS = ZScaleInterval(
     n_samples=10000, contrast=0.15, max_reject=0.5, 

@@ -41,7 +41,8 @@ import filepath
 import printcolors as pc
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}galactic.py    {pc.END}: '
+scriptName = 'galactic.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
 if not os.path.exists(f'{filepath.rasters}scratch_galactic/'):

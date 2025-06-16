@@ -36,7 +36,8 @@ import filepath
 import printcolors as pc
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}coordinates.py {pc.END}: '
+scriptName = 'coordinates.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
 def bearing_angle(lat1, lon1, lat2, lon2):

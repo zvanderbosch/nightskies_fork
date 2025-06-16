@@ -45,7 +45,8 @@ import filepath
 import printcolors as pc
 
 # Define print staus prefix
-PREFIX = f'{pc.GREEN}reduce.py      {pc.END}: '
+scriptName = 'reduce.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
 

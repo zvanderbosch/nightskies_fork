@@ -44,7 +44,8 @@ import filepath
 import printcolors as pc
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}medianmosaic.py{pc.END}: '
+scriptName = 'medianmosaic.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #-----------------------------------------------------------------------------#
 if not os.path.exists(filepath.rasters+'scratch_median/'):
