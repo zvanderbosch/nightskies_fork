@@ -1427,7 +1427,7 @@ class MosaicAnalysis(_MosaicAnalysis):
 
         # Get needed paths
         gridsetp = self.paths['griddata']
-        sheetssetp = self.paths['sheets']
+        graphicssetp = self.paths['mapgraphics']
 
         # Get the statistics
         stats = self.stats
@@ -1540,9 +1540,9 @@ class MosaicAnalysis(_MosaicAnalysis):
         ## Combine histogram and data, model, artificial images
 
         # Load image descriptions
-        imdata = Image.open(f"{sheetssetp}data.png")
-        immodel = Image.open(f"{sheetssetp}model.png")
-        imskyglow = Image.open(f"{sheetssetp}skyglow.png")
+        imdata = Image.open(f"{graphicssetp}data.png")
+        immodel = Image.open(f"{graphicssetp}model.png")
+        imskyglow = Image.open(f"{graphicssetp}skyglow.png")
 
         # Combine all figures into one with PIL.Image
         imgPath = f"{gridsetp}/S_0{self.set}"
@@ -1614,7 +1614,7 @@ def main():
         'skyglow': f"{gridsetp}/S_0{set}/skyglow/",
         'airglow': f"{gridsetp}/S_0{set}/airglow/",
         'scratch': f"{filepath.rasters}scratch_natsky/",
-        'sheets': f"{filepath.scripts}/ACP/spreadsheets/"
+        'mapgraphics': f"{filepath.maps}graphics/"
     }
 
     # Create/clear natsky, skyglow, airglow, and scratch directories

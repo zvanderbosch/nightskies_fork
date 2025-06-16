@@ -152,7 +152,7 @@ def calculate_places(dnight):
             lat = H['LATITUDE']
 
     # Load in the Places21k spreadsheet with 2010 census data
-    placesFile = f"{filepath.scripts}ACP/spreadsheets/Places21k.xlsx"
+    placesFile = f"{filepath.spreadsheets}Places21k.xlsx"
     places = pd.read_excel(placesFile)
 
     # Calculate great circle distances
