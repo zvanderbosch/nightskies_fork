@@ -200,7 +200,7 @@ def solve(fn):
     #solve for astrometry; see "python client.py -help"
     fn_base = fn.split("\\")[-1][:-4]
     cmd = [
-        'python', 'client.py', 
+        'python', './ccdmodules/client.py', 
         '--apikey', f'{filepath.apikey}',
         '--upload', f'{fn}',
         '--parity', '1',
@@ -230,7 +230,7 @@ def solve(fn):
         #solve for astrometry; see "python client.py -help"
         fn_base = fn.split("\\")[-1][:-4]
         cmd = [
-            'python', 'client.py', 
+            'python', './ccdmodules/client.py', 
             '--apikey', f'{filepath.apikey}',
             '--upload', f'{fn}',
             '--parity', '1',
