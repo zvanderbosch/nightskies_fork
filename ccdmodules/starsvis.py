@@ -208,7 +208,7 @@ def calculate_stars_visible(dnight,sets,filter):
         
         # Get extinction coefficient
         extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.txt"
-        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[setnum-1,6])
+        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[setnum-1,9])
 
         # Load in median sky brightness and natural sky rasters
         brightRasterMag = arcpy.sa.Raster(f"{gridsetp}median/skybrightmags")

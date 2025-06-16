@@ -214,7 +214,7 @@ def mosaic(dnight, sets, filter):
         #read in the best-fit zeropoint and plate scale
         file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
         zeropoint, platescale, exptime = n.loadtxt(
-            file, usecols=(4,16,17), unpack=True, ndmin=2
+            file, usecols=(8,16,17), unpack=True, ndmin=2
         )
         
         # Status Update

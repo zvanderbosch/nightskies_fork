@@ -294,7 +294,7 @@ def calc_skyonly_SQM(dataNight, setNum, filterName):
     # Get zeropoint, extinction coeff, plate scale, & exposure time
     extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
     extData = n.loadtxt(extfile, ndmin=2)
-    zeropoint = extData[setNum-1,4]
+    zeropoint = extData[setNum-1,8]
     platescale = extData[setNum-1,16]
     exptime = extData[setNum-1,17]
     psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
@@ -335,7 +335,7 @@ def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
     # Get zeropoint, extinction coeff, plate scale, & exposure time
     extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
     extData = n.loadtxt(extfile, ndmin=2)
-    extCoeff = abs(extData[setNum-1,6])
+    extCoeff = abs(extData[setNum-1,9])
 
     # Get Site time and location for data set midpoint
     imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
