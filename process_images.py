@@ -167,11 +167,22 @@ def fit_zeropoint(*args):
         arg = list(args[:-1])
         arg[2] = filter
         nstar, bestfit_file = EX.extinction(*arg)
-        bestfitp = list(n.loadtxt(bestfit_file, dtype=str, comments=None, 
-                        delimiter='!'))
+
+        # Log and print out fit results
         logm(m,'%s-band best fit zeropoint and extinction: ' %filter)
-        logm(m, bestfitp)
-        logm(m, '\n')        
+        columnNames = n.loadtxt(bestfit_file, dtype=str, comments=None, max_rows=1,)
+        bestfitp = n.loadtxt(bestfit_file,dtype=str,ndmin=2)
+        nrow,ncol = bestfitp.shape
+        setString = f"{'':23s}"
+        for j in range(nrow):
+            setString += f"Set-{j+1:<6d}"
+        logm(m,setString)
+        for i in range(ncol-1):
+            rowString = f"{columnNames[i+2]:23s}"
+            for j in range(nrow):
+                rowString += f"{bestfitp[j,i+1]:10s}"
+            logm(m,rowString)
+
     t2 = time.time()
     args[-1].put(t2-t1)
     args[-1].put(m)
