@@ -678,7 +678,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         )
         ax.plot(
             a, extFixed*a + zeropoint, '--', lw=2, c='k',
-            label='Best fit (ZP-Fixed): %.3fx+%.2f' %(extFree,zeropoint)
+            label='Best fit (ZP-Fixed): %.3fx+%.2f' %(extFixed,zeropoint)
         )
         ax.errorbar(
             0, zpFree, zpFree_err, fmt='o', mfc='None', mec='C1',
