@@ -265,9 +265,9 @@ if __name__ == '__main__':
     
     #Check the calibration files exist    
     for i in range(len(filelist)):
-        if V_band == 'Yes':
+        if V_band[i] == 'Yes':
             open(filepath.flats+Flat_V[i])
-        if B_band == 'Yes':
+        if B_band[i] == 'Yes':
             open(filepath.flats+Flat_B[i])
         open(filepath.lincurve+Curve[i]+'.txt')
     
