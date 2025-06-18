@@ -702,21 +702,51 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         # Status update
         print(f'{PREFIX}{filter}-band Set {s[0]} COMPLETE')
     
-    #save the bestfit zeropoint and extinction coefficient     
-    fileout = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-    fmt = [
-        '%5i'   , '%11i'  , '%14i'  , '%18i'  , # H1 columns
-        '%15.3f', '%19.3f', '%16.3f', '%20.3f', # H2 columns
-        '%18.2f', '%18.3f', '%22.3f',           # H3 columns
-        '%20.3f', '%17.3f', '%21.3f',           # H4 columns
-        '%8.3f' , '%8.3f' , '%17.3f', '%11.1f'  # H5 columns
+    # Define column names for output
+    columnNames = [
+        "set", 
+        "img_solved", 
+        "num_star_used", 
+        "num_star_rejected",
+        "zeropoint_free", 
+        "zeropoint_free_err", 
+        "extinction_free", 
+        "extinction_free_err",
+        "zeropoint_default", 
+        "extinction_fixedZ", 
+        "extinction_fixedZ_err",
+        "color_coeff_default", 
+        "color_coeff_free", 
+        "color_coeff_free_err",
+        "x_scale", 
+        "y_scale", 
+        "avg_scale",
+        "exptime"
     ]
-    H1 = "set  img_solved  num_star_used  num_star_rejected  "
-    H2 = "zeropoint_free  zeropoint_free_err  extinction_free  extinction_free_err  "
-    H3 = "zeropoint_default  extinction_fixedZ  extinction_fixedZ_err  "
-    H4 = "color_coeff_default  color_coeff_free  color_coeff_free_err  "
-    H5 = "x_scale  y_scale  avg_scale['/pix]  exptime[s]"
-    n.savetxt(fileout,n.array((zeropoint_dnight)),fmt=fmt,header=H1+H2+H3+H4+H5)
+
+    # Save fit results to excel file
+    fileout = filepath.calibdata+dnight+'/extinction_fit_%s.xlsx' %filter
+    outputDF = pd.DataFrame(
+        data = zeropoint_dnight, columns = columnNames
+    )
+    outputDF.to_excel(
+        fileout, float_format='%.5f', index=False
+    )
+
+    # Adjust excel column widths
+    with pd.ExcelWriter(fileout, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
+        workbook = writer.book
+        worksheet = workbook['Sheet1']
+        for col in worksheet.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except: pass
+            adjusted_width = max_length + 2
+            worksheet.column_dimensions[column].width = adjusted_width
     
     return len(stars), fileout
 
