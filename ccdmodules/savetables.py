@@ -1017,18 +1017,22 @@ def append_natsky_params(excelFile, dnight, sets):
 
             # Load in natural sky model parameters
             natskyFile = f"{calsetp}natsky_model_params.xlsx"
-            natskyParams = pd.read_excel(natskyFile)
-            airglowHeight = natskyParams['Emitting Layer Height (km)'].iloc[0]
-            siteElevation = natskyParams['Site Elevation (m)'].iloc[0]
-            extCoeff = natskyParams['Extinction Coefficient'].iloc[0]
-            airglowZenithNl = natskyParams['Zenith Airglow (nL)'].iloc[0]
+            natskyParams = pd.read_excel(
+                natskyFile, sheet_name="Model_Parameters"
+            )
 
-            airglowExt = natskyParams['Airglow Extinction Constant'].iloc[0]
-            adlFactor = natskyParams['A.D.L. Multiplier'].iloc[0]
-            zodiacalExt = natskyParams['Zodiacal Extinction Constant'].iloc[0]
-            galacticExt = natskyParams['Galactic Extinction Constant'].iloc[0]
-            fitQuality = natskyParams['Quality Flag (0-5)'].iloc[0]
-            natskyNotes = natskyParams['Notes'].iloc[0]
+            # Extract individual model parameters
+            setIdx = (natskyParams['Data Set'] == setnum)
+            airglowHeight = natskyParams[setIdx]['Emitting Layer Height (km)'].iloc[0]
+            siteElevation = natskyParams[setIdx]['Site Elevation (m)'].iloc[0]
+            extCoeff = natskyParams[setIdx]['Extinction Coefficient'].iloc[0]
+            airglowZenithNl = natskyParams[setIdx]['Zenith Airglow (nL)'].iloc[0]
+            airglowExt = natskyParams[setIdx]['Airglow Extinction Constant'].iloc[0]
+            adlFactor = natskyParams[setIdx]['A.D.L. Multiplier'].iloc[0]
+            zodiacalExt = natskyParams[setIdx]['Zodiacal Extinction Constant'].iloc[0]
+            galacticExt = natskyParams[setIdx]['Galactic Extinction Constant'].iloc[0]
+            fitQuality = natskyParams[setIdx]['Quality Flag (0-5)'].iloc[0]
+            natskyNotes = natskyParams[setIdx]['Notes'].iloc[0]
 
             # Unit conversions
             airglowZenithMccd = nl_to_mccd(airglowZenithNl)  # nL to uCd
