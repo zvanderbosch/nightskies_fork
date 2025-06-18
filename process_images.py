@@ -45,6 +45,7 @@ import sys
 import time
 import warnings
 import numpy as n
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from datetime import datetime as Dtime
@@ -170,17 +171,18 @@ def fit_zeropoint(*args):
 
         # Log and print out fit results
         logm(m,'%s-band best fit zeropoint and extinction: ' %filter)
-        columnNames = n.loadtxt(bestfit_file, dtype=str, comments=None, max_rows=1,)
-        bestfitp = n.loadtxt(bestfit_file,dtype=str,ndmin=2)
+        bestfitDF = pd.read_excel(bestfit_file, dtype=str)
+        columnNames = bestfitDF.columns
+        bestfitp = bestfitDF.values
         nrow,ncol = bestfitp.shape
         setString = f"{'':23s}"
         for j in range(nrow):
-            setString += f"Set-{j+1:<6d}"
+            setString += f"Set-{j+1:<8d}"
         logm(m,setString)
         for i in range(ncol-1):
-            rowString = f"{columnNames[i+2]:23s}"
+            rowString = f"{columnNames[i+1]:23s}"
             for j in range(nrow):
-                rowString += f"{bestfitp[j,i+1]:10s}"
+                rowString += f"{bestfitp[j,i+1]:12s}"
             logm(m,rowString)
 
     t2 = time.time()
@@ -294,7 +296,7 @@ if __name__ == '__main__':
         barfig.canvas.manager.window.move(2755,0)  
     else:
         print('You have 5 seconds to adjust the position of the progress bar window')
-        plt.pause(5) #users have 5 seconds to adjust the figure position
+        plt.pause(0.1) #users have 5 seconds to adjust the figure position
     
     #Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -341,24 +343,24 @@ if __name__ == '__main__':
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # Run processes
-        reduce_images(*K0)                            #image reduction   
-        register_coord(*K2)                           #pointing 
-        p2.start(); update_progressbar(2,i)           #pointing error
+        # reduce_images(*K0)                            #image reduction   
+        # register_coord(*K2)                           #pointing 
+        # p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        p4.start(); update_progressbar(4,i)           #median filter
-        p2.join() ; update_progressbar(2,i,q2.get())
-        p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
-        p5.join() ; update_progressbar(5,i,q5.get())
+        # p4.start(); update_progressbar(4,i)           #median filter
+        # p2.join() ; update_progressbar(2,i,q2.get())
+        # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+        # p5.join() ; update_progressbar(5,i,q5.get())
         p3.join() ; update_progressbar(3,i,q3.get())
-        p6.start(); update_progressbar(6,i)           #full mosaic
-        p7.start(); update_progressbar(7,i)           #galactic mosaic
-        p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        p9.start(); update_progressbar(9,i)           #median mosaic
-        p4.join() ; update_progressbar(4,i,q4.get())
-        p6.join() ; update_progressbar(6,i,q6.get())
-        p7.join() ; update_progressbar(7,i,q7.get())
-        p8.join() ; update_progressbar(8,i,q8.get())
-        p9.join() ; update_progressbar(9,i,q9.get())
+        # p6.start(); update_progressbar(6,i)           #full mosaic
+        # p7.start(); update_progressbar(7,i)           #galactic mosaic
+        # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
+        # p9.start(); update_progressbar(9,i)           #median mosaic
+        # p4.join() ; update_progressbar(4,i,q4.get())
+        # p6.join() ; update_progressbar(6,i,q6.get())
+        # p7.join() ; update_progressbar(7,i,q7.get())
+        # p8.join() ; update_progressbar(8,i,q8.get())
+        # p9.join() ; update_progressbar(9,i,q9.get())
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
