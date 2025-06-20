@@ -18,7 +18,7 @@
 #
 #
 #Input: 
-#   (1) filelist.txt
+#   (1) filelist.xlsx
 #   (2) Sky brightness mosaic (skybrightnl)
 #   (2) Anthropogenic light mosaic (anthlightnl)
 #
@@ -231,9 +231,17 @@ if __name__ == '__main__':
         
     #------------ Read in the processing list and initialize ---------------------#
 
-    # Read in the processing dataset list and the calibration file names 
-    filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, _,_,_,_, processor, centralAz, location = filelist.T
+    # Read in processing dataset list and skip rows where Process = No
+    filelist = pd.read_excel(f"{filepath.processlist}filelist.xlsx")
+    filelist = filelist.loc[filelist['Process'] == 'Yes'].reset_index(drop=True)
+
+    # Get metadata for each dataset to be processed
+    Dataset = filelist['Dataset'].values
+    V_band = filelist['V_band'].values
+    B_band = filelist['B_band'].values
+    processor = filelist['Processor'].values
+    centralAz = filelist['Central_AZ'].values
+    location = filelist['Location'].values
     
     # Determine the number of data sets collected in each night 
     img_sets = set(['1st','2nd','3rd','4th','5th','6th','7th','8th'])
@@ -339,7 +347,7 @@ if __name__ == '__main__':
         skyqualityMetrics = r6[1]
 
         # Draw maps
-        q7=Queue(); args=(Dataset[i],sets,processor[0],int(centralAz[0]),location[0],q7)
+        q7=Queue(); args=(Dataset[i],sets,processor[i],int(centralAz[i]),location[i],q7)
         p7 = Process(target=process_drawmaps,args=args)
         p7.start(); update_progressbar(7,i)
         p7.join() ; r7 = q7.get()
@@ -372,9 +380,9 @@ if __name__ == '__main__':
         tableArgs = (
             Dataset[i], 
             sets, 
-            processor[0],
-            int(centralAz[0]),
-            location[0], 
+            processor[i],
+            int(centralAz[i]),
+            location[i], 
             metricResults,
             q8
         )

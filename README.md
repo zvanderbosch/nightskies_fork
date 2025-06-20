@@ -74,7 +74,7 @@ Below are a few common issues that have been encountered during installation or 
 The directory structure assumed by the pipeline looks as follows, with a description of the primary contents of each folder to the right:
 ```
 CCD 
-└─── Data                          -Contains the filelist.txt processing list
+└─── Data                          -Contains the filelist.xlsx processing list
 │    └─── calibdata                -Calibrated images and data validation outputs
 │    └─── fielddata                -Raw images and calibration files
 │    └─── graphics                 -Final all-sky skyglow images per data set
@@ -114,8 +114,9 @@ CCD
 2. Ensure raw data is placed in the `fielddata` directory.
 3. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
 4. In the `filepath.py` script, update the `apikey` parameter with your own [Astrometry.net](https://nova.astrometry.net/) API key. This will be needed for image plate solving.
-5. Modify the `filelist.txt` file, which should be located in the `CCD --> Data` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.txt` file is provided [here](data/filelist.txt), and has the following fields:
+5. Modify the `filelist.xlsx` file, which should be located in the `CCD --> Data` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.xlsx` file is provided [here](data/filelist.xlsx), and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
+   - `Process`: Yes or No, whether to process this dataset
    - `V_band`: Yes or No, whether to process V-band images
    - `B_band`: Yes or No, whether to process B-band images
    - `Flat_V`: Name of master flat file used to calibrate V-band images

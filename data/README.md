@@ -5,7 +5,7 @@
 This ZIP file contains the directory structure assumed by the pipeline. The directory structure is shown below along with a description of the primary contents of each folder to the right:
 ```
 CCD 
-└─── Data                          -Contains the filelist.txt processing list
+└─── Data                          -Contains thxlsx processing list
 │    └─── calibdata                -Calibrated images and data validation outputs
 │    └─── fielddata                -Raw images and calibration files
 │    └─── graphics                 -Final all-sky skyglow images per data set
@@ -26,7 +26,7 @@ CCD
      └─── Master                   -Master Flat/Bias/Thermal images per CCD camera
 ```
 
-## [filelist.txt](./filelist.txt)
+## [filelist.xlsx](./filelist.xlsx)
 
 This file tells the pipeline which data sets to process. It should be placed in the `CCD --> Data` directory and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)

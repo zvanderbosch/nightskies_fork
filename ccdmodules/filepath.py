@@ -22,12 +22,12 @@
 
 
 # Base directory for CCD data products
-base = "G:/CCD"
+base = "C:/Users/zvanderbosch/data/CCD"
 
 # Astrometry.net API key
 apikey = 'kdvqtjbqkbkbuyzb'
 
-# Directory where filelist.txt lives
+# Directory where filelist.xlsx lives
 processlist = f"{base}/Data/"
 
 # Directory for Linearity Curve calibration files

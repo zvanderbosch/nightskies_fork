@@ -814,9 +814,14 @@ def append_calibration(excelFile, dnight, sets):
     # Sheet name
     sheetName = "CALIBRATION"
 
-    # Load in calibration data from filelist
-    filelist = n.loadtxt(f"{filepath.processlist}filelist.txt", dtype=str, ndmin=2)
-    Dataset,_,_,FlatV,_,Curve,_,_,_,_ = filelist.T
+    # Read in processing dataset list and skip rows where Process = No
+    filelist = pd.read_excel(f"{filepath.processlist}filelist.xlsx")
+    filelist = filelist.loc[filelist['Process'] == 'Yes'].reset_index(drop=True)
+
+    # Get metadata for each dataset to be processed
+    Dataset = filelist['Dataset'].values
+    FlatV = filelist['Flat_V'].values
+    Curve = filelist['Curve'].values
 
     # Set the flat and curve filenames and paths
     flatFile = FlatV[Dataset == dnight][0]

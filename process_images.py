@@ -23,7 +23,7 @@
 #
 #
 #Input:
-#   (1) filelist.txt - input list of file folders to be processed and the 
+#   (1) filelist.xlsx - input list of file folders to be processed and the 
 #       associated calibration files. 
 #
 #
@@ -263,10 +263,6 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore",".*GUI is implemented.*")
         
     #------------ Read in the processing list and initialize ---------------------#
-
-    #Read in the processing dataset list and the calibration file names 
-    # filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    # Dataset, V_band, B_band, Flat_V, Flat_B, Curve, zeropoint, Processor, _, _ = filelist.T
 
     # Read in processing dataset list and skip rows where Process = No
     filelist = pd.read_excel(f"{filepath.processlist}filelist.xlsx")
