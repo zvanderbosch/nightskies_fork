@@ -213,7 +213,6 @@ def calculate_stars_visible(dnight,sets,filter):
 
         # Load in median sky brightness and natural sky rasters
         brightRasterMag = arcpy.sa.Raster(f"{gridsetp}median/skybrightmags")
-        brightRasterNl = arcpy.sa.Raster(f"{gridsetp}median/skybrightnl")
         natRasterMag = arcpy.sa.Raster(f"{gridsetp}nat/natskymags")
         
         # Get coordinate systems
@@ -225,7 +224,6 @@ def calculate_stars_visible(dnight,sets,filter):
 
         # Project sky brightness rasters to fisheye equal area
         brightMagName = f"brightf{setnum}"
-        brightNlName = f"brightnl{setnum}"
         arcpy.management.ProjectRaster(
             brightRasterMag, brightMagName, coordSysLocal, "BILINEAR", "5558.8"
         )
