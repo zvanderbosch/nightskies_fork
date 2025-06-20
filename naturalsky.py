@@ -55,7 +55,8 @@ import filepath
 import printcolors as pc
 
 # Print status prefix
-PREFIX = f'{pc.GREEN}naturalsky_v2.py{pc.END}: '
+scriptName = 'naturalsky_v2.py'
+PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
 #set arcpy environment variables
 arcpy.env.overwriteOutput = True
