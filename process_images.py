@@ -87,14 +87,14 @@ def log_inputs(p):
     print(filepath.calibdata+dnight+'/processlog_images.txt')
     print(' ')
     m = []
-    logm(m,'%s processed on %s by %s' %(p[0],str(Dtime.now())[:19],p[6]))
+    logm(m,f"{p['Dataset']} processed on {str(Dtime.now())} by {p['Processor']}")
     logm(m,'')
     logm(m,'Input files:')
-    logm(m,'Reducing V-band data? ' + p[1])
-    logm(m,'Reducing B-band data? ' + p[2])
-    logm(m,'vflat = ' + p[3])
-    logm(m,'bflat = ' + p[4])
-    logm(m,'curve = ' + p[5])
+    logm(m,'Reducing V-band data? ' + p['V_band'])
+    logm(m,'Reducing B-band data? ' + p['B_band'])
+    logm(m,'vflat = ' + p['Flat_V'])
+    logm(m,'bflat = ' + p['Flat_B'])
+    logm(m,'curve = ' + p['Curve'])
     logm(m,'')
     logm(m,'____________________ Processing history: _____________________')
     logm(m,'')
@@ -199,7 +199,6 @@ def apply_filter(*args):
     t1 = time.time()
     import ccdmodules.medianfilter as MF
     for filter in args[2]:
-        # print('Applying median filter to %s-band images' %filter)
         MF.filter(args[0],args[1],filter)
     t2 = time.time()
     args[-1].put(t2-t1)
@@ -266,8 +265,22 @@ if __name__ == '__main__':
     #------------ Read in the processing list and initialize ---------------------#
 
     #Read in the processing dataset list and the calibration file names 
-    filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
-    Dataset, V_band, B_band, Flat_V, Flat_B, Curve, zeropoint, Processor, _, _ = filelist.T
+    # filelist = n.loadtxt(filepath.processlist+'filelist.txt', dtype=str, ndmin=2)
+    # Dataset, V_band, B_band, Flat_V, Flat_B, Curve, zeropoint, Processor, _, _ = filelist.T
+
+    # Read in processing dataset list and skip rows where Process = No
+    filelist = pd.read_excel(f"{filepath.processlist}filelist.xlsx")
+    filelist = filelist.loc[filelist.Process == 'Yes'].reset_index(drop=True)
+
+    # Get metadata for each dataset to be processed
+    Dataset = filelist['Dataset'].values
+    V_band = filelist['V_band'].values
+    B_band = filelist['B_band'].values
+    Flat_V = filelist['Flat_V'].values
+    Flat_B = filelist['Flat_B'].values
+    Curve = filelist['Curve'].values
+    zeropoint = filelist['Zeropoint'].values
+    Processor = filelist['Processor'].values
     
     #Check the calibration files exist    
     for i in range(len(filelist)):
@@ -313,7 +326,7 @@ if __name__ == '__main__':
     for i in range(len(filelist)):
 
         history = open(filepath.calibdata+Dataset[i]+'/processlog_images.txt', 'w')
-        log_inputs(filelist[i])
+        log_inputs(filelist.loc[i])
         
         # Generate inputs for each processing step
         Filter = []; Filterset = {}
