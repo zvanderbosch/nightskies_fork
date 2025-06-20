@@ -727,7 +727,8 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     # Save fit results to excel file
     fileout = filepath.calibdata+dnight+'/extinction_fit_%s.xlsx' %filter
     outputDF = pd.DataFrame(
-        data = zeropoint_dnight, columns = columnNames
+        data=zeropoint_dnight, 
+        columns=columnNames
     )
     outputDF.to_excel(
         fileout, index=False
