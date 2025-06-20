@@ -387,6 +387,45 @@ DROPDOWNS = {
 }
 
 
+# Some mappings between FITS header values and standard NIGHT METADATA values
+METADATA_MAPPINGS = {
+    'INSTRUMENT': {
+        'Nexstar 1': 'NexStar 1',
+        'Nexstar 2': 'NexStar 2',
+        'Nexstar 3': 'NexStar 3',
+        'Nexstar 4': 'NexStar 4',
+        'Nexstar 5': 'NexStar 5',
+        'Nexstar 6': 'NexStar 6',
+        'Nexstar 7': 'NexStar 7',
+        'Nexstar 8': 'NexStar 8',
+        'Nexstar 9': 'NexStar 9',
+        'Nexstar 10': 'NexStar 10',
+        'Nexstar 11': 'NexStar 11',
+        'Nexstar SE1': 'NexStar SE1'
+    },
+    'CAMERA': {
+        'ML1': 'ML 1',
+        'ML1': 'ML 2',
+        'ML3': 'ML 3',
+        'ML4': 'ML 4',
+        'ML5': 'ML 5',
+        'ML6': 'ML 6',
+        'ML7': 'ML 7'
+    },
+    'LENS': {
+        'Nikon f/2_new': 'Nikon 1.2'
+    },
+    'FILTER': {
+        'V': {
+            'ML 2': 9776,
+            'ML 3': 9047,
+            'ML 4': 9776,
+            'ML 5': 9776
+        },
+        'B': {}
+    }
+
+}
 #------------------------------------------------------------------------------#
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
@@ -554,6 +593,29 @@ def get_site_info(imageFile):
     utc = H['DATE-OBS']
     tempc = (H['AMTEMP_F'] - 32) * 5./9
 
+    # Get instrument details from FITS header
+    fitsTelescope = H['TELESCOP']
+    fitsInstrument = H['INSTRUME']
+    fitsCamera = fitsInstrument.split(",")[0].strip()
+    fitsLens = fitsInstrument.split(",")[1].strip()
+    fitsFilter = H['FILTER'].strip()
+
+    # Map FITS values to standard NIGHT METADATA entries
+    if fitsTelescope in METADATA_MAPPINGS['INSTRUMENT'].keys():
+        instrument = METADATA_MAPPINGS['INSTRUMENT'][fitsTelescope]
+    else: instrument = None
+    if fitsCamera in METADATA_MAPPINGS['CAMERA'].keys():
+        camera = METADATA_MAPPINGS['CAMERA'][fitsCamera]
+    else: camera = None
+    if fitsLens in METADATA_MAPPINGS['LENS'].keys():
+        lens = METADATA_MAPPINGS['LENS'][fitsLens]
+    else: lens = None
+    if camera is not None:
+        if camera in METADATA_MAPPINGS['FILTER'][fitsFilter].keys():
+            filterBatch = METADATA_MAPPINGS['FILTER'][fitsFilter][camera]
+        else: filterBatch = None
+    else: filterBatch = None
+
     # Convert observers string to list of observers and pad with empty strings
     observers = [x.strip() for x in observers.split(",")]
     while len(observers) < 4:
@@ -600,7 +662,11 @@ def get_site_info(imageFile):
         'humidity': H['HUMID'],
         'windspeed': H['WIND_MPH'],
         'tempcelsius': tempc,
-        'telescope': H['TELESCOP'],
+        'instrument': instrument,
+        'camera': camera,
+        'lens': lens,
+        'filterName': fitsFilter,
+        'filterBatch': filterBatch,
         'exptime': H['EXPTIME'],
         'ccdtemp': H['CCD-TEMP']
     }
@@ -670,6 +736,16 @@ def append_night_metadata(excelFile, siteInfo):
         worksheet.cell(row=5, column=30, value=siteInfo['observers'][3])  # Observer 4
         # worksheet.cell(row=5, column=31, value=siteInfo['narrative'])   # Narrative
         worksheet.cell(row=5, column=32, value=siteInfo['centralAZ'])     # Central Azimuth
+
+        # Add instrument details when available
+        if siteInfo['camera'] is not None:
+            worksheet.cell(row=5, column=13, value=siteInfo['camera'])      # Camera name
+        if siteInfo['lens'] is not None:
+            worksheet.cell(row=5, column=15, value=siteInfo['lens'])        # Camera Lens name
+        if siteInfo['filterBatch'] is not None:
+            worksheet.cell(row=5, column=16, value=siteInfo['filterBatch']) # Filter batch ID
+        if siteInfo['instrument'] is not None:
+            worksheet.cell(row=5, column=17, value=siteInfo['instrument'])  # Telescope mount name
 
         # Set some cell number formats
         datestyle = SHEETSTYLES['datetime']['datestyle']
