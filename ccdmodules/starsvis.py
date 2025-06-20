@@ -26,7 +26,6 @@ from astropy.io import fits
 import os
 import stat
 import arcpy
-import numpy as n
 import pandas as pd
 import astropy.units as u
 import astropy.coordinates as coord
