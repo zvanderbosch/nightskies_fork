@@ -730,7 +730,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         data = zeropoint_dnight, columns = columnNames
     )
     outputDF.to_excel(
-        fileout, float_format='%.5f', index=False
+        fileout, index=False
     )
 
     # Adjust excel column widths
@@ -748,7 +748,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
             adjusted_width = max_length + 2
             worksheet.column_dimensions[column].width = adjusted_width
     
-    return len(stars), fileout
+    return outputDF
 
 if __name__ == "__main__":
     pass

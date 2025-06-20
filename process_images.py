@@ -167,11 +167,10 @@ def fit_zeropoint(*args):
     for filter in args[2]:
         arg = list(args[:-1])
         arg[2] = filter
-        nstar, bestfit_file = EX.extinction(*arg)
+        bestfitDF = EX.extinction(*arg)
 
         # Log and print out fit results
         logm(m,'%s-band best fit zeropoint and extinction: ' %filter)
-        bestfitDF = pd.read_excel(bestfit_file, dtype=str)
         columnNames = bestfitDF.columns
         bestfitp = bestfitDF.values
         nrow,ncol = bestfitp.shape
@@ -182,7 +181,12 @@ def fit_zeropoint(*args):
         for i in range(ncol-1):
             rowString = f"{columnNames[i+1]:23s}"
             for j in range(nrow):
-                rowString += f"{bestfitp[j,i+1]:12s}"
+                if columnNames[i+1] in ['img_solved','num_star_used','num_star_rejected']:
+                    rowString += f"{bestfitp[j,i+1]:<12.0f}"
+                elif columnNames[i+1] in ['exptime']:
+                    rowString += f"{bestfitp[j,i+1]:<12.1f}"
+                else:
+                    rowString += f"{bestfitp[j,i+1]:<12.3f}"
             logm(m,rowString)
 
     t2 = time.time()
