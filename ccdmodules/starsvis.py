@@ -233,7 +233,6 @@ def calculate_stars_visible(dnight,sets,filter):
             brightRasterNl, brightNlName, coordSysLocal, "BILINEAR", "5558.8"
         )
         brightRasterMagProjected = arcpy.sa.Raster(brightMagName)
-        # brightRasterNlProjected = arcpy.sa.Raster(brightNlName)
 
         # Project star shapefile to local horizon
         starName = "j2000proj.shp"
