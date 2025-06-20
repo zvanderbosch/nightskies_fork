@@ -208,12 +208,19 @@ def mosaic(dnight, sets, filter):
     #filter paths
     F = {'V':'', 'B':'B/'}
     f = {'V':'', 'B':'b'}
+
+    # Read in the best-fit enxtinction parameters
+    extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.xlsx"
+    extinctionData = pd.read_excel(extinctionFile)
     
     for s in sets:
 
+        # Convert set number to integer
+        setnum = int(s[0])
+
         # Define file paths
-        calsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/{F[filter]}"
-        gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/{F[filter]}median/"
+        calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/{F[filter]}"
+        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}median/"
         scratchsetp = f"{filepath.rasters}scratch_median/"
         domainsetp = f"{calsetp}/domains/"
 
@@ -226,21 +233,19 @@ def mosaic(dnight, sets, filter):
         clear_scratch(scratchsetp)
                 
         #read in the registered images coordinates
-        file = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
+        file = f"{filepath.calibdata}{dnight}/pointerr_{setnum}.txt"
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
         Obs_AZ[35] %= 360
         imnum = len(Obs_AZ)
-        
-        #read in the best-fit zeropoint and plate scale
-        file = filepath.calibdata+dnight+'/extinction_fit_%s.xlsx' %filter
-        extinctionData = pd.read_excel(file)
-        zeropoint = extinctionData['zeropoint_default'].values
-        platescale = extinctionData['avg_scale'].values
-        exptime = extinctionData['exptime'].values
+
+        # Get zeropoint, platescale, and exposure time for data set
+        zeropoint = extinctionData['zeropoint_default'].iloc[setnum-1]
+        platescale = extinctionData['avg_scale'].iloc[setnum-1]
+        exptime = n.float64(extinctionData['exptime'].iloc[setnum-1])
         
         # Status update
-        print(f'{PREFIX}Generating median rasters for {filter}-Band Set {s[0]}...')
+        print(f'{PREFIX}Generating median rasters for {filter}-Band Set {setnum}...')
 
         #loop through each file in the set
         for w in range(imnum+1):
@@ -313,7 +318,7 @@ def mosaic(dnight, sets, filter):
 
             # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(f'{PREFIX}{filter}-Band Set {s[0]}, {v}/{imnum} rasters complete')
+                print(f'{PREFIX}{filter}-Band Set {setnum}, {v}/{imnum} rasters complete')
         
         #mosaic raster list must start with an image with max pixel value > 256
         v=1; mstart=1
@@ -331,7 +336,7 @@ def mosaic(dnight, sets, filter):
         R = R1+';'+R2
         
         #mosaic to topocentric coordinate image; save in Griddata\
-        print(f"{PREFIX}Mosaicking median rasters for {filter}-Band Set {s[0]}...")
+        print(f"{PREFIX}Mosaicking median rasters for {filter}-Band Set {setnum}...")
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'skytopom', geogcs, 
             "32_BIT_FLOAT", "0.0266", "1", "BLEND", "FIRST"
@@ -353,28 +358,28 @@ def mosaic(dnight, sets, filter):
         )
         
         #convert to magnitudes per square arc second
-        print(f"{PREFIX}Converting mosaic to mag/arcsec^2 for {filter}-Band Set {s[0]}...")
-        psa = 2.5*n.log10((platescale[int(s[0])-1]*60)**2) # platescale adjustment
+        print(f"{PREFIX}Converting mosaic to mag/arcsec^2 for {filter}-Band Set {setnum}...")
+        psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
         stm1 = arcpy.sa.Raster(gridsetp + os.sep + 'skybright')
-        stm2 = 2.5 * arcpy.sa.Log10(stm1 / exptime[0])
-        skytopomags = zeropoint[int(s[0])-1] + psa - stm2
+        stm2 = 2.5 * arcpy.sa.Log10(stm1 / exptime)
+        skytopomags = zeropoint + psa - stm2
         skytopomags.save(gridsetp+'skybrightmags')
         
         #save mags mosaic to disk
-        print(f"{PREFIX}Creating median mosaic layer file for {filter}-Band Set {s[0]}...")
-        layerName = dnight+'_%s_median%s'%(s[0],f[filter])
-        layerfile = filepath.griddata+dnight+'/skybrightmags%s%s.lyrx'%(f[filter],s[0])
+        print(f"{PREFIX}Creating median mosaic layer file for {filter}-Band Set {setnum}...")
+        layerName = f"{dnight}_{setnum}_median{f[filter]}"
+        layerfile = f"{filepath.griddata}{dnight}/skybrightmags{f[filter]}{setnum}.lyrx"
         symbologyLayer = filepath.rasters+'magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'skybrightmags', layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
-        file = filepath.griddata+dnight+'/S_0%s/%smedian/skybrightmags' %(s[0],F[filter])
+        file = f"{filepath.griddat}{dnight}/S_{setnum:02d}/{f[filter]}median/skybrightmags"
         arcpy_raster = arcpy.sa.Raster(file)  
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
-        fname = filepath.griddata+dnight+'/skybrightmags%s%s.fits'%(f[filter],s[0])
+        fname = f"{filepath.griddata}{dnight}/skybrightmags{f[filter]}{setnum}.fits"
         fits.writeto(fname, A_small, overwrite=True)
 
         # Remove intermediate raster directories & files
@@ -387,7 +392,7 @@ def mosaic(dnight, sets, filter):
         clear_scratch(scratchsetp)
 
         # Final status update
-        print(f"{PREFIX}{filter}-Band Set {s[0]} median mosaic {pc.CYAN}COMPLETE{pc.END}")
+        print(f"{PREFIX}{filter}-Band Set {setnum} median mosaic {pc.CYAN}COMPLETE{pc.END}")
         
     #create mask.tif for horizon masking in the later process
     maskDir = f"{filepath.griddata}{dnight}/mask"
