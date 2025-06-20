@@ -178,11 +178,14 @@ def mosaic(dnight, sets):
 
     for s in sets:
 
+        # Conver set number to integer
+        setnum = int(s[0])
+
         # Define file paths
         calsetp = f"{filepath.calibdata}{dnight}/"
-        gridsetp = f"{filepath.griddata}{dnight}/S_0{s[0]}/gal/"
+        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/gal/"
         scratchsetp = f"{filepath.rasters}scratch_galactic/"
-        domainsetp = f"{calsetp}/S_0{s[0]}/domains/"
+        domainsetp = f"{calsetp}/S_{setnum:02d}/domains/"
 
         # Remove and/or create gridsetp directory
         if os.path.exists(gridsetp):
@@ -193,18 +196,18 @@ def mosaic(dnight, sets):
         clear_scratch(scratchsetp)
         
         # Read in the galactic coordinates from coordinates_%s.txt
-        file = f'{calsetp}coordinates_{s[0]}.txt'
+        file = f'{calsetp}coordinates_{setnum}.txt'
         Gal_ang, Gal_l, Gal_b = n.loadtxt(file,usecols=(1,2,3)).T
         
         # Read in the registered images coordinates
-        file = f'{calsetp}pointerr_{s[0]}.txt'
+        file = f'{calsetp}pointerr_{setnum}.txt'
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
         Obs_AZ[35] %= 360
         imnum = len(Obs_AZ)
         
         # Status update
-        print(f'{PREFIX}Generating galactic rasters for Set {s[0]}...')
+        print(f'{PREFIX}Generating galactic rasters for Set {setnum}...')
 
         # Loop through each file in the set
         for w in range(imnum+1):
@@ -262,10 +265,10 @@ def mosaic(dnight, sets):
 
             # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(f'{PREFIX}Set {s[0]}, {v}/{imnum} rasters complete')
+                print(f'{PREFIX}Set {setnum}, {v}/{imnum} rasters complete')
         
         # Mosaic to topocentric coordinate model; save in Griddata\
-        print(f"{PREFIX}Mosaicking galactic rasters for Set {s[0]}...")
+        print(f"{PREFIX}Mosaicking galactic rasters for Set {setnum}...")
         R = ';'.join([f'gali{i:02d}' for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'galtopmagsuc', geogcs, 
@@ -280,8 +283,8 @@ def mosaic(dnight, sets):
         )
 
         # Create Raster layer, add magnitudes symbology, and save layer to file
-        print(f"{PREFIX}Creating galactic mosaic layer file for Set {s[0]}...")
-        layerfile = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.lyrx'
+        print(f"{PREFIX}Creating galactic mosaic layer file for Set {setnum}...")
+        layerfile = f'{filepath.griddata}{dnight}/galtopmags{setnum}.lyrx'
         symbologyFile = f'{filepath.rasters}magnitudes.lyrx'
         arcpy.management.MakeRasterLayer(gridsetp+'galtopmags', 'galtoplyr')
         arcpy.management.ApplySymbologyFromLayer('galtoplyr', symbologyFile)
@@ -292,7 +295,7 @@ def mosaic(dnight, sets):
         arcpy_raster = arcpy.sa.Raster(file)
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
-        fname = f'{filepath.griddata}{dnight}/galtopmags{s[0]}.fits'
+        fname = f'{filepath.griddata}{dnight}/galtopmags{setnum}.fits'
         fits.writeto(fname, A_small, overwrite=True)
 
         # Remove intermediate raster directories & files
@@ -303,7 +306,7 @@ def mosaic(dnight, sets):
         clear_scratch(scratchsetp)
 
         # Status update
-        print(f"{PREFIX}Set {s[0]} galactic mosaic {pc.CYAN}COMPLETE{pc.END}")
+        print(f"{PREFIX}Set {setnum} galactic mosaic {pc.CYAN}COMPLETE{pc.END}")
 
 if __name__ == "__main__":
     mosaic('FCNA160803', ['1st',])

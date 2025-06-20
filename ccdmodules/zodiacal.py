@@ -172,9 +172,12 @@ def mosaic(dnight, sets):
 
     for s in sets:
 
+        # Conver set number to integer
+        setnum = int(s[0])
+
         # Define file paths
-        calsetp = filepath.calibdata+dnight+'/S_0%s/' %s[0]
-        gridsetp = filepath.griddata+dnight+'/S_0%s/zod/' %s[0]
+        calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/"
+        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/zod/"
         scratchsetp = f"{filepath.rasters}scratch_zodiacal/"
         domainsetp = f"{calsetp}domains/"
 
@@ -186,18 +189,18 @@ def mosaic(dnight, sets):
         clear_scratch(scratchsetp)
         
         #read in the zodiacal coordinates from coordinates_%s.txt
-        file = filepath.calibdata+dnight+'/coordinates_%s.txt'%s[0]
+        file = f"{filepath.calibdata}{dnight}/coordinates_{setnum}.txt"
         Ecl_ang, Ecl_l, Ecl_b = n.loadtxt(file,usecols=(4,5,6)).T
         
         #read in the registered images coordinates
-        file = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
+        file = f"{filepath.calibdata}{dnight}/pointerr_{setnum}.txt"
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
         Obs_AZ[35] %= 360
         imnum = len(Obs_AZ)
         
         # Status update
-        print(f'{PREFIX}Generating zodiacal rasters for Set {s[0]}...')
+        print(f'{PREFIX}Generating zodiacal rasters for Set {setnum}...')
 
         #loop through each file in the set
         for w in range(imnum+1):
@@ -255,10 +258,10 @@ def mosaic(dnight, sets):
 
             # Status update
             if (v == w+1) & (v % 5 == 0):
-                print(f'{PREFIX}Set {s[0]}, {v}/{imnum} rasters complete')
+                print(f'{PREFIX}Set {setnum}, {v}/{imnum} rasters complete')
             
         #Mosaic to topocentric coordinate model; save in Griddata\
-        print(f"{PREFIX}Mosaicking zodiacal rasters for Set {s[0]}...")
+        print(f"{PREFIX}Mosaicking zodiacal rasters for Set {setnum}...")
         R = ';'.join(['zodi%02d' %i for i in range(1,47)])
         arcpy.management.MosaicToNewRaster(
             R, gridsetp, 'zodtopo', geogcs, 
@@ -281,19 +284,19 @@ def mosaic(dnight, sets):
         )
     
         #Create Raster layer, add magnitudes symbology, and save layer to file
-        print(f"{PREFIX}Creating zodiacal mosaic layer file for Set {s[0]}...")
-        layerfile = filepath.griddata+dnight+'/zodtopmags%s.lyrx' %s[0]
-        symbologyLayer = filepath.rasters+'magnitudes.lyrx'
+        print(f"{PREFIX}Creating zodiacal mosaic layer file for Set {setnum}...")
+        layerfile = f"{filepath.griddata}{dnight}/zodtopmags{setnum}.lyrx"
+        symbologyLayer = f"{filepath.rasters}magnitudes.lyrx"
         arcpy.management.MakeRasterLayer(gridsetp+'zodtopmags', 'zodtoplyr')
         arcpy.management.ApplySymbologyFromLayer('zodtoplyr', symbologyLayer)
         arcpy.management.SaveToLayerFile('zodtoplyr', layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
-        file = filepath.griddata+dnight+"/S_0"+s[0]+"/zod/zodtopmags"
+        file = f"{filepath.griddata}{dnight}/S_{setnum:02d}/zod/zodtopmags"
         arcpy_raster = arcpy.sa.Raster(file)  
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
-        fname = filepath.griddata+dnight+'/zodtopmags%s.fits' %s[0]
+        fname = f"{filepath.griddata}{dnight}/zodtopmags{setnum}.fits"
         fits.writeto(fname, A_small, overwrite=True)
 
         # Remove intermediate raster directories & files
@@ -307,7 +310,7 @@ def mosaic(dnight, sets):
 
         # Final status update
         print(
-            f"{PREFIX}: Set {s[0]} zodiacal mosaic {pc.CYAN}COMPLETE{pc.END}"
+            f"{PREFIX}: Set {setnum} zodiacal mosaic {pc.CYAN}COMPLETE{pc.END}"
         )
 
     
