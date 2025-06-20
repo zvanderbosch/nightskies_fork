@@ -229,9 +229,6 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.management.ProjectRaster(
             brightRasterMag, brightMagName, coordSysLocal, "BILINEAR", "5558.8"
         )
-        arcpy.management.ProjectRaster(
-            brightRasterNl, brightNlName, coordSysLocal, "BILINEAR", "5558.8"
-        )
         brightRasterMagProjected = arcpy.sa.Raster(brightMagName)
 
         # Project star shapefile to local horizon
