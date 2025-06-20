@@ -23,14 +23,20 @@
 #       bestfit standard stars contours overlaid on the image data
 #
 #Output:
-#   (1) extinction_stars_%s.txt -- list of the standard stars used for fitting
-#   (2) extinction_fit_%s.png -- graphical display of the fitting result
-#   (3) extinction_fit.txt -- best-fit extinction coefficient and zeropoint
+#   (1) extinction_stars_<FILTER>_<SET>.txt 
+#       -- list of the standard stars used for fitting
+#   (2) extinction_fit_<FILTER>_<SET>.png 
+#       -- graphical display of the fitting result
+#   (3) extinction_fit_<FILTER>.xlsx 
+#       -- best-fit extinction coefficient and zeropoint
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic as "extinction v4.vbs"
 #	Li-Wei Hung -- Cleaned, improved, and translated to python
 #   Zach Vanderbosch -- Updated to Python 3.11, replaced ACP/ASCOM with Astropy
+#   Zach Vanderbosch -- Added additional fitting for color-coefficient and
+#                       for extinction using a fixed camera zeropoint.
+#   Zach Vanderbosch -- Saving results to Excel sheet rather than .txt file
 #
 #-----------------------------------------------------------------------------#
 
