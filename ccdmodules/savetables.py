@@ -621,10 +621,10 @@ def append_night_metadata(excelFile, siteInfo):
 
         # Load in zeropoint and platescale values
         calsetp = f"{filepath.calibdata}{siteInfo['datanight']}/"
-        extinctionfile = f"{calsetp}extinction_fit_V.txt"
-        extinctionData  = n.loadtxt(extinctionfile, ndmin=2)
-        zeropoint = extinctionData[0,8]
-        platescale = n.mean(extinctionData[:,16])
+        extinctionfile = f"{calsetp}extinction_fit_V.xlsx"
+        extinctionData  = pd.read_excel(extinctionfile)
+        zeropoint = extinctionData['zeropoint_default'].iloc[0]
+        platescale = extinctionData['avg_scale'].mean()
 
         # Calculate image scale offset
         scaleOffset = 2.5*n.log10((platescale*60)**2)
@@ -879,17 +879,17 @@ def append_extinction(excelFile, dnight, sets):
     sheetName = "EXTINCTION"
 
     # Load in extinction data
-    extinctionfile = f"{filepath.calibdata}{dnight}/extinction_fit_V.txt"
-    extinctionData  = n.loadtxt(extinctionfile, ndmin=2)
-    imgSolved = extinctionData[:,1]
-    starsFit = extinctionData[:,2]
-    starsRej = extinctionData[:,3]
-    zpFree = extinctionData[:,4]
-    zpFreeErr = extinctionData[:,5]
-    zpFixed = extinctionData[:,8]
-    extFixed = extinctionData[:,9]
-    colorFixed = extinctionData[:,11]
-    colorFree = extinctionData[:,12]
+    extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_V.xlsx"
+    extinctionData  = pd.read_excel(extinctionFile)
+    imgSolved = extinctionData['img_solved'].values
+    starsFit = extinctionData['num_star_used'].values
+    starsRej = extinctionData['num_star_rejected'].values
+    zpFree = extinctionData['zeropoint_free'].values
+    zpFreeErr = extinctionData['zeropoint_free_err'].values
+    zpFixed = extinctionData['zeropoint_default'].values
+    extFixed = extinctionData['extinction_fixedZ'].values
+    colorFixed = extinctionData['color_coeff_default'].values
+    colorFree = extinctionData['color_coeff_free'].values
 
     # Add to EXTINCTION sheet
     with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:

@@ -207,8 +207,9 @@ def calculate_stars_visible(dnight,sets,filter):
         raZenith, decZenith = get_zenith_coords(midpointImage)
         
         # Get extinction coefficient
-        extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.txt"
-        extCoeff = abs(n.loadtxt(extinctionFile, ndmin=2)[setnum-1,9])
+        extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.xlsx"
+        extinctionData = pd.read_excel(extinctionFile)
+        extCoeff = abs(extinctionData['extinction_fixedZ'].iloc[setnum-1])
 
         # Load in median sky brightness and natural sky rasters
         brightRasterMag = arcpy.sa.Raster(f"{gridsetp}median/skybrightmags")

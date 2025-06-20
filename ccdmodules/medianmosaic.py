@@ -13,12 +13,12 @@
 #
 #Input: 
 #   (1) median filtered tiff files in the filepath.calibdata
-#   (2) pointerr_%s.txt
-#   (3) extinction_fit_%s.txt
+#   (2) pointerr_<SET>.txt
+#   (3) extinction_fit_<FILTER>.txt
 #   (4) raster files in the filepath.rasters folder
 #
 #Output:
-#   (1) layer files skybrightmags%s.lyrx for median mosaic
+#   (1) layer files skybrightmags<SET>.lyrx for median mosaic
 #   (2) mask.tif for making the horizontal mask in the later process
 #
 #History:
@@ -32,12 +32,13 @@ from astropy.io import fits
 from PIL import Image
 from skimage.transform import downscale_local_mean
 
-import arcpy
-import numpy as n
 import os
-import time
 import stat
+import time
+import arcpy
 import shutil
+import numpy as n
+import pandas as pd
 
 # Local Source
 import filepath
@@ -232,10 +233,11 @@ def mosaic(dnight, sets, filter):
         imnum = len(Obs_AZ)
         
         #read in the best-fit zeropoint and plate scale
-        file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-        zeropoint, platescale, exptime = n.loadtxt(
-            file, usecols=(8,16,17), unpack=True, ndmin=2
-        )
+        file = filepath.calibdata+dnight+'/extinction_fit_%s.xlsx' %filter
+        extinctionData = pd.read_excel(file)
+        zeropoint = extinctionData['zeropoint_default'].values
+        platescale = extinctionData['avg_scale'].values
+        exptime = extinctionData['exptime'].values
         
         # Status update
         print(f'{PREFIX}Generating median rasters for {filter}-Band Set {s[0]}...')

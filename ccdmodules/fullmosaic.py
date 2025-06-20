@@ -13,12 +13,12 @@
 #
 #Input: 
 #   (1) full resolution tiff files in the filepath.calibdata
-#   (2) pointerr_%s.txt
-#   (3) extinction_fit_%s.txt
+#   (2) pointerr_<SET>.txt
+#   (3) extinction_fit_<FILTER>.txt
 #   (4) raster files in the filepath.rasters folder
 #
 #Output:
-#   (1) layer files skytopomags%s.lyrx for full-resolution mosaic
+#   (1) layer files skytopomags<SET>.lyrx for full-resolution mosaic
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
@@ -30,11 +30,12 @@
 from glob import glob
 from PIL import Image
 
-import arcpy
-import numpy as n
 import os
 import stat
+import arcpy
 import shutil
+import numpy as n
+import pandas as pd
 
 # Local Source
 import filepath
@@ -212,10 +213,11 @@ def mosaic(dnight, sets, filter):
         imnum = len(Obs_AZ)
         
         #read in the best-fit zeropoint and plate scale
-        file = filepath.calibdata+dnight+'/extinction_fit_%s.txt' %filter
-        zeropoint, platescale, exptime = n.loadtxt(
-            file, usecols=(8,16,17), unpack=True, ndmin=2
-        )
+        file = filepath.calibdata+dnight+'/extinction_fit_%s.xlsx' %filter
+        extinctionData = pd.read_excel(file)
+        zeropoint = extinctionData['zeropoint_default'].values
+        platescale = extinctionData['avg_scale'].values
+        exptime = extinctionData['exptime'].values
         
         # Status Update
         print(f'{PREFIX}Generating fullres rasters for {filter}-Band Set {s[0]}...')

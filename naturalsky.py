@@ -233,8 +233,9 @@ class Model(object):
         data set. 
         """
         d,s,f = self.dnight, self.set, self.filter
-        extinctionfile = f"{filepath.calibdata}{d}/extinction_fit_{f}.txt"
-        self.extinction = abs(n.loadtxt(extinctionfile, ndmin=2)[s-1,9])
+        extinctionFile = f"{filepath.calibdata}{d}/extinction_fit_{f}.xlsx"
+        extinctionData = pd.read_excel(extinctionFile)
+        self.extinction = extinctionData['extinction_fixedZ'].iloc[s-1]
         
     def get_1d_za(self,):
         """

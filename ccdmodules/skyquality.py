@@ -292,11 +292,11 @@ def calc_skyonly_SQM(dataNight, setNum, filterName):
     '''
     
     # Get zeropoint, extinction coeff, plate scale, & exposure time
-    extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
-    extData = n.loadtxt(extfile, ndmin=2)
-    zeropoint = extData[setNum-1,8]
-    platescale = extData[setNum-1,16]
-    exptime = extData[setNum-1,17]
+    extFile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.xlsx"
+    extData = pd.read_excel(extFile)
+    zeropoint = extData['zeropoint_default'].iloc[setNum-1]
+    platescale = extData['avg_scale'].iloc[setNum-1]
+    exptime = extData['exptime'].iloc[setNum-1]
     psa = 2.5*n.log10((platescale*60)**2) # platescale adjustment
 
     # Perform sky brightness measurements
@@ -333,9 +333,9 @@ def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
     '''
 
     # Get zeropoint, extinction coeff, plate scale, & exposure time
-    extfile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.txt"
-    extData = n.loadtxt(extfile, ndmin=2)
-    extCoeff = abs(extData[setNum-1,9])
+    extFile = f"{filepath.calibdata}{dataNight}/extinction_fit_{filterName}.xlsx"
+    extData = pd.read_excel(extFile)
+    extCoeff = abs(extData['extinction_fixedZ'].iloc[setNum-1])
 
     # Get Site time and location for data set midpoint
     imgsetp = f"{filepath.calibdata}{dataNight}/S_{setNum:02d}/"
@@ -446,11 +446,11 @@ def calculate_sky_quality(dnight,sets,filter,albedo):
 
     # Load in zeropoint, platescale, and exposure time values
     calsetp = f"{filepath.calibdata}{dnight}/"
-    extinctionfile = f"{calsetp}extinction_fit_V.txt"
-    extinctionData  = n.loadtxt(extinctionfile, ndmin=2)
-    zeropoint = extinctionData[0,8]
-    platescale = n.mean(extinctionData[:,16])
-    exptime = extinctionData[:,17]
+    extinctionFile = f"{calsetp}extinction_fit_{filter}.xlsx"
+    extinctionData  = pd.read_excel(extinctionFile)
+    zeropoint = extinctionData['zeropoint_default'].values
+    platescale = extinctionData['avg_scale'].mean()
+    exptime = extinctionData['exptime'].values
 
     # Calculate image scale offset
     scaleOffset = 2.5*n.log10((platescale*60)**2)
@@ -461,7 +461,7 @@ def calculate_sky_quality(dnight,sets,filter,albedo):
 
         # Set path for grid datasets
         setnum = int(s[0])
-        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F['V']}"
+        gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}"
 
         # Calculate sky quality indices for each mask
         sqiAllsky = calc_SQI(gridsetp, 'horizon')
