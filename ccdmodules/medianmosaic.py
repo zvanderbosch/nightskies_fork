@@ -375,7 +375,7 @@ def mosaic(dnight, sets, filter):
         arcpy.management.SaveToLayerFile(layerName, layerfile, "ABSOLUTE")
         
         #Downscale the raster and save it as a fits file
-        file = f"{filepath.griddat}{dnight}/S_{setnum:02d}/{f[filter]}median/skybrightmags"
+        file = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}median/skybrightmags"
         arcpy_raster = arcpy.sa.Raster(file)  
         A = arcpy.RasterToNumPyArray(arcpy_raster, "#", "#", "#", -9999)
         A_small = downscale_local_mean(A[:1800,:7200],(25,25)) #72x288
