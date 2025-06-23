@@ -54,14 +54,14 @@ SHEETDATA = {
             'DNIGHT', 'NPS_UNIT', 'UNIT_CODE', 'LONGITUDE', 'LATITUDE', 
             'ELEVATION', 'SITE_NAME', 'DATE_START_UT', 'TIME _START_UT', 
             'AIR_TEMP_C', 'RH', 'WIND_SPEED_MPH', 'CAMERA', 'CAMERA_TEMP', 
-            'LENS', 'FILTER', 'INSTRUMENT', 'NUM_IMAGES', 'EXPTIME', 'ZEROPOINT', 
-            'IMG_SCALE_OFFSET', 'NUM_SETS', 'ZLM', 'BORTLE', 'ALBEDO', 'SQM', 
-            'OBS_1', 'OBS_2', 'OBS_3', 'OBS_4', 'NARRATIVE', 'PICTAZIMUTH'
+            'LENS', 'FILTER_NAME', 'FILTER', 'INSTRUMENT', 'NUM_IMAGES', 'EXPTIME', 
+            'ZEROPOINT', 'IMG_SCALE_OFFSET', 'NUM_SETS', 'ZLM', 'BORTLE', 'ALBEDO', 
+            'SQM', 'OBS_1', 'OBS_2', 'OBS_3', 'OBS_4', 'NARRATIVE', 'PICTAZIMUTH'
         ],
         'colWidths':[
             16.9, 36.0, 23.1, 15.9, 13.1, 14.9, 43.6, 18.7, 18.6, 17.3,  8.0, 
-            17.9, 12.4, 16.0,  8.7, 10.1, 17.0, 16.4,  9.6, 14.3, 20.7, 13.6, 
-            10.3, 15.0, 13.0,  9.6, 23.0, 22.3, 21.0, 23.4,176.3, 33.9
+            17.9, 12.4, 16.0,  8.7, 10.1, 10.1, 17.0, 16.4,  9.6, 14.3, 20.7, 
+            13.6, 10.3, 15.0, 13.0,  9.6, 23.0, 22.3, 21.0, 23.4,176.3, 33.9
         ]
     },
     'CITIES':{
@@ -722,31 +722,33 @@ def append_night_metadata(excelFile, siteInfo):
         worksheet.cell(row=5, column=11, value=siteInfo['humidity'])      # Relative Humidity (%)
         worksheet.cell(row=5, column=12, value=siteInfo['windspeed'])     # Wind speed (mph)
         worksheet.cell(row=5, column=14, value=siteInfo['ccdtemp'])       # Camera Temp
-        worksheet.cell(row=5, column=18, value=45)                        # Number of Images
-        worksheet.cell(row=5, column=19, value=siteInfo['exptime'])       # Exposure Time
-        worksheet.cell(row=5, column=20, value=zeropoint)                 # Zeropoint
-        worksheet.cell(row=5, column=21, value=scaleOffset)               # Image Scale Offset
-        worksheet.cell(row=5, column=22, value=siteInfo['numsets'])       # Number of Sets
-        # worksheet.cell(row=5, column=23, value=siteInfo['zlm'])         # Zenith Limiting Mag
-        # worksheet.cell(row=5, column=24, value=siteInfo['bortle'])      # Bortle
-        worksheet.cell(row=5, column=25, value=siteInfo['siteAlbedo'])    # Albedo
-        # worksheet.cell(row=5, column=26, value=siteInfo['sqm'])         # SQM
-        worksheet.cell(row=5, column=27, value=siteInfo['observers'][0])  # Observer 1
-        worksheet.cell(row=5, column=28, value=siteInfo['observers'][1])  # Observer 2
-        worksheet.cell(row=5, column=29, value=siteInfo['observers'][2])  # Observer 3
-        worksheet.cell(row=5, column=30, value=siteInfo['observers'][3])  # Observer 4
-        # worksheet.cell(row=5, column=31, value=siteInfo['narrative'])   # Narrative
-        worksheet.cell(row=5, column=32, value=siteInfo['centralAZ'])     # Central Azimuth
+        worksheet.cell(row=5, column=19, value=45)                        # Number of Images
+        worksheet.cell(row=5, column=20, value=siteInfo['exptime'])       # Exposure Time
+        worksheet.cell(row=5, column=21, value=zeropoint)                 # Zeropoint
+        worksheet.cell(row=5, column=22, value=scaleOffset)               # Image Scale Offset
+        worksheet.cell(row=5, column=23, value=siteInfo['numsets'])       # Number of Sets
+        # worksheet.cell(row=5, column=24, value=siteInfo['zlm'])         # Zenith Limiting Mag
+        # worksheet.cell(row=5, column=25, value=siteInfo['bortle'])      # Bortle
+        worksheet.cell(row=5, column=26, value=siteInfo['siteAlbedo'])    # Albedo
+        # worksheet.cell(row=5, column=27, value=siteInfo['sqm'])         # SQM
+        worksheet.cell(row=5, column=28, value=siteInfo['observers'][0])  # Observer 1
+        worksheet.cell(row=5, column=29, value=siteInfo['observers'][1])  # Observer 2
+        worksheet.cell(row=5, column=30, value=siteInfo['observers'][2])  # Observer 3
+        worksheet.cell(row=5, column=31, value=siteInfo['observers'][3])  # Observer 4
+        # worksheet.cell(row=5, column=32, value=siteInfo['narrative'])   # Narrative
+        worksheet.cell(row=5, column=33, value=siteInfo['centralAZ'])     # Central Azimuth
 
         # Add instrument details when available
         if siteInfo['camera'] is not None:
             worksheet.cell(row=5, column=13, value=siteInfo['camera'])      # Camera name
         if siteInfo['lens'] is not None:
             worksheet.cell(row=5, column=15, value=siteInfo['lens'])        # Camera Lens name
+        if siteInfo['filterName'] is not None:
+            worksheet.cell(row=5, column=16, value=siteInfo['lens'])        # Filter name
         if siteInfo['filterBatch'] is not None:
-            worksheet.cell(row=5, column=16, value=siteInfo['filterBatch']) # Filter batch ID
+            worksheet.cell(row=5, column=17, value=siteInfo['filterBatch']) # Filter batch ID
         if siteInfo['instrument'] is not None:
-            worksheet.cell(row=5, column=17, value=siteInfo['instrument'])  # Telescope mount name
+            worksheet.cell(row=5, column=18, value=siteInfo['instrument'])  # Telescope mount name
 
         # Set some cell number formats
         datestyle = SHEETSTYLES['datetime']['datestyle']
@@ -755,9 +757,9 @@ def append_night_metadata(excelFile, siteInfo):
         worksheet.cell(row=5, column=9).style = timestyle         # UTC Start Time
         worksheet.cell(row=5, column=10).number_format = '0.0'    # Air temperature
         worksheet.cell(row=5, column=11).number_format = '0.0'    # Relative humidity
-        worksheet.cell(row=5, column=20).number_format = '0.000'  # Zeropoint
-        worksheet.cell(row=5, column=21).number_format = '0.000'  # Image Scale Offset
-        worksheet.cell(row=5, column=25).number_format = '0.000'  # Albedo
+        worksheet.cell(row=5, column=21).number_format = '0.000'  # Zeropoint
+        worksheet.cell(row=5, column=22).number_format = '0.000'  # Image Scale Offset
+        worksheet.cell(row=5, column=26).number_format = '0.000'  # Albedo
 
         # Set cell styles
         ncol = len(SHEETDATA[sheetName]['colNames'])
