@@ -132,11 +132,12 @@ SHEETDATA = {
             'DNIGHT', 'DSET', 'AVE_LUM_MSA', 'AVE_LUM_MCCD', 'ZENITH_LUM_MSA', 
             'ZENITH_LUM_MCCD', 'BRIGHTEST_LUM_MSA', 'BRIGHTEST_LUM_MCCD', 
             'ALLSKY_MAGS', 'ALLSKY_MLX', 'HORIZ_MLX', 'MAXVERT_MLX', 'NSTARS_FLAT', 
-            'NSTARS_OBS', 'NSTARS_EXT', 'VISSTARS_NAT', 'VISSTARS_OBS', 'SCALAR_ILL_V4'
+            'NSTARS_OBS', 'NSTARS_EXT', 'VISSTARS_NAT', 'VISSTARS_OBS', 
+            'PCT_VISSTARS', 'SCALAR_ILL_V4'
         ],
         'colWidths':[
             16.3, 13.0, 20.0, 16.6, 20.6, 21.1, 22.4, 24.0, 19.4, 
-            15.1, 15.6, 17.1, 15.6, 14.9, 15.1, 15.3, 15.1, 16.6
+            15.1, 15.6, 17.1, 15.6, 14.9, 15.1, 15.3, 15.1, 15.1, 16.6
         ]
     },
     'GLARE':{
@@ -1254,6 +1255,7 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             numStarsExtincted = svMetrics[svIndex]['Nstar_vis_noBkg'].iloc[0]
             numStarsVisNatsky = svMetrics[svIndex]['Nstar_vis_natsky'].iloc[0]
             numStarsVisPolluted = svMetrics[svIndex]['Nstar_vis_polluted'].iloc[0]
+            fracStarsVis = 100 * numStarsVisPolluted / numStarsVisNatsky
             scalarIllum = iaMetrics[iaIndex]['skyscalar'].iloc[0] * metrics['albedo'] / 4
 
             # Find maximum vertical illuminance
@@ -1286,7 +1288,8 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=15, value=numStarsExtincted)    # Num Stars after Extinction
             worksheet.cell(row=setnum+4, column=16, value=numStarsVisNatsky)    # Num Stars Visible, Natural Sky
             worksheet.cell(row=setnum+4, column=17, value=numStarsVisPolluted)  # Num Stars Visible, Polluted Sky
-            worksheet.cell(row=setnum+4, column=18, value=scalarIllum)          # Scalar Illuminance
+            worksheet.cell(row=setnum+4, column=18, value=fracStarsVis)         # Fraction of Stars Visible
+            worksheet.cell(row=setnum+4, column=19, value=scalarIllum)          # Scalar Illuminance
 
             # Set some cell number/date formats
             worksheet.cell(row=setnum+4, column=3 ).number_format = '0.00'    # Mean Luminance (mag/arcesc^2)
@@ -1304,7 +1307,8 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=15).number_format = '####'    # Num Stars after Extinction
             worksheet.cell(row=setnum+4, column=16).number_format = '####'    # Num Stars Visible, Natural Sky
             worksheet.cell(row=setnum+4, column=17).number_format = '####'    # Num Stars Visible, Polluted Sky
-            worksheet.cell(row=setnum+4, column=18).number_format = '0.0000'  # Scalar Illuminance
+            worksheet.cell(row=setnum+4, column=18).number_format = '0.00'    # Fraction of Stars Visible
+            worksheet.cell(row=setnum+4, column=19).number_format = '0.0000'  # Scalar Illuminance
 
             # Set cell styles
             ncol = len(SHEETDATA[sheetName]['colNames'])
