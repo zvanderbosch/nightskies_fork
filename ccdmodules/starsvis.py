@@ -187,6 +187,9 @@ def calculate_stars_visible(dnight,sets,filter):
     starShape = f"{filepath.rasters}shapefiles/SAOJ200079.shp"
     flatmaskShape = f"{filepath.rasters}shapefiles/allskyf.shp"
 
+    # Load in bestfit extinction parameters
+    extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.xlsx"
+    extinctionData = pd.read_excel(extinctionFile)
 
     # Loop through each data set
     numstarsOutput = []
@@ -200,14 +203,11 @@ def calculate_stars_visible(dnight,sets,filter):
         # Initial status update for data set
         print(f'{PREFIX}Processing {dnight} Set-{setnum} {filter}-band...')
 
-
         # Get Zenith RA and Dec at dataset midpoint in time
         midpointImage = f"{calsetp}ib022.fit"
         raZenith, decZenith = get_zenith_coords(midpointImage)
         
         # Get extinction coefficient
-        extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.xlsx"
-        extinctionData = pd.read_excel(extinctionFile)
         extCoeff = abs(extinctionData['extinction_fixedZ'].iloc[setnum-1])
 
         # Load in median sky brightness and natural sky rasters
@@ -257,7 +257,7 @@ def calculate_stars_visible(dnight,sets,filter):
         arcpy.management.CalculateField(     # Calculate extincted star magnitudes
             skyStarsFile, "extmag", f"(!airmass! * {extCoeff:.8f}) + !vmag!", "PYTHON")
 
-        # Extract bacground brightness values
+        # Extract background brightness values
         arcpy.sa.ExtractMultiValuesToPoints(
             skyStarsFile, [[brightRasterMagProjected, "background"]], "NONE")
         arcpy.sa.ExtractMultiValuesToPoints(
