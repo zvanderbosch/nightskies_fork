@@ -3,20 +3,29 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/16
+#Last updated: 2025/06/23
 #
-#This script computes the number/fraction of stars visible.
+#This script computes the number and fraction of stars visible.
 #
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) extinction_fit_<FILTER>.xlsx - Best-fit extinction parameters
+#   (2) skybrightmags - Observed sky brightness raster
+#   (3) natskymags - Natural sky model raster
+#   (4) maskd.fit - Terrain mask raster
+#   (5) airmassf - Raster providing airmass values across the sky
+#   (6) SAOJ200079.shp - Geo-database of SAO Star Catalog
+#   (7) allskyf.shp - Flat horizon mask raster
 #
 #Output:
-#   (1) 
+#   (1) skystars.shp - Stars from SAOJ200079.shp above observed horizon
+#   (2) extstars.shp - Stars from skystars.shp with extincted magnitudes < 7.5
+#   (3) visstars.shp - Stars from extstars.shp visible in polluted sky
+#   (4) visstarsn.shp - Stars from extstars.shp visible in natural sky
 #
 #History:
-#	Zach Vanderbosch -- Created script
+#	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
 #
 #-----------------------------------------------------------------------------#
 
