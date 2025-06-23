@@ -221,8 +221,11 @@ def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
     # Define array of rotation angles (0 -> 350 in 10-degree increments)
     rotationAngles = n.arange(0,360,10,dtype=int)
 
+    # Create arrays to store illuminance values for each mosaic
+    vertIllum = [n.zeros(len(rotationAngles))] * 3
+
     # Iterate over rotation angles in 10-degree increments
-    for angle in rotationAngles:
+    for j,angle in enumerate(rotationAngles):
 
         # Status update
         print(f'{PREFIX}Calculating vertical illuminance at angle {angle}...')
@@ -251,7 +254,22 @@ def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
             rows = arcpy.SearchCursor(outputTable)
             row = rows.next()
             results[f'vert-{angle:03d}-{i}'] = row.getValue("SUM")
+            vertIllum[i][j] = row.getValue("SUM")
             clear_memory([row,rows])
+
+    # Get min/max vertical illuminance values and associated azimuth values
+    results[f'max_vlum-0'] = vertIllum[0].max()
+    results[f'min_vlum-0'] = vertIllum[0].min()
+    results[f'max_vlum-1'] = vertIllum[1].max()
+    results[f'min_vlum-1'] = vertIllum[1].min()
+    results[f'max_vlum-2'] = vertIllum[2].max()
+    results[f'min_vlum-2'] = vertIllum[2].min()
+    results[f'max_vlum_azimuth-0'] = rotationAngles[vertIllum[0].argmax()]
+    results[f'min_vlum_azimuth-0'] = rotationAngles[vertIllum[0].argmin()]
+    results[f'max_vlum_azimuth-1'] = rotationAngles[vertIllum[1].argmax()]
+    results[f'min_vlum_azimuth-1'] = rotationAngles[vertIllum[1].argmin()]
+    results[f'max_vlum_azimuth-2'] = rotationAngles[vertIllum[2].argmax()]
+    results[f'min_vlum_azimuth-2'] = rotationAngles[vertIllum[2].argmin()]
 
     return results
 
