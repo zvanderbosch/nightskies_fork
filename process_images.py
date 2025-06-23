@@ -121,7 +121,7 @@ def update_progressbar(x,y,t=0):
 
 def check_zeropoint(zp,dnight):
 
-    # The default zeropoints for each camera
+    # The default zeropoints (mag) for each camera
     zpDefaults = {
         'IMG1': 14.67,
         'IMG2': 14.79,
