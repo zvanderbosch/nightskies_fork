@@ -1469,13 +1469,18 @@ def append_lp_za80(excelFile, dnight, sets, metrics):
             totalLumZA80Mlux = sgMetrics[sgIndex]['totalill1'].iloc[0]
             horizIllumZA80Mlux = sgMetrics[sgIndex]['horizs1'].iloc[0]
             brightestLumNl = sgMetrics[sgIndex]['skymax1'].iloc[0]
+            maxVertIllumMlux = sgMetrics[sgIndex]['max_vlum-1'].iloc[0]
+            minVertIllumMlux = sgMetrics[sgIndex]['min_vlum-1'].iloc[0]
+            meanVertIllumMlux = sgMetrics[sgIndex]['mean_vlum-1'].iloc[0]
+            maxVertIllumAZ = sgMetrics[sgIndex]['max_vlum_azimuth-1'].iloc[0]
+            minVertIllumAZ = sgMetrics[sgIndex]['min_vlum_azimuth-1'].iloc[0]
 
             # Get vertical illuminance stats
-            vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
-            vertColumns = [col for col in vertColumnsAll if col[-1] == '1']
-            maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
-            minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
-            meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
+            # vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
+            # vertColumns = [col for col in vertColumnsAll if col[-1] == '1']
+            # maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
+            # minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
+            # meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
 
             # Unit conversions
             meanLumZA80Nl = mlux_to_nl(meanLumZA80Mlux)       # mlux to nL
@@ -1566,13 +1571,18 @@ def append_lp_za70(excelFile, dnight, sets, metrics):
             totalLumZA70Mlux = sgMetrics[sgIndex]['totalill2'].iloc[0]
             horizIllumZA70Mlux = sgMetrics[sgIndex]['horizs2'].iloc[0]
             brightestLumNl = sgMetrics[sgIndex]['skymax2'].iloc[0]
+            maxVertIllumMlux = sgMetrics[sgIndex]['max_vlum-2'].iloc[0]
+            minVertIllumMlux = sgMetrics[sgIndex]['min_vlum-2'].iloc[0]
+            meanVertIllumMlux = sgMetrics[sgIndex]['mean_vlum-2'].iloc[0]
+            maxVertIllumAZ = sgMetrics[sgIndex]['max_vlum_azimuth-2'].iloc[0]
+            minVertIllumAZ = sgMetrics[sgIndex]['min_vlum_azimuth-2'].iloc[0]
 
             # Get vertical illuminance stats
-            vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
-            vertColumns = [col for col in vertColumnsAll if col[-1] == '2']
-            maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
-            minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
-            meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
+            # vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
+            # vertColumns = [col for col in vertColumnsAll if col[-1] == '2']
+            # maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
+            # minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
+            # meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
 
             # Unit conversions
             meanLumZA70Nl = mlux_to_nl(meanLumZA70Mlux)       # mlux to nL
