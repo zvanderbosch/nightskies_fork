@@ -48,6 +48,7 @@ import numpy as n
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from astropy.io import fits
 from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
@@ -116,7 +117,39 @@ def update_progressbar(x,y,t=0):
         barax.text(x+4.5, y+5.5, texty, color=c, horizontalalignment='center',
                    verticalalignment='center', size='medium')
     plt.pause(0.05)     #draw the new data and run the GUI's event loop
-    
+
+
+def check_zeropoint(zp,dnight):
+
+    # The default zeropoints for each camera
+    zpDefaults = {
+        'IMG1': 14.67,
+        'IMG2': 14.79,
+        'IMG3': 14.10,
+        'SBIG1': 14.79,
+        'ML2': 14.68,
+        'ML3': 14.78,
+        'ML4': 14.62,
+        'ML5': 14.71,
+        'ML6': 14.75,
+        'ML7': 14.93 
+    }
+
+    # Get camera name from FITS header
+    firstImage = f"{filepath.calibdata}{dnight}/S_01/ib001.fit"
+    H = fits.getheader(firstImage, ext=0)
+    camera = H['INSTRUME'].split(",")[0].strip().replace(" ","")
+
+    # Compare provided and default zeropoints
+    if camera in zpDefaults.keys():
+        zpDefault = zpDefaults[camera]
+        if not n.isclose(zp, zpDefault, atol=1e-03):
+            print(f'{PREFIX}{pc.RED}WARNING{pc.END}! - Provided zeropoint ({zp:.3f}) and default zeropoint ')
+            print(f'{PREFIX}for the {camera} Camera ({zpDefault:.3f}) differ by more than 0.001 mag.')
+            zpcheck = input(f'{PREFIX}Continue with data processing using the provided zeropoint? (Y/N): ')
+            if zpcheck.strip() not in ['Y','y']:
+                sys.exit(1)
+
 
 def reduce_images(*args):
     '''Basic image reduction'''
@@ -320,6 +353,9 @@ if __name__ == '__main__':
         
     #Looping through multiple data nights
     for i in range(len(filelist)):
+
+        # Check provided zeropoint against known defaults
+        check_zeropoint(zeropoint[i], Dataset[i])
 
         history = open(filepath.calibdata+Dataset[i]+'/processlog_images.txt', 'w')
         log_inputs(filelist.loc[i])
