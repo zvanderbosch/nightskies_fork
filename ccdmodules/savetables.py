@@ -1259,10 +1259,10 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
             numStarsVisPolluted = svMetrics[svIndex]['Nstar_vis_polluted'].iloc[0]
             fracStarsVis = 100 * numStarsVisPolluted / numStarsVisNatsky
             scalarIllum = iaMetrics[iaIndex]['skyscalar'].iloc[0] * metrics['albedo'] / 4
-
-            # Find maximum vertical illuminance
-            vertColumns = [col for col in iaMetrics.columns if 'vert-' in col]
-            maxVertIllumMlux = max(iaMetrics[iaIndex][vertColumns].values[0])
+            maxVertIllumMlux = iaMetrics[iaIndex]['max_vlum'].iloc[0]
+            minVertIllumMlux = iaMetrics[iaIndex]['min_vlum'].iloc[0]
+            maxVertIllumAZ = iaMetrics[iaIndex]['max_vlum_azimuth'].iloc[0]
+            minVertIllumAZ = iaMetrics[iaIndex]['min_vlum_azimuth'].iloc[0]
 
             # Unit conversions
             meanLumAllskyMccd = nl_to_mccd(meanLumAllskyNl)  # nL to uCd
@@ -1359,13 +1359,18 @@ def append_lp_allsky(excelFile, dnight, sets, metrics):
             horizIllumAllskyMlux = sgMetrics[sgIndex]['horizs0'].iloc[0]
             brightestLumNl = sgMetrics[sgIndex]['skymax0'].iloc[0]
             zenithLumNl = nsMetrics[nsIndex]['Zenith'].iloc[0]
+            maxVertIllumMlux = sgMetrics[sgIndex]['max_vlum-0'].iloc[0]
+            minVertIllumMlux = sgMetrics[sgIndex]['min_vlum-0'].iloc[0]
+            meanVertIllumMlux = sgMetrics[sgIndex]['mean_vlum-0'].iloc[0]
+            maxVertIllumAZ = sgMetrics[sgIndex]['max_vlum_azimuth-0'].iloc[0]
+            minVertIllumAZ = sgMetrics[sgIndex]['min_vlum_azimuth-0'].iloc[0]
 
-            # Get vertical illuminance stats
-            vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
-            vertColumns = [col for col in vertColumnsAll if col[-1] == '0']
-            maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
-            minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
-            meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
+            # # Get vertical illuminance stats
+            # vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
+            # vertColumns = [col for col in vertColumnsAll if col[-1] == '0']
+            # maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
+            # minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
+            # meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
 
             # Unit conversions
             meanLumAllskyNl = mlux_to_nl(meanLumAllskyMlux)       # mlux to nL
