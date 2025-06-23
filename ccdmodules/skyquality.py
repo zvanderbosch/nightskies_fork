@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/22
+#Last updated: 2025/06/23
 #
 #This script computes sky quality index (SQI) and synthetic
 #sky quality meter (SQM) values, alogn with a few photometric
@@ -13,10 +13,23 @@
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) extinction_fit_<FILTER>.xlsx - Best-fit extinction parameters
+#   (2) Calibrated images (ib###.fit, zenith1.fit, zenith2.fit)
+#   (3) SQI tables (sqitbl.df, sqitbl80.dbf, sqitbl70.dbf) from naturalsky.py
 #
 #Output:
-#   (1) 
+#   (1) sqOutput - Pandas dataframe containing light pollution metrics:
+#       - SQI_allsky    -- Sky quality index, observed horizon
+#       - SQI_ZA80      -- Sky Quality index, zenith angle 80
+#       - SQI_ZA70      -- Sky quality index, zenith angle 70
+#       - SQM_sky       -- Synthetic SQM, sky background only
+#       - SQM_synthetic -- Synthetic SQM, sky + stars + planets
+#       - zenith_mag    -- Zenith luminance from zenith2.fit
+#       - allsky_mag    -- All-sky luminance, observed horizon
+#       - za70_mag      -- All-sky luminance, zenith angle 70
+#       - brightest_mag -- Brightest pixel above horizon
+#       - faintest_mag  -- Faintest pixel above horizon
+#       - scalar_illum  -- Scalar illuminance
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from sqiv4.vbs)
