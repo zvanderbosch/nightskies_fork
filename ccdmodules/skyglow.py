@@ -257,19 +257,13 @@ def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
             vertIllum[i][j] = row.getValue("SUM")
             clear_memory([row,rows])
 
-    # Get min/max vertical illuminance values and associated azimuth values
-    results[f'max_vlum-0'] = vertIllum[0].max()
-    results[f'min_vlum-0'] = vertIllum[0].min()
-    results[f'max_vlum-1'] = vertIllum[1].max()
-    results[f'min_vlum-1'] = vertIllum[1].min()
-    results[f'max_vlum-2'] = vertIllum[2].max()
-    results[f'min_vlum-2'] = vertIllum[2].min()
-    results[f'max_vlum_azimuth-0'] = rotationAngles[vertIllum[0].argmax()]
-    results[f'min_vlum_azimuth-0'] = rotationAngles[vertIllum[0].argmin()]
-    results[f'max_vlum_azimuth-1'] = rotationAngles[vertIllum[1].argmax()]
-    results[f'min_vlum_azimuth-1'] = rotationAngles[vertIllum[1].argmin()]
-    results[f'max_vlum_azimuth-2'] = rotationAngles[vertIllum[2].argmax()]
-    results[f'min_vlum_azimuth-2'] = rotationAngles[vertIllum[2].argmin()]
+    # Get min/max/mean vertical illuminance values and associated azimuth values
+    for i in range(len(mosaicListVert)):
+        results[f'max_vlum-{i}'] = vertIllum[i].max()
+        results[f'min_vlum-{i}'] = vertIllum[i].min()
+        results[f'mean_vlum-{i}'] = vertIllum[i].mean()
+        results[f'max_vlum_azimuth-{i}'] = rotationAngles[vertIllum[i].argmax()]
+        results[f'min_vlum_azimuth-{i}'] = rotationAngles[vertIllum[i].argmin()]
 
     return results
 
