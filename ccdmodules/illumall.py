@@ -290,10 +290,10 @@ def calc_vertical_illuminance(mosaic, zoneRaster, gridPath, results):
         clear_memory([row,rows])
 
     # Get min/max vertical illuminance values and associated azimuth values
-    results[f'max_vert'] = vertIllum.max()
-    results[f'min_vert'] = vertIllum.min()
-    results[f'max_vert_azimuth'] = rotationAngles[vertIllum.argmax()]
-    results[f'min_vert_azimuth'] = rotationAngles[vertIllum.argmin()]
+    results[f'max_vlum'] = vertIllum.max()
+    results[f'min_vlum'] = vertIllum.min()
+    results[f'max_vlum_azimuth'] = rotationAngles[vertIllum.argmax()]
+    results[f'min_vlum_azimuth'] = rotationAngles[vertIllum.argmin()]
 
     return results
 
