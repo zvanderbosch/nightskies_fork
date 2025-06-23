@@ -260,9 +260,11 @@ def calc_vertical_illuminance(mosaic, zoneRaster, gridPath, results):
 
     # Define array of rotation angles (0 -> 355 in 5-degree increments)
     rotationAngles = n.arange(0,360,5,dtype=int)
+    vertIllum = n.zeros(len(rotationAngles))
 
     # Iterate over rotation angles in 10-degree increments
-    for angle in rotationAngles:
+    vertValues = []
+    for i,angle in enumerate(rotationAngles):
 
         # Status update
         print(f'{PREFIX}Calculating vertical illuminance at angle {angle}...')
@@ -284,7 +286,14 @@ def calc_vertical_illuminance(mosaic, zoneRaster, gridPath, results):
         rows = arcpy.SearchCursor(outputTable)
         row = rows.next()
         results[f'vert-{angle:03d}'] = row.getValue("SUM")
+        vertIllum[i] = row.getValue("SUM")
         clear_memory([row,rows])
+
+    # Get min/max vertical illuminance values and associated azimuth values
+    results[f'max_vert'] = vertIllum.max()
+    results[f'min_vert'] = vertIllum.min()
+    results[f'max_vert_azimuth'] = rotationAngles[vertIllum.argmax()]
+    results[f'min_vert_azimuth'] = rotationAngles[vertIllum.argmin()]
 
     return results
 
