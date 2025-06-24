@@ -190,22 +190,22 @@ SHEETDATA = {
             'ZA80_BRIGHTEST_ART_MCCD', 'ZA80_BRIGHTEST_LPR', 'ZA80_MEANLUM_ART_MCCD'
         ],
         'colWidths':[
-            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 23.0, 26.3, 
-            22.6, 25.9, 21.3, 23.0, 22.6, 20.4, 28.6, 22.4, 27.7
+            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 26.0, 26.3, 
+            22.6, 25.9, 21.3, 26.0, 22.6, 20.4, 28.6, 22.4, 27.7
         ]
     },
     'LP70':{
         'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR SKY FROM ZENITH TO ZENITH ANGLE 70",
         'colNames':[
             'DNIGHT', 'DSET', 'SQI_ZA70', 'ZA70_ALR', 'ZA70_ART_MAGS', 
-            'ZA70_ART_MLX', 'ZA70_MAXVERT_ART_MLX', 'ZA70_MAXVERT_LPR', 'ZA70_MAXVERT_AZIMUTH'
+            'ZA70_ART_MLX', 'ZA70_MAXVERT_ART_MLX', 'ZA70_MAXVERT_LPR', 'ZA70_MAXVERT_AZIMUTH',
             'ZA70_ MEANVERT_ART_MLX', 'ZA70_MEANVERT_LPR', 'ZA70_MINVERT_ART_MLX', 
             'ZA70_MINVERT_LPR', 'ZA70_MINVERT_AZIMUTH', 'ZA70_HORIZ_ART_MLX', 'ZA70_HORIZ_LPR', 
             'ZA70_BRIGHTEST_ART_MCCD', 'ZA70_BRIGHTEST_LPR', 'ZA70_MEANLUM_ART_MCCD'
         ],
         'colWidths':[
-            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 23.0, 26.3, 
-            22.6, 25.9, 21.3, 23.0, 22.6, 20.4, 28.6, 22.4, 27.7
+            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 26.0, 26.3, 
+            22.6, 25.9, 21.3, 26.0, 22.6, 20.4, 28.6, 22.4, 27.7
         ]
     },
     'ZONES':{
