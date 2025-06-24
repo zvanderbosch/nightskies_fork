@@ -343,8 +343,12 @@ def save_illuminance_data(metrics, dnight, sets, filter):
     '''
 
     # Define excel filename and sheet names
-    excelFile = f"{filepath.calibdata}{dnight}/vert_test.xlsx"
-    excelSheets = ["Allsky","ZA80","ZA70"]
+    excelFile = f"{filepath.calibdata}{dnight}/vert.xlsx"
+    excelSheets = ["Allsky_Artificial","ZA80_Artificial","ZA70_Artificial"]
+
+    # Delete existing vert.xlsx 
+    if os.path.isfile(excelFile):
+        os.remove(excelFile)
 
     # Get number of data sets and define column names
     Nsets = len(sets)
