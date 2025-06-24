@@ -14,7 +14,7 @@
 #   (1) 
 #
 #Output:
-#   (1) 
+#   (1) vert.xlsx - Table of vert/horiz illuminance values & stats
 #
 #History:
 #	Zach Vanderbosch -- Created script
@@ -22,6 +22,8 @@
 #-----------------------------------------------------------------------------#
 
 from scipy.interpolate import make_interp_spline
+from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
+from openpyxl.utils import get_column_letter
 
 import os
 import stat
@@ -220,9 +222,14 @@ def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
 
     # Define array of rotation angles (0 -> 350 in 10-degree increments)
     rotationAngles = n.arange(0,360,10,dtype=int)
+    numAngles = len(rotationAngles)
 
     # Create arrays to store illuminance values for each mosaic
-    vertIllum = [n.zeros(len(rotationAngles))] * 3
+    vertIllum = [
+        n.zeros(numAngles),
+        n.zeros(numAngles),
+        n.zeros(numAngles)
+    ]
 
     # Iterate over rotation angles in 10-degree increments
     for j,angle in enumerate(rotationAngles):
@@ -330,6 +337,141 @@ def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
         arcpy.management.Delete(layer,"")
 
 
+def save_illuminance_data(metrics, dnight, sets, filter):
+    '''
+    Function to save vertical & horizontal illuminance data to vert.xlsx
+    '''
+
+    # Define excel filename and sheet names
+    excelFile = f"{filepath.calibdata}{dnight}/vert_test.xlsx"
+    excelSheets = ["Allsky","ZA80","ZA70"]
+
+    # Get number of data sets and define column names
+    Nsets = len(sets)
+    excelVertColumns = ['Azimuth'] + [f'Vert Illum Set-{i+1}' for i in range(Nsets)]
+    excelStatRows = [
+        'Min Vert (mlux)',
+        'Max Vert (mlux)',
+        'Mean Vert (mlux)',
+        'Min Vert Azimuth',
+        'Max Vert Azimuth',
+        'Horiz Illum (mlux)'
+    ]
+
+    # Define some cell formatting styles
+    headerFont = Font(
+        name="Calibri", 
+        size=11, 
+        bold=True, 
+        color="000000"
+    )
+    headerColor = PatternFill(
+        fill_type='solid',
+        start_color='CCFFCC', # Green
+        end_color='CCFFCC'
+    )
+    rowColor = PatternFill(
+        fill_type='solid',
+        start_color='F59067', # Orange
+        end_color='F59067'
+    )
+    headerBorder = Border(
+        left=Side(style='thin'), 
+        right=Side(style='thin'), 
+        top=Side(style='thin'), 
+        bottom=Side(style='thin')
+    )
+    headerAlignment = Alignment(
+        horizontal="center", 
+        vertical="center",
+        wrap_text=True
+    )
+
+    # Add Excel sheets with column headers if it doesn't exist
+    with pd.ExcelWriter(excelFile, engine='openpyxl') as writer:
+
+        # Create an openpyxl workbook object
+        workbook = writer.book
+
+        # Add sheets and set column/row header formats
+        for sheet in excelSheets:
+            if sheet not in workbook.sheetnames:
+                workbook.create_sheet(sheet)
+                worksheet = writer.sheets[sheet]
+                for i, value in enumerate(excelVertColumns,1):
+                    cell = worksheet.cell(row=1, column=i)
+                    cell.value = value
+                    cell.font = headerFont
+                    cell.border = headerBorder
+                    cell.fill = headerColor
+                    cell.alignment = headerAlignment
+                    colLetter = get_column_letter(i)
+                    worksheet.column_dimensions[colLetter].width = 12
+                for i, value in enumerate(excelStatRows,1):
+                    cell = worksheet.cell(row=i+38, column=1)
+                    cell.value = value
+                    cell.font = headerFont
+                    cell.border = headerBorder
+                    cell.fill = rowColor
+                    cell.alignment = headerAlignment
+                
+                # Set width of first column separately
+                worksheet.column_dimensions['A'].width = 20
+
+
+        # Iterate over each sheet
+        for i,sheet in enumerate(excelSheets):
+
+            # Grab the worksheet
+            worksheet = writer.sheets[sheet]
+
+            # Iterate over each data set
+            for s in sets:
+
+                # Convert set number to integer
+                setnum = int(s[0])
+
+                # Get metrics associated with the set/filter
+                setIndex = (
+                    (metrics['dataset'] == setnum) &
+                    (metrics['filter'] == filter)
+                )
+                setMetrics = metrics.loc[setIndex]
+
+                # Add statistics values
+                worksheet.cell(row=39, column=2, value=setMetrics[f'min_vlum-{i}'].iloc[0])
+                worksheet.cell(row=40, column=2, value=setMetrics[f'max_vlum-{i}'].iloc[0])
+                worksheet.cell(row=41, column=2, value=setMetrics[f'mean_vlum-{i}'].iloc[0])
+                worksheet.cell(row=42, column=2, value=setMetrics[f'min_vlum_azimuth-{i}'].iloc[0])
+                worksheet.cell(row=43, column=2, value=setMetrics[f'max_vlum_azimuth-{i}'].iloc[0])
+                worksheet.cell(row=44, column=2, value=setMetrics[f'horizs{i}'].iloc[0])
+                worksheet.cell(row=39, column=2).number_format = '0.00000'
+                worksheet.cell(row=40, column=2).number_format = '0.00000'
+                worksheet.cell(row=41, column=2).number_format = '0.00000'
+                worksheet.cell(row=42, column=2).number_format = '0'
+                worksheet.cell(row=43, column=2).number_format = '0'
+                worksheet.cell(row=44, column=2).number_format = '0.00000'
+
+                # Get vertical illuminance columns for the given sheet
+                vertCols = [c for c in metrics.columns if 'vert-' in c and int(c[-1]) == i]
+
+                # Get azimuth and vertical illuminance
+                vertValues = setMetrics[vertCols].values[0]
+                azValues = [int(x.split("-")[1]) for x in vertCols]
+
+                # Add azimuth and vertical illuminance values to table
+                for j,(az,vert) in enumerate(zip(azValues,vertValues)):
+                    
+                    # Add azimuth values for first set only
+                    if setnum == 1:
+                        worksheet.cell(row=j+2, column=1, value=az)
+                        worksheet.cell(row=j+2, column=1).number_format = '0'
+
+                    # Add vertical illuminance values
+                    worksheet.cell(row=j+2, column=setnum+1, value=vert)
+                    worksheet.cell(row=j+2, column=setnum+1).number_format = '0.00000'
+
+
 #-----------------------------------------------------------------------------#
 # Main Program
 
@@ -404,19 +546,19 @@ def calculate_statistics(dnight,sets,filter):
             'za70': anthRaster70
         }
 
-        # Calculate sky luminance metrics
-        print(f'{PREFIX}Calculating anthropogenic sky luminance...')
-        resultDict = calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
+        # # Calculate sky luminance metrics
+        # print(f'{PREFIX}Calculating anthropogenic sky luminance...')
+        # resultDict = calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # Calculate mean sky luminance by zone
-        print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
-        resultDict = calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
+        # # Calculate mean sky luminance by zone
+        # print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
+        # resultDict = calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
 
 
-        # Calculate zonal stats for each mosaic
-        print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
-        resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
+        # # Calculate zonal stats for each mosaic
+        # print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
+        # resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
         # Calculate horizontal illuminance
@@ -429,9 +571,9 @@ def calculate_statistics(dnight,sets,filter):
         resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # Calculate zonal histograms
-        print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
-        calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
+        # # Calculate zonal histograms
+        # print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
+        # calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
 
         # Generate dataframe entry for given dataset
         skyglowEntry = pd.DataFrame(
@@ -527,5 +669,8 @@ def calculate_statistics(dnight,sets,filter):
 
     # Create final dataframe output
     skyglowOutput = pd.concat(skyglowOutput)
+
+    # Save illuminance data to vert.xlsx file
+    save_illuminance_data(skyglowOutput, dnight, sets, filter)
 
     return skyglowOutput
