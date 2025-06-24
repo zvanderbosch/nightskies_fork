@@ -60,7 +60,7 @@ SHEETDATA = {
         ],
         'colWidths':[
             16.9, 36.0, 23.1, 15.9, 13.1, 14.9, 43.6, 18.7, 18.6, 17.3,  8.0, 
-            17.9, 12.4, 16.0,  8.7, 10.1, 10.1, 17.0, 16.4,  9.6, 14.3, 20.7, 
+            17.9, 12.4, 16.0, 12.0, 14.1, 10.1, 17.0, 16.4,  9.6, 14.3, 20.7, 
             13.6, 10.3, 15.0, 13.0,  9.6, 23.0, 22.3, 21.0, 23.4,176.3, 33.9
         ]
     },
@@ -366,6 +366,9 @@ DROPDOWNS = {
     'LENS': [
         'Nikon 1.2', 'Nikon 1.8'
     ],
+    'FILTER_NAME': [
+        'V','B'
+    ],
     'FILTER': [
         '5541','5728','6084','7706','8582','8525','9047','9776'
     ],
@@ -375,18 +378,24 @@ DROPDOWNS = {
         'NexStar 11','NexStar SE1'
     ],
     'OBSERVERS': [
+        'S Anderson',
         'B Banet',
+        'E Brown',
         'D Duriscoe',
+        'C Geis',
         'S Hummel',
         'L Hung',
         'T Jiles',
         'K Magargal',
         'B Meadows',
+        'E Meyer',
         'B Miller',
         'C Moore',
+        'T Olstad',
         'A Pipkin',
         'Z Vanderbosch',
-        'J White'
+        'J White',
+        'K White'
     ]
 }
 
@@ -524,6 +533,9 @@ def create_excel_template(excelFile):
                 dvLens = DataValidation(
                     type="list", formula1=f'"{",".join(DROPDOWNS["LENS"])}"'
                 )
+                dvFilterName = DataValidation(
+                    type="list", formula1=f'"{",".join(DROPDOWNS["FILTER_NAME"])}"'
+                )
                 dvFilter = DataValidation(
                     type="list", formula1=f'"{",".join(DROPDOWNS["FILTER"])}"'
                 )
@@ -537,6 +549,7 @@ def create_excel_template(excelFile):
                 # Add data validation objects to sheets
                 worksheet.add_data_validation(dvCamera)
                 worksheet.add_data_validation(dvLens)
+                worksheet.add_data_validation(dvFilterName)
                 worksheet.add_data_validation(dvFilter)
                 worksheet.add_data_validation(dvInstrument)
                 worksheet.add_data_validation(dvObservers)
@@ -544,12 +557,13 @@ def create_excel_template(excelFile):
                 # Set cell locations for each dropdown menu
                 dvCamera.add(worksheet['M5'])
                 dvLens.add(worksheet['O5'])
-                dvFilter.add(worksheet['P5'])
-                dvInstrument.add(worksheet['Q5'])
-                dvObservers.add(worksheet['AA5'])
+                dvFilterName.add(worksheet['P5'])
+                dvFilter.add(worksheet['Q5'])
+                dvInstrument.add(worksheet['R5'])
                 dvObservers.add(worksheet['AB5'])
                 dvObservers.add(worksheet['AC5'])
                 dvObservers.add(worksheet['AD5'])
+                dvObservers.add(worksheet['AE5'])
 
             else:
                 # Add sheet title
@@ -747,7 +761,7 @@ def append_night_metadata(excelFile, siteInfo):
         if siteInfo['lens'] is not None:
             worksheet.cell(row=5, column=15, value=siteInfo['lens'])        # Camera Lens name
         if siteInfo['filterName'] is not None:
-            worksheet.cell(row=5, column=16, value=siteInfo['lens'])        # Filter name
+            worksheet.cell(row=5, column=16, value=siteInfo['filterName'])  # Filter name
         if siteInfo['filterBatch'] is not None:
             worksheet.cell(row=5, column=17, value=siteInfo['filterBatch']) # Filter batch ID
         if siteInfo['instrument'] is not None:
