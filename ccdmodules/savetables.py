@@ -169,42 +169,43 @@ SHEETDATA = {
         'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR THE WHOLE OBSERVABLE SKY",
         'colNames':[
             'DNIGHT', 'DSET', 'SQI_ALLSKY', 'ALR', 'ALLSKY_ART_MAGS', 
-            'ALLSKY_ART_MLX', 'MAXVERT_ART_MLX', 'MAXVERT_LPR', 
+            'ALLSKY_ART_MLX', 'MAXVERT_ART_MLX', 'MAXVERT_LPR', 'MAXVERT_AZIMUTH',
             'MEANVERT_ART_MLX', 'MEANVERT_LPR', 'MINVERT_ART_MLX', 'MINVERT_LPR', 
-            'HORIZ_ART_MLX', 'HORIZ_LPR', 'BRIGHTEST_ART_MCCD', 'BRIGHTEST_LPR', 
-            'ZENITH_LUM_ART_MCCD', 'ZENITH_LUM_LPR', 'MEANLUM_ART_MCCD', 'MODEL_ALR'
+            'MINVERT_AZIMUTH', 'HORIZ_ART_MLX', 'HORIZ_LPR', 'BRIGHTEST_ART_MCCD', 
+            'BRIGHTEST_LPR', 'ZENITH_LUM_ART_MCCD', 'ZENITH_LUM_LPR', 
+            'MEANLUM_ART_MCCD', 'MODEL_ALR'
         ],
         'colWidths':[
-            14.3, 13.0, 13.1,  9.7, 24.6, 23.1, 20.9, 20.1, 21.3, 17.1, 
-            21.6, 16.6, 18.4, 15.3, 25.3, 18.1, 25.0, 18.7, 23.3, 15.1
+            14.3, 13.0, 13.1,  9.7, 24.6, 23.1, 20.9, 20.1, 20.6, 21.3, 17.1,
+            21.6, 16.6, 20.6, 18.4, 15.3, 25.3, 18.1, 25.0, 18.7, 23.3, 15.1
         ]
     },
     'LP80':{
         'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR SKY FROM ZENITH TO ZENITH ANGLE 80",
         'colNames':[
             'DNIGHT', 'DSET', 'SQI_ZA80', 'ZA80_ALR', 'ZA80_ART_MAGS', 
-            'ZA80_ART_MLX', 'ZA80_MAXVERT_ART_MLX', 'ZA80_MAXVERT_LPR', 
+            'ZA80_ART_MLX', 'ZA80_MAXVERT_ART_MLX', 'ZA80_MAXVERT_LPR', 'ZA80_MAXVERT_AZIMUTH',
             'ZA80_ MEANVERT_ART_MLX', 'ZA80_MEANVERT_LPR', 'ZA80_MINVERT_ART_MLX', 
-            'ZA80_MINVERT_LPR', 'ZA80_HORIZ_ART_MLX', 'ZA80_HORIZ_LPR', 
+            'ZA80_MINVERT_LPR', 'ZA80_MINVERT_AZIMUTH', 'ZA80_HORIZ_ART_MLX', 'ZA80_HORIZ_LPR', 
             'ZA80_BRIGHTEST_ART_MCCD', 'ZA80_BRIGHTEST_LPR', 'ZA80_MEANLUM_ART_MCCD'
         ],
         'colWidths':[
-            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 26.3, 
-            22.6, 25.9, 21.3, 22.6, 20.4, 28.6, 22.4, 27.7
+            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 23.0, 26.3, 
+            22.6, 25.9, 21.3, 23.0, 22.6, 20.4, 28.6, 22.4, 27.7
         ]
     },
     'LP70':{
         'title':"LIGHT POLLUTION CALCULATIONS FROM SKYGOW (LUMINANCE AND ILLUMINANCE) FOR SKY FROM ZENITH TO ZENITH ANGLE 70",
         'colNames':[
             'DNIGHT', 'DSET', 'SQI_ZA70', 'ZA70_ALR', 'ZA70_ART_MAGS', 
-            'ZA70_ART_MLX', 'ZA70_MAXVERT_ART_MLX', 'ZA70_MAXVERT_LPR', 
+            'ZA70_ART_MLX', 'ZA70_MAXVERT_ART_MLX', 'ZA70_MAXVERT_LPR', 'ZA70_MAXVERT_AZIMUTH'
             'ZA70_ MEANVERT_ART_MLX', 'ZA70_MEANVERT_LPR', 'ZA70_MINVERT_ART_MLX', 
-            'ZA70_MINVERT_LPR', 'ZA70_HORIZ_ART_MLX', 'ZA70_HORIZ_LPR', 
+            'ZA70_MINVERT_LPR', 'ZA70_MINVERT_AZIMUTH', 'ZA70_HORIZ_ART_MLX', 'ZA70_HORIZ_LPR', 
             'ZA70_BRIGHTEST_ART_MCCD', 'ZA70_BRIGHTEST_LPR', 'ZA70_MEANLUM_ART_MCCD'
         ],
         'colWidths':[
-            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 26.3, 
-            22.6, 25.9, 21.3, 22.6, 20.4, 28.6, 22.4, 27.7
+            12.4, 13.0, 13.1,  9.7, 24.6, 23.1, 26.0, 20.1, 23.0, 26.3, 
+            22.6, 25.9, 21.3, 23.0, 22.6, 20.4, 28.6, 22.4, 27.7
         ]
     },
     'ZONES':{
@@ -1373,13 +1374,6 @@ def append_lp_allsky(excelFile, dnight, sets, metrics):
             maxVertIllumAZ = sgMetrics[sgIndex]['max_vlum_azimuth-0'].iloc[0]
             minVertIllumAZ = sgMetrics[sgIndex]['min_vlum_azimuth-0'].iloc[0]
 
-            # # Get vertical illuminance stats
-            # vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
-            # vertColumns = [col for col in vertColumnsAll if col[-1] == '0']
-            # maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
-            # minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
-            # meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
-
             # Unit conversions
             meanLumAllskyNl = mlux_to_nl(meanLumAllskyMlux)       # mlux to nL
             meanLumAllskyMccd = nl_to_mccd(meanLumAllskyNl)       # nL to uCd
@@ -1402,19 +1396,21 @@ def append_lp_allsky(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=5 , value=totalLumAllskyMag)    # All-sky luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=6 , value=totalLumAllskyMlux)   # All-sky luminous emittance (milli-Lux)
             worksheet.cell(row=setnum+4, column=7 , value=maxVertIllumMlux)     # Max Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=8 , value=lprVertMax)           # Max Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=9 , value=meanVertIllumMlux)    # Mean Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=10, value=lprVertMean)          # Mean Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=11, value=minVertIllumMlux)     # Min Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=12, value=lprVertMin)           # Min Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=13, value=horizIllumAllskyMlux) # Horizontal Illum (mlux)
-            worksheet.cell(row=setnum+4, column=14, value=lprHorizontal)        # Horizontal Illum (LPR)
-            worksheet.cell(row=setnum+4, column=15, value=brightestLumMccd)     # Brightest luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=16, value=lprBrightest)         # Brightest luminance (LPR)
-            worksheet.cell(row=setnum+4, column=17, value=zenithLumMccd)        # Zenith luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=18, value=lprZenith)            # Zenith luminance (LPR)
-            worksheet.cell(row=setnum+4, column=19, value=meanLumAllskyMccd)    # Mean all-sky luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=20, value=siteALR)              # Modeled ALR for site
+            worksheet.cell(row=setnum+4, column=8 , value=lprVertMax)           # Max Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=9 , value=maxVertIllumAZ)       # Azimuth at Max Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=10, value=meanVertIllumMlux)    # Mean Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11, value=lprVertMean)          # Mean Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=12, value=minVertIllumMlux)     # Min Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13, value=lprVertMin)           # Min Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=14, value=minVertIllumAZ)       # Azimuth at Min Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=15, value=horizIllumAllskyMlux) # Horizontal Illum (mlux)
+            worksheet.cell(row=setnum+4, column=16, value=lprHorizontal)        # Horizontal Illum (LPR)
+            worksheet.cell(row=setnum+4, column=17, value=brightestLumMccd)     # Brightest luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=18, value=lprBrightest)         # Brightest luminance (LPR)
+            worksheet.cell(row=setnum+4, column=19, value=zenithLumMccd)        # Zenith luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=20, value=lprZenith)            # Zenith luminance (LPR)
+            worksheet.cell(row=setnum+4, column=21, value=meanLumAllskyMccd)    # Mean all-sky luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=22, value=siteALR)              # Modeled ALR for site
 
             # Set some cell number/date formats
             worksheet.cell(row=setnum+4, column=3 ).number_format = '0.0'       # Sky Quality Index
@@ -1422,19 +1418,21 @@ def append_lp_allsky(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=5 ).number_format = '0.00'      # All-sky luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=6 ).number_format = '0.000'     # All-sky luminous emittance (milli-Lux)
             worksheet.cell(row=setnum+4, column=7 ).number_format = '0.000'     # Max Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'     # Max Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.000'     # Mean Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'     # Mean Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'     # Min Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'     # Min Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'     # Horizontal Illum (mlux)
-            worksheet.cell(row=setnum+4, column=14).number_format = '0.000'     # Horizontal Illum (LPR)
-            worksheet.cell(row=setnum+4, column=15).number_format = '####'      # Brightest luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=16).number_format = '0.00'      # Brightest luminance (LPR)
-            worksheet.cell(row=setnum+4, column=17).number_format = '####'      # Zenith luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=18).number_format = '0.000'     # Zenith luminance (LPR)
-            worksheet.cell(row=setnum+4, column=19).number_format = '####'      # Mean all-sky luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=20).number_format = '0.000'     # Modeled ALR for site
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'     # Max Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '####'      # Azimuth at Max Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'     # Mean Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'     # Mean Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'     # Min Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'     # Min Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=14).number_format = '####'      # Azimuth at Min Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=15).number_format = '0.000'     # Horizontal Illum (mlux)
+            worksheet.cell(row=setnum+4, column=16).number_format = '0.000'     # Horizontal Illum (LPR)
+            worksheet.cell(row=setnum+4, column=17).number_format = '####'      # Brightest luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=18).number_format = '0.00'      # Brightest luminance (LPR)
+            worksheet.cell(row=setnum+4, column=19).number_format = '####'      # Zenith luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=20).number_format = '0.000'     # Zenith luminance (LPR)
+            worksheet.cell(row=setnum+4, column=21).number_format = '####'      # Mean all-sky luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=22).number_format = '0.000'     # Modeled ALR for site
 
             # Set cell styles
             ncol = len(SHEETDATA[sheetName]['colNames'])
@@ -1483,13 +1481,6 @@ def append_lp_za80(excelFile, dnight, sets, metrics):
             maxVertIllumAZ = sgMetrics[sgIndex]['max_vlum_azimuth-1'].iloc[0]
             minVertIllumAZ = sgMetrics[sgIndex]['min_vlum_azimuth-1'].iloc[0]
 
-            # Get vertical illuminance stats
-            # vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
-            # vertColumns = [col for col in vertColumnsAll if col[-1] == '1']
-            # maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
-            # minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
-            # meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
-
             # Unit conversions
             meanLumZA80Nl = mlux_to_nl(meanLumZA80Mlux)       # mlux to nL
             meanLumZA80Mccd = nl_to_mccd(meanLumZA80Nl)       # nL to uCd
@@ -1510,16 +1501,18 @@ def append_lp_za80(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=5 , value=totalLumZA80Mag)    # ZA-80 luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=6 , value=totalLumZA80Mlux)   # ZA-80 luminous emittance (milli-Lux)
             worksheet.cell(row=setnum+4, column=7 , value=maxVertIllumMlux)   # Max Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=8 , value=lprVertMax)         # Max Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=9 , value=meanVertIllumMlux)  # Mean Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=10, value=lprVertMean)        # Mean Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=11, value=minVertIllumMlux)   # Min Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=12, value=lprVertMin)         # Min Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=13, value=horizIllumZA80Mlux) # Horizontal Illum (mlux)
-            worksheet.cell(row=setnum+4, column=14, value=lprHorizontal)      # Horizontal Illum (LPR)
-            worksheet.cell(row=setnum+4, column=15, value=brightestLumMccd)   # Brightest luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=16, value=lprBrightest)       # Brightest luminance (LPR)
-            worksheet.cell(row=setnum+4, column=17, value=meanLumZA80Mccd)    # Mean ZA-80 luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 , value=lprVertMax)         # Max Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=9 , value=maxVertIllumAZ)     # Azimuth at Max Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=10, value=meanVertIllumMlux)  # Mean Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11, value=lprVertMean)        # Mean Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=12, value=minVertIllumMlux)   # Min Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13, value=lprVertMin)         # Min Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=14, value=minVertIllumAZ)     # Azimuth at Min Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=15, value=horizIllumZA80Mlux) # Horizontal Illum (mlux)
+            worksheet.cell(row=setnum+4, column=16, value=lprHorizontal)      # Horizontal Illum (LPR)
+            worksheet.cell(row=setnum+4, column=17, value=brightestLumMccd)   # Brightest luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=18, value=lprBrightest)       # Brightest luminance (LPR)
+            worksheet.cell(row=setnum+4, column=19, value=meanLumZA80Mccd)    # Mean ZA-80 luminance (micro-Candela)
 
             # Set some cell number/date formats
             worksheet.cell(row=setnum+4, column=3 ).number_format = '0.0'       # Sky Quality Index
@@ -1527,16 +1520,18 @@ def append_lp_za80(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=5 ).number_format = '0.00'      # ZA-80 luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=6 ).number_format = '0.000'     # ZA-80 luminous emittance (milli-Lux)
             worksheet.cell(row=setnum+4, column=7 ).number_format = '0.000'     # Max Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'     # Max Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.000'     # Mean Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'     # Mean Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'     # Min Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'     # Min Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'     # Horizontal Illum (mlux)
-            worksheet.cell(row=setnum+4, column=14).number_format = '0.000'     # Horizontal Illum (LPR)
-            worksheet.cell(row=setnum+4, column=15).number_format = '####'      # Brightest luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=16).number_format = '0.00'      # Brightest luminance (LPR)
-            worksheet.cell(row=setnum+4, column=17).number_format = '####'      # Mean ZA-80 luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'     # Max Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '####'      # Azimuth at Max Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'     # Mean Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'     # Mean Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'     # Min Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'     # Min Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=14).number_format = '####'      # Azimuth at Min Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=15).number_format = '0.000'     # Horizontal Illum (mlux)
+            worksheet.cell(row=setnum+4, column=16).number_format = '0.000'     # Horizontal Illum (LPR)
+            worksheet.cell(row=setnum+4, column=17).number_format = '####'      # Brightest luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=18).number_format = '0.00'      # Brightest luminance (LPR)
+            worksheet.cell(row=setnum+4, column=19).number_format = '####'      # Mean ZA-80 luminance (micro-Candela)
 
             # Set cell styles
             ncol = len(SHEETDATA[sheetName]['colNames'])
@@ -1585,13 +1580,6 @@ def append_lp_za70(excelFile, dnight, sets, metrics):
             maxVertIllumAZ = sgMetrics[sgIndex]['max_vlum_azimuth-2'].iloc[0]
             minVertIllumAZ = sgMetrics[sgIndex]['min_vlum_azimuth-2'].iloc[0]
 
-            # Get vertical illuminance stats
-            # vertColumnsAll = [col for col in sgMetrics.columns if 'vert-' in col]
-            # vertColumns = [col for col in vertColumnsAll if col[-1] == '2']
-            # maxVertIllumMlux = max(sgMetrics[sgIndex][vertColumns].values[0])
-            # minVertIllumMlux = min(sgMetrics[sgIndex][vertColumns].values[0])
-            # meanVertIllumMlux = n.mean(sgMetrics[sgIndex][vertColumns].values[0])
-
             # Unit conversions
             meanLumZA70Nl = mlux_to_nl(meanLumZA70Mlux)       # mlux to nL
             meanLumZA70Mccd = nl_to_mccd(meanLumZA70Nl)       # nL to uCd
@@ -1612,16 +1600,18 @@ def append_lp_za70(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=5 , value=totalLumZA70Mag)    # ZA-70 luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=6 , value=totalLumZA70Mlux)   # ZA-70 luminous emittance (milli-Lux)
             worksheet.cell(row=setnum+4, column=7 , value=maxVertIllumMlux)   # Max Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=8 , value=lprVertMax)         # Max Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=9 , value=meanVertIllumMlux)  # Mean Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=10, value=lprVertMean)        # Mean Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=11, value=minVertIllumMlux)   # Min Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=12, value=lprVertMin)         # Min Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=13, value=horizIllumZA70Mlux) # Horizontal Illum (mlux)
-            worksheet.cell(row=setnum+4, column=14, value=lprHorizontal)      # Horizontal Illum (LPR)
-            worksheet.cell(row=setnum+4, column=15, value=brightestLumMccd)   # Brightest luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=16, value=lprBrightest)       # Brightest luminance (LPR)
-            worksheet.cell(row=setnum+4, column=17, value=meanLumZA70Mccd)    # Mean ZA-70 luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 , value=lprVertMax)         # Max Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=9 , value=maxVertIllumAZ)     # Azimuth at Max Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=10, value=meanVertIllumMlux)  # Mean Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11, value=lprVertMean)        # Mean Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=12, value=minVertIllumMlux)   # Min Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13, value=lprVertMin)         # Min Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=14, value=minVertIllumAZ)     # Azimuth at Min Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=15, value=horizIllumZA70Mlux) # Horizontal Illum (mlux)
+            worksheet.cell(row=setnum+4, column=16, value=lprHorizontal)      # Horizontal Illum (LPR)
+            worksheet.cell(row=setnum+4, column=17, value=brightestLumMccd)   # Brightest luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=18, value=lprBrightest)       # Brightest luminance (LPR)
+            worksheet.cell(row=setnum+4, column=19, value=meanLumZA70Mccd)    # Mean ZA-70 luminance (micro-Candela)
 
             # Set some cell number/date formats
             worksheet.cell(row=setnum+4, column=3 ).number_format = '0.0'       # Sky Quality Index
@@ -1629,16 +1619,18 @@ def append_lp_za70(excelFile, dnight, sets, metrics):
             worksheet.cell(row=setnum+4, column=5 ).number_format = '0.00'      # ZA-80 luminous emittance (mag)
             worksheet.cell(row=setnum+4, column=6 ).number_format = '0.000'     # ZA-80 luminous emittance (milli-Lux)
             worksheet.cell(row=setnum+4, column=7 ).number_format = '0.000'     # Max Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'     # Max Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=9 ).number_format = '0.000'     # Mean Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'     # Mean Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'     # Min Vertical Illum (milli-Lux)
-            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'     # Min Vertical Illum (LPR))
-            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'     # Horizontal Illum (mlux)
-            worksheet.cell(row=setnum+4, column=14).number_format = '0.000'     # Horizontal Illum (LPR)
-            worksheet.cell(row=setnum+4, column=15).number_format = '####'      # Brightest luminance (micro-Candela)
-            worksheet.cell(row=setnum+4, column=16).number_format = '0.00'      # Brightest luminance (LPR)
-            worksheet.cell(row=setnum+4, column=17).number_format = '####'      # Mean ZA-80 luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'     # Max Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=9 ).number_format = '####'      # Azimuth at Max Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=10).number_format = '0.000'     # Mean Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=11).number_format = '0.000'     # Mean Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=12).number_format = '0.000'     # Min Vertical Illum (milli-Lux)
+            worksheet.cell(row=setnum+4, column=13).number_format = '0.000'     # Min Vertical Illum (LPR)
+            worksheet.cell(row=setnum+4, column=14).number_format = '####'      # Azimuth at Min Vertical Illum (deg)
+            worksheet.cell(row=setnum+4, column=15).number_format = '0.000'     # Horizontal Illum (mlux)
+            worksheet.cell(row=setnum+4, column=16).number_format = '0.000'     # Horizontal Illum (LPR)
+            worksheet.cell(row=setnum+4, column=17).number_format = '####'      # Brightest luminance (micro-Candela)
+            worksheet.cell(row=setnum+4, column=18).number_format = '0.00'      # Brightest luminance (LPR)
+            worksheet.cell(row=setnum+4, column=19).number_format = '####'      # Mean ZA-80 luminance (micro-Candela)
 
             # Set cell styles
             ncol = len(SHEETDATA[sheetName]['colNames'])
