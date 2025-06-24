@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/28
+#Last updated: 2025/06/24
 #
 #This script generates the final output tables consolidating
 #data night attributes, calibration, and light pollution 
@@ -12,10 +12,16 @@
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) extinction_fit_<FILTER>.xlsx - Best-fit extinction parameters
+#   (2) cities.xlsx - List of nearby cities ranked by Walker's Law
+#   (3) filelist.xlsx - List of datasets to be processed
+#   (4) pointerr_<SET>.txt - Pointing error data
+#   (5) coordinates_<SET>.txt - Image coordinate data
+#   (6) natsky_model_params.xlsx - Natural sky model parameters & metrics
+#   (7) ib001.fit and zenith1.fit per SET - Calibrated FITS images
 #
 #Output:
-#   (1) 
+#   (1) <DATANIGHT>.xlsx - Summary tables for metadata and metrics
 #
 #History:
 #	Zach Vanderbosch -- Created script
@@ -874,16 +880,6 @@ def append_set_metadata(excelFile, dnight, sets):
             worksheet.cell(row=setnum+4, column=4 , value=siteInfo['utcDT'].time())  # UTC Start Time
             worksheet.cell(row=setnum+4, column=5 , value=siteInfo['lmtDT'].date())  # LMT Mid Date
             worksheet.cell(row=setnum+4, column=6 , value=siteInfo['lmtMidTime'])    # LMT Mid Time (hours)
-            # worksheet.cell(row=setnum+4, column=7 , value=dnight)                  # Glare quality
-            # worksheet.cell(row=setnum+4, column=8 , value=dnight)                  # Atmosphere quality
-            # worksheet.cell(row=setnum+4, column=9 , value=dnight)                  # Collection quality
-            # worksheet.cell(row=setnum+4, column=10, value=dnight)                  # Processing quality
-            # worksheet.cell(row=setnum+4, column=11, value=dnight)                  # Reference Set
-            # worksheet.cell(row=setnum+4, column=12, value=dnight)                  # Usable (Y/N)
-            # worksheet.cell(row=setnum+4, column=13, value=dnight)                  # Clouds
-            # worksheet.cell(row=setnum+4, column=14, value=dnight)                  # Plumes
-            # worksheet.cell(row=setnum+4, column=15, value=dnight)                  # PCT20
-            # worksheet.cell(row=setnum+4, column=16, value=dnight)                  # Collection Notes
 
             # Set some cell number/date formats
             datestyle = SHEETSTYLES['datetime']['datestyle']
