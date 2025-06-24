@@ -346,10 +346,6 @@ def save_illuminance_data(metrics, dnight, sets, filter):
     excelFile = f"{filepath.calibdata}{dnight}/vert.xlsx"
     excelSheets = ["Allsky_Artificial","ZA80_Artificial","ZA70_Artificial"]
 
-    # Delete existing vert.xlsx 
-    if os.path.isfile(excelFile):
-        os.remove(excelFile)
-
     # Get number of data sets and define column names
     Nsets = len(sets)
     excelVertColumns = ['Azimuth'] + [f'Vert Illum Set-{i+1}' for i in range(Nsets)]
@@ -392,7 +388,7 @@ def save_illuminance_data(metrics, dnight, sets, filter):
     )
 
     # Add Excel sheets with column headers if it doesn't exist
-    with pd.ExcelWriter(excelFile, engine='openpyxl') as writer:
+    with pd.ExcelWriter(excelFile, engine='openpyxl', mode='a') as writer:
 
         # Create an openpyxl workbook object
         workbook = writer.book
@@ -550,19 +546,19 @@ def calculate_statistics(dnight,sets,filter):
             'za70': anthRaster70
         }
 
-        # # Calculate sky luminance metrics
-        # print(f'{PREFIX}Calculating anthropogenic sky luminance...')
-        # resultDict = calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
+        # Calculate sky luminance metrics
+        print(f'{PREFIX}Calculating anthropogenic sky luminance...')
+        resultDict = calc_sky_luminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # # Calculate mean sky luminance by zone
-        # print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
-        # resultDict = calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
+        # Calculate mean sky luminance by zone
+        print(f'{PREFIX}Calculating mean anthropogenic sky luminance by zone...')
+        resultDict = calc_zonal_sky_luminance(anthRaster, zoneFile, gridsetp, resultDict)
 
 
-        # # Calculate zonal stats for each mosaic
-        # print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
-        # resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
+        # Calculate zonal stats for each mosaic
+        print(f'{PREFIX}Calculating all-sky anthropogenic luminous emittance...')
+        resultDict = calc_luminouos_emittance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
         # Calculate horizontal illuminance
@@ -575,9 +571,9 @@ def calculate_statistics(dnight,sets,filter):
         resultDict = calc_vertical_illuminance(mosaicDict, maskRaster, gridsetp, resultDict)
 
 
-        # # Calculate zonal histograms
-        # print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
-        # calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
+        # Calculate zonal histograms
+        print(f'{PREFIX}Calculating anthropogenic SQI zonal histograms...')
+        calc_sqi_histograms(maskRaster, gridsetp, za80File, za70File)
 
         # Generate dataframe entry for given dataset
         skyglowEntry = pd.DataFrame(
