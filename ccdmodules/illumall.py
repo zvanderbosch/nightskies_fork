@@ -22,6 +22,9 @@
 #
 #-----------------------------------------------------------------------------#
 
+from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
+from openpyxl.utils import get_column_letter
+
 import os
 import stat
 import arcpy
@@ -290,13 +293,147 @@ def calc_vertical_illuminance(mosaic, zoneRaster, gridPath, results):
         clear_memory([row,rows])
 
     # Get min/max vertical illuminance values and associated azimuth values
-    results[f'max_vlum'] = vertIllum.max()
-    results[f'min_vlum'] = vertIllum.min()
-    results[f'max_vlum_azimuth'] = rotationAngles[vertIllum.argmax()]
-    results[f'min_vlum_azimuth'] = rotationAngles[vertIllum.argmin()]
+    results['max_vlum'] = vertIllum.max()
+    results['min_vlum'] = vertIllum.min()
+    results['mean_vlum'] = vertIllum.mean()
+    results['max_vlum_azimuth'] = rotationAngles[vertIllum.argmax()]
+    results['min_vlum_azimuth'] = rotationAngles[vertIllum.argmin()]
 
     return results
 
+
+def save_illuminance_data(metrics, dnight, sets, filter):
+    '''
+    Function to save vertical & horizontal illuminance data to vert.xlsx
+    '''
+
+    # Define excel filename and sheet names
+    excelFile = f"{filepath.calibdata}{dnight}/vert.xlsx"
+    sheet = "Allsky_All_Sources"
+
+    # Delete existing vert.xlsx 
+    if os.path.isfile(excelFile):
+        os.remove(excelFile)
+
+    # Get number of data sets and define column names
+    Nsets = len(sets)
+    excelVertColumns = ['Azimuth'] + [f'Vert Illum Set-{i+1}' for i in range(Nsets)]
+    excelStatRows = [
+        'Min Vert (mlux)',
+        'Max Vert (mlux)',
+        'Mean Vert (mlux)',
+        'Min Vert Azimuth',
+        'Max Vert Azimuth',
+        'Horiz Illum (mlux)'
+    ]
+
+    # Define some cell formatting styles
+    headerFont = Font(
+        name="Calibri", 
+        size=11, 
+        bold=True, 
+        color="000000"
+    )
+    headerColor = PatternFill(
+        fill_type='solid',
+        start_color='CCFFCC', # Green
+        end_color='CCFFCC'
+    )
+    rowColor = PatternFill(
+        fill_type='solid',
+        start_color='F59067', # Orange
+        end_color='F59067'
+    )
+    headerBorder = Border(
+        left=Side(style='thin'), 
+        right=Side(style='thin'), 
+        top=Side(style='thin'), 
+        bottom=Side(style='thin')
+    )
+    headerAlignment = Alignment(
+        horizontal="center", 
+        vertical="center",
+        wrap_text=True
+    )
+
+    # Add Excel sheets with column headers if it doesn't exist
+    with pd.ExcelWriter(excelFile, engine='openpyxl') as writer:
+
+        # Create an openpyxl workbook object
+        workbook = writer.book
+
+        # Add sheets and set column/row header formats
+        if sheet not in workbook.sheetnames:
+            workbook.create_sheet(sheet)
+            worksheet = writer.sheets[sheet]
+            for i, value in enumerate(excelVertColumns,1):
+                cell = worksheet.cell(row=1, column=i)
+                cell.value = value
+                cell.font = headerFont
+                cell.border = headerBorder
+                cell.fill = headerColor
+                cell.alignment = headerAlignment
+                colLetter = get_column_letter(i)
+                worksheet.column_dimensions[colLetter].width = 12
+            for i, value in enumerate(excelStatRows,1):
+                cell = worksheet.cell(row=i+74, column=1)
+                cell.value = value
+                cell.font = headerFont
+                cell.border = headerBorder
+                cell.fill = rowColor
+                cell.alignment = headerAlignment
+            
+            # Set width of first column separately
+            worksheet.column_dimensions['A'].width = 20
+
+        # Grab the worksheet
+        worksheet = writer.sheets[sheet]
+
+        # Iterate over each data set
+        for s in sets:
+
+            # Convert set number to integer
+            setnum = int(s[0])
+
+            # Get metrics associated with the set/filter
+            setIndex = (
+                (metrics['dataset'] == setnum) &
+                (metrics['filter'] == filter)
+            )
+            setMetrics = metrics.loc[setIndex]
+
+            # Add statistics values
+            worksheet.cell(row=75, column=2, value=setMetrics['min_vlum'].iloc[0])
+            worksheet.cell(row=76, column=2, value=setMetrics['max_vlum'].iloc[0])
+            worksheet.cell(row=77, column=2, value=setMetrics['mean_vlum'].iloc[0])
+            worksheet.cell(row=78, column=2, value=setMetrics['min_vlum_azimuth'].iloc[0])
+            worksheet.cell(row=79, column=2, value=setMetrics['max_vlum_azimuth'].iloc[0])
+            worksheet.cell(row=80, column=2, value=setMetrics['horizs'].iloc[0])
+            worksheet.cell(row=75, column=2).number_format = '0.00000'
+            worksheet.cell(row=76, column=2).number_format = '0.00000'
+            worksheet.cell(row=77, column=2).number_format = '0.00000'
+            worksheet.cell(row=78, column=2).number_format = '0'
+            worksheet.cell(row=79, column=2).number_format = '0'
+            worksheet.cell(row=80, column=2).number_format = '0.00000'
+
+            # Get vertical illuminance columns for the given sheet
+            vertCols = [c for c in metrics.columns if 'vert-' in c]
+
+            # Get azimuth and vertical illuminance
+            vertValues = setMetrics[vertCols].values[0]
+            azValues = [int(x.split("-")[1]) for x in vertCols]
+
+            # Add azimuth and vertical illuminance values to table
+            for j,(az,vert) in enumerate(zip(azValues,vertValues)):
+                
+                # Add azimuth values for first set only
+                if setnum == 1:
+                    worksheet.cell(row=j+2, column=1, value=az)
+                    worksheet.cell(row=j+2, column=1).number_format = '0'
+
+                # Add vertical illuminance values
+                worksheet.cell(row=j+2, column=setnum+1, value=vert)
+                worksheet.cell(row=j+2, column=setnum+1).number_format = '0.00000'
 
 
 #------------------------------------------------------------------------------#
@@ -375,7 +512,7 @@ def calculate_statistics(dnight,sets,filter):
 
 
         # Calculate vertical illuminance
-        print(f'{PREFIX}Calculating anthropogenic vertical illuminance...')
+        print(f'{PREFIX}Calculating vertical illuminance for all sources...')
         resultDict = calc_vertical_illuminance(brightRaster, areaRaster, gridsetp, resultDict)
 
         # Generate dataframe entry for given dataset
@@ -393,5 +530,8 @@ def calculate_statistics(dnight,sets,filter):
 
     # Create final dataframe output
     illumallOutput = pd.concat(illumallOutput)
+
+    # Save illuminance data to vert.xlsx file
+    save_illuminance_data(illumallOutput, dnight, sets, filter)
 
     return illumallOutput
