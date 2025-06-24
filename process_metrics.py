@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/06/13
+#Last updated: 2025/06/24
 #
 #This script executes the final steps of the NSNSD CCD data processing
 #pipeline, analyzing the observed sky brightness and inferred artificial
@@ -20,15 +20,16 @@
 #Input: 
 #   (1) filelist.xlsx
 #   (2) Sky brightness mosaic (skybrightnl)
-#   (2) Anthropogenic light mosaic (anthlightnl)
+#   (3) Anthropogenic light mosaic (anthlightnl)
 #
 #Output:
 #   (1) List of nearby cities ranked by Walker's Law values (calibdata)
 #       a. cities.xlsx
-#   (2) Vertical & Horizontal Illuminance plots (calibdata)
+#   (2) Vertical & Horizontal Illuminance tables & plots (calibdata)
 #       a. illuminance_horizon.png
 #       b. illuminance_za80.png
 #       c. illuminance_za70.png
+#       d. vert.xlsx
 #   (3) Panoramic graphics (graphics)
 #       a. <DATANIGHT>_fullres_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
 #       b. <DATANIGHT>_skybright_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
@@ -36,6 +37,10 @@
 #       d. <DATANIGHT>_artificial_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
 #   (4) Sky Brightness and Light Pollution Metrics (tables)
 #       a. <DATANIGHT>.xlsx
+#   (5) Processing summaries
+#       a. processing_metrics.png
+#       b. processing_metrics.txt
+#
 #
 #
 #History:
@@ -291,21 +296,21 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # Anthropogenic skyglow luminance & illuminance
+        # All sources skyglow luminance & illuminance
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
-        p0 = Process(target=process_skyglow,args=args)
+        p0 = Process(target=process_illumall,args=args)
         p0.start(); update_progressbar(0,i)
         p0.join() ; r0 = q0.get()
         update_progressbar(0,i,r0[0])
-        skyglowMetrics = r0[1]
-        
-        # All sources skyglow luminance & illuminance
+        illumallMetrics = r0[1]
+
+        # Anthropogenic skyglow luminance & illuminance
         q1=Queue(); args=(Dataset[i],sets,Filter,q1)
-        p1 = Process(target=process_illumall,args=args)
+        p1 = Process(target=process_skyglow,args=args)
         p1.start(); update_progressbar(1,i)
         p1.join() ; r1 = q1.get()
         update_progressbar(1,i,r1[0])
-        illumallMetrics = r1[1]
+        skyglowMetrics = r1[1]
 
         # Number/fraction of visible stars
         q2=Queue(); args=(Dataset[i],sets,Filter,q2)
