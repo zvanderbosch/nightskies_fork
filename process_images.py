@@ -119,7 +119,7 @@ def update_progressbar(x,y,t=0):
     plt.pause(0.05)     #draw the new data and run the GUI's event loop
 
 
-def check_zeropoint(zp,dnight):
+def check_zeropoint(zp,dnight,dset):
 
     # The default zeropoints (mag) for each camera
     zpDefaults = {
@@ -136,7 +136,7 @@ def check_zeropoint(zp,dnight):
     }
 
     # Get camera name from FITS header
-    firstImage = f"{filepath.calibdata}{dnight}/S_01/ib001.fit"
+    firstImage = f"{filepath.rawdata}{dnight}/{dset}/ib001.fit"
     H = fits.getheader(firstImage, ext=0)
     camera = H['INSTRUME'].split(",")[0].strip().replace(" ","")
 
@@ -354,9 +354,6 @@ if __name__ == '__main__':
     #Looping through multiple data nights
     for i in range(len(filelist)):
 
-        # Check provided zeropoint against known defaults
-        check_zeropoint(zeropoint[i], Dataset[i])
-
         history = open(filepath.calibdata+Dataset[i]+'/processlog_images.txt', 'w')
         log_inputs(filelist.loc[i])
         
@@ -374,6 +371,9 @@ if __name__ == '__main__':
         K1 = (Dataset[i],sets,Filter,zeropoint[i])
         K2 = (Dataset[i],sets,Filter) 
         K3 = (Dataset[i],sets)  
+
+        # Check provided zeropoint against known defaults
+        check_zeropoint(zeropoint[i], Dataset[i], sets[0])
 
         # Status update
         print(
