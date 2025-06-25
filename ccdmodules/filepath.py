@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/04/01
+#Last updated: 2025/06/25
 #
 #This script defines directory file paths that point towards
 #various data products needed for pipeline execution.
@@ -22,7 +22,7 @@
 
 
 # Base directory for CCD data products
-base = "C:/Users/zvanderbosch/data/CCD"
+base = "G:/CCD"
 
 # Astrometry.net API key
 apikey = 'kdvqtjbqkbkbuyzb'
