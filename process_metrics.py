@@ -316,47 +316,40 @@ if __name__ == '__main__':
         else:
             os.makedirs(scratchsetp)
 
-        # All sources skyglow luminance & illuminance
+        # Setup first five processes
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
-        p0 = Process(target=process_illumall,args=args)
-        p0.start(); update_progressbar(0,i)
-
-        # Anthropogenic skyglow luminance & illuminance
+        p0 = Process(target=process_illumall,args=args)     # All sources skyglow luminance & illuminance
         q1=Queue(); args=(Dataset[i],sets,Filter,q1)
-        p1 = Process(target=process_skyglow,args=args)
-        p1.start(); update_progressbar(1,i)
-
-        # Number/fraction of visible stars
+        p1 = Process(target=process_skyglow,args=args)      # Anthropogenic skyglow luminance & illuminance
         q2=Queue(); args=(Dataset[i],sets,Filter,q2)
-        p2 = Process(target=process_starsvis,args=args)
-        p2.start(); update_progressbar(2,i)
-
-        # All-sky Light Pollution Ratio (ALR) model
+        p2 = Process(target=process_starsvis,args=args)     # Number/fraction of visible stars
         q3=Queue(); args=(Dataset[i],q3)
-        p3 = Process(target=process_alrmodel,args=args)
-        p3.start(); update_progressbar(3,i)
-
-        # Calculate Site Albedo
+        p3 = Process(target=process_alrmodel,args=args)     # All-sky Light Pollution Ratio (ALR) model
         q4=Queue(); args=(Dataset[i], q4); 
-        p4 = Process(target=process_albedomodel,args=args)
-        p4.start(); update_progressbar(4,i)
+        p4 = Process(target=process_albedomodel,args=args)  # Calculate Site Albedo
+        q5=Queue(); args=(Dataset[i], q5)
+        p5 = Process(target=process_places,args=args)       # Places
 
-        # Wait for first five processes to finish
-        p0.join() ; r0 = q0.get(); update_progressbar(0,i,r0[0])
-        p1.join() ; r1 = q1.get(); update_progressbar(1,i,r1[0])
-        p2.join() ; r2 = q2.get(); update_progressbar(2,i,r2[0])
-        p3.join() ; r3 = q3.get(); update_progressbar(3,i,r3[0])
-        p4.join() ; r4 = q4.get(); update_progressbar(4,i,r4[0])
+        # Execute first five processes
+        p0.start(); update_progressbar(0,i)
+        p1.start(); update_progressbar(1,i)
+        p2.start(); update_progressbar(2,i)
+        p3.start(); update_progressbar(3,i)
+        p4.start(); update_progressbar(4,i)
+        p5.start(); update_progressbar(5,i)
+        p2.join() ; r2=q2.get(); update_progressbar(2,i,r2[0])
+        p3.join() ; r3=q3.get(); update_progressbar(3,i,r3[0])
+        p4.join() ; r4=q4.get(); update_progressbar(4,i,r4[0])
+        p5.join() ; r5=q5.get(); update_progressbar(5,i,r5)
+        p0.join() ; r0=q0.get(); update_progressbar(0,i,r0[0])
+        p1.join() ; r1=q1.get(); update_progressbar(1,i,r1[0])
+
+        # Get metrics from returned results
         illumallMetrics = r0[1]
         skyglowMetrics = r1[1]
         numstars = r2[1]
         siteALR = r3[1]
         siteAlbedo = r4[1]
-
-        # Places
-        q5=Queue(); args=(Dataset[i], q5)
-        p5 = Process(target=process_places,args=args)
-        p5.start(); update_progressbar(5,i)
 
         # Sky quality metrics
         q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
@@ -369,9 +362,9 @@ if __name__ == '__main__':
         p7.start(); update_progressbar(7,i)
         
         # Wait for next three processes to finish
-        p5.join() ; r5 = q5.get(); update_progressbar(5,i,r5)
-        p6.join() ; r6 = q6.get(); update_progressbar(6,i,r6[0])
-        p7.join() ; r7 = q7.get(); update_progressbar(7,i,r7)
+        p5.join() ; r5=q5.get(); update_progressbar(5,i,r5)
+        p6.join() ; r6=q6.get(); update_progressbar(6,i,r6[0])
+        p7.join() ; r7=q7.get(); update_progressbar(7,i,r7)
         skyqualityMetrics = r6[1]
 
         # Clear out scratch directory when finished
