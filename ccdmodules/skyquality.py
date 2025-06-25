@@ -476,6 +476,13 @@ def calculate_sky_quality(dnight,sets,filter,albedo):
         setnum = int(s[0])
         gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}"
 
+        # Print status update
+        print(f"{PREFIX}Processing {dnight} Set-{setnum}")
+
+        # Get zeropoint and exposure time for given dataset
+        zpSet = zeropoint[setnum-1]
+        expSet = exptime[setnum-1]
+
         # Calculate sky quality indices for each mask
         sqiAllsky = calc_SQI(gridsetp, 'horizon')
         sqiZ80 = calc_SQI(gridsetp, 'ZA80')
@@ -487,18 +494,18 @@ def calculate_sky_quality(dnight,sets,filter,albedo):
 
         # Measure brightness at center of zenith images
         zenithPhot = measure_zenith_images(f"{calsetp}/S_{setnum:02d}/")
-        zenithPhot['mag'] = zeropoint + scaleOffset - zenithPhot['inst_mag']
+        zenithPhot['mag'] = zpSet + scaleOffset - zenithPhot['inst_mag']
         magZenith2 = zenithPhot[zenithPhot.image == 'zenith2'].mag.iloc[0]
 
         # Measure All-sky and above ZA-70 total magnitudes
         aduSum = imgPhot.ADU.sum()
         aduSumZA70 = imgPhot[imgPhot.Pany >= 20].ADU.sum()
         scaleFactor = 4 * 3600 * 3600 / (platescale*60)**2
-        allskyMag = zeropoint - 2.5*n.log10(aduSum * scaleFactor / exptime[setnum-1])
-        za70Mag = zeropoint - 2.5*n.log10(aduSumZA70 * scaleFactor / exptime[setnum-1])
+        allskyMag = zpSet - 2.5*n.log10(aduSum * scaleFactor / expSet)
+        za70Mag = zpSet - 2.5*n.log10(aduSumZA70 * scaleFactor / expSet)
 
         # Get brightest and faintest magnitudes measured
-        imgPhot['mag'] = zeropoint + scaleOffset - 2.5*n.log10(imgPhot['ADU'] / exptime[setnum-1])
+        imgPhot['mag'] = zpSet + scaleOffset - 2.5*n.log10(imgPhot['ADU'] / expSet)
         faintestMag = imgPhot[imgPhot.Pany >= 46].mag.quantile(0.98)
         brightestMag = imgPhot.mag.min()
 
