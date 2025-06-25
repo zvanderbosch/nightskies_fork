@@ -25,9 +25,7 @@ from glob import glob
 from astropy.io import fits
 from astropy import constants
 
-import os
 import sys
-import stat
 import numpy as n
 import pandas as pd
 
@@ -135,6 +133,9 @@ def calculate_places(dnight):
     Main program for computing great circle distances and Walker's
     Law values for nearby cities and towns using 2010 Census data.
     '''
+
+    # Print status update
+    print(f"{PREFIX}Processing nearby cities for {dnight}")
 
     # Filter paths
     F = {'V':'', 'B':'B/'}

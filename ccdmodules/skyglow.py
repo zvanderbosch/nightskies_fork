@@ -61,18 +61,6 @@ COLORS = {
 
 #-----------------------------------------------------------------------------#
 
-def clear_scratch(scratch_dir):
-    '''
-    Function to clear out all files and folders from
-    the scratch directory.
-    '''
-    for root, dirs, files in os.walk(scratch_dir, topdown=False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.chmod(os.path.join(root, name), stat.S_IWRITE)
-            os.rmdir(os.path.join(root, name))
-
 
 def clear_memory(objectList):
     '''
@@ -496,12 +484,6 @@ def calculate_statistics(dnight,sets,filter):
     scratchsetp = f"{filepath.rasters}scratch_metrics/"
     arcpy.env.workspace = scratchsetp
     arcpy.env.scratchWorkspace = scratchsetp
-
-    # Create or clear out working directory
-    if os.path.exists(scratchsetp):
-        clear_scratch(scratchsetp)
-    else:
-        os.makedirs(scratchsetp)
 
     # Define paths to a few needed files
     zoneFile = f'{filepath.rasters}shapefiles/allbands.shp'

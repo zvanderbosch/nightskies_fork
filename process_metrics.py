@@ -51,6 +51,7 @@
 import os
 import sys
 import time
+import stat
 import warnings
 import numpy as n
 import pandas as pd
@@ -220,6 +221,18 @@ def process_tables(*args):
     print(f'{PREFIX}Processing Time (savetables): {t2-t1:.2f} seconds')
 
 
+def clear_scratch(scratch_dir):
+    '''
+    Function to clear out all files and folders from
+    the scratch directory.
+    '''
+    for root, dirs, files in os.walk(scratch_dir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.chmod(os.path.join(root, name), stat.S_IWRITE)
+            os.rmdir(os.path.join(root, name))
+
 
 ##########################  Main Program  #####################################
 
@@ -296,67 +309,73 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
+        # Create or clear out scratch directory
+        scratchsetp = f"{filepath.rasters}scratch_metrics/"
+        if os.path.exists(scratchsetp):
+            clear_scratch(scratchsetp)
+        else:
+            os.makedirs(scratchsetp)
+
         # All sources skyglow luminance & illuminance
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
         p0 = Process(target=process_illumall,args=args)
         p0.start(); update_progressbar(0,i)
-        p0.join() ; r0 = q0.get()
-        update_progressbar(0,i,r0[0])
-        illumallMetrics = r0[1]
 
         # Anthropogenic skyglow luminance & illuminance
         q1=Queue(); args=(Dataset[i],sets,Filter,q1)
         p1 = Process(target=process_skyglow,args=args)
         p1.start(); update_progressbar(1,i)
-        p1.join() ; r1 = q1.get()
-        update_progressbar(1,i,r1[0])
-        skyglowMetrics = r1[1]
 
         # Number/fraction of visible stars
         q2=Queue(); args=(Dataset[i],sets,Filter,q2)
         p2 = Process(target=process_starsvis,args=args)
         p2.start(); update_progressbar(2,i)
-        p2.join() ; r2 = q2.get()
-        update_progressbar(2,i,r2[0])
-        numstars = r2[1]
 
         # All-sky Light Pollution Ratio (ALR) model
         q3=Queue(); args=(Dataset[i],q3)
         p3 = Process(target=process_alrmodel,args=args)
         p3.start(); update_progressbar(3,i)
-        p3.join() ; r3 = q3.get()
-        update_progressbar(3,i,r3[0])
-        siteALR = r3[1]
 
         # Calculate Site Albedo
         q4=Queue(); args=(Dataset[i], q4); 
         p4 = Process(target=process_albedomodel,args=args)
         p4.start(); update_progressbar(4,i)
-        p4.join() ; r4 = q4.get()
-        update_progressbar(4,i,r4[0])
+
+        # Wait for first five processes to finish
+        p0.join() ; r0 = q0.get(); update_progressbar(0,i,r0[0])
+        p1.join() ; r1 = q1.get(); update_progressbar(1,i,r1[0])
+        p2.join() ; r2 = q2.get(); update_progressbar(2,i,r2[0])
+        p3.join() ; r3 = q3.get(); update_progressbar(3,i,r3[0])
+        p4.join() ; r4 = q4.get(); update_progressbar(4,i,r4[0])
+        illumallMetrics = r0[1]
+        skyglowMetrics = r1[1]
+        numstars = r2[1]
+        siteALR = r3[1]
         siteAlbedo = r4[1]
 
         # Places
         q5=Queue(); args=(Dataset[i], q5)
         p5 = Process(target=process_places,args=args)
         p5.start(); update_progressbar(5,i)
-        p5.join() ; r5 = q5.get()
-        update_progressbar(5,i,r5)
 
         # Sky quality metrics
         q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
         p6 = Process(target=process_skyquality,args=args)
         p6.start(); update_progressbar(6,i)
-        p6.join() ; r6 = q6.get()
-        update_progressbar(6,i,r6[0])
-        skyqualityMetrics = r6[1]
 
         # Draw maps
         q7=Queue(); args=(Dataset[i],sets,processor[i],int(centralAz[i]),location[i],q7)
         p7 = Process(target=process_drawmaps,args=args)
         p7.start(); update_progressbar(7,i)
-        p7.join() ; r7 = q7.get()
-        update_progressbar(7,i,r7)
+        
+        # Wait for next three processes to finish
+        p5.join() ; r5 = q5.get(); update_progressbar(5,i,r5)
+        p6.join() ; r6 = q6.get(); update_progressbar(6,i,r6[0])
+        p7.join() ; r7 = q7.get(); update_progressbar(7,i,r7)
+        skyqualityMetrics = r6[1]
+
+        # Clear out scratch directory when finished
+        clear_scratch(scratchsetp)
 
         # Load statistics from natsky_model_params.xlsx
         natskyAllSources = pd.read_excel(

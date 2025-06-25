@@ -47,19 +47,6 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
-def clear_scratch(scratch_dir):
-    '''
-    Function to clear out all files and folders from
-    the scratch directory.
-    '''
-    for root, dirs, files in os.walk(scratch_dir, topdown=False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.chmod(os.path.join(root, name), stat.S_IWRITE)
-            os.rmdir(os.path.join(root, name))
-
-
 def clear_memory(objectList):
     '''
     Function for clearing variables from memory
@@ -85,12 +72,6 @@ def calculate_albedo_model(dnight):
     scratchsetp = f"{filepath.rasters}scratch_metrics/"
     arcpy.env.workspace = scratchsetp
     arcpy.env.scratchWorkspace = scratchsetp
-
-    # Create or clear out working directory
-    if os.path.exists(scratchsetp):
-        clear_scratch(scratchsetp)
-    else:
-        os.makedirs(scratchsetp)
 
     # Load in the ALR raster
     albedoRaster = arcpy.sa.Raster(f"{filepath.rasters}ws_albedo")
