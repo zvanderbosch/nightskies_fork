@@ -131,8 +131,8 @@ def bar_metrics(dnight, nset):
     #process names
     pname = [
         'Number of sets',
+        'All-Sources Stats',
         'Skyglow Stats',
-        'All-sky Stats',
         'Number of Stars Visible',
         'ALR Model',
         'Albedo Model',
