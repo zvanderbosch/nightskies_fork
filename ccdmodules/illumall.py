@@ -411,18 +411,18 @@ def save_illuminance_data(metrics, dnight, sets, filter):
             setMetrics = metrics.loc[setIndex]
 
             # Add statistics values
-            worksheet.cell(row=2, column=2, value=setMetrics['min_vlum'].iloc[0])
-            worksheet.cell(row=3, column=2, value=setMetrics['max_vlum'].iloc[0])
-            worksheet.cell(row=4, column=2, value=setMetrics['mean_vlum'].iloc[0])
-            worksheet.cell(row=5, column=2, value=setMetrics['min_vlum_azimuth'].iloc[0])
-            worksheet.cell(row=6, column=2, value=setMetrics['max_vlum_azimuth'].iloc[0])
-            worksheet.cell(row=7, column=2, value=setMetrics['horizs'].iloc[0])
-            worksheet.cell(row=2, column=2).number_format = '0.00000'
-            worksheet.cell(row=3, column=2).number_format = '0.00000'
-            worksheet.cell(row=4, column=2).number_format = '0.00000'
-            worksheet.cell(row=5, column=2).number_format = '0'
-            worksheet.cell(row=6, column=2).number_format = '0'
-            worksheet.cell(row=7, column=2).number_format = '0.00000'
+            worksheet.cell(row=2, column=setnum+1, value=setMetrics['min_vlum'].iloc[0])
+            worksheet.cell(row=3, column=setnum+1, value=setMetrics['max_vlum'].iloc[0])
+            worksheet.cell(row=4, column=setnum+1, value=setMetrics['mean_vlum'].iloc[0])
+            worksheet.cell(row=5, column=setnum+1, value=setMetrics['min_vlum_azimuth'].iloc[0])
+            worksheet.cell(row=6, column=setnum+1, value=setMetrics['max_vlum_azimuth'].iloc[0])
+            worksheet.cell(row=7, column=setnum+1, value=setMetrics['horizs'].iloc[0])
+            worksheet.cell(row=2, column=setnum+1).number_format = '0.00000'
+            worksheet.cell(row=3, column=setnum+1).number_format = '0.00000'
+            worksheet.cell(row=4, column=setnum+1).number_format = '0.00000'
+            worksheet.cell(row=5, column=setnum+1).number_format = '0'
+            worksheet.cell(row=6, column=setnum+1).number_format = '0'
+            worksheet.cell(row=7, column=setnum+1).number_format = '0.00000'
 
             # Get vertical illuminance columns for the given sheet
             vertCols = [c for c in metrics.columns if 'vert-' in c]
