@@ -377,8 +377,8 @@ def save_illuminance_data(metrics, dnight, sets, filter):
     )
 
     # Create or open existing Excel sheet
-    if os.path.isfile(excelFile):
-        try:
+    if not os.path.isfile(excelFile):
+        try: # Create file
             writer = pd.ExcelWriter(
                 excelFile, 
                 engine='openpyxl'
@@ -390,7 +390,7 @@ def save_illuminance_data(metrics, dnight, sets, filter):
                 engine='openpyxl'
             )
     else:
-        try:
+        try: # Append to file
             writer = pd.ExcelWriter(
                 excelFile, 
                 engine='openpyxl', 
