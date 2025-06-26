@@ -316,7 +316,7 @@ if __name__ == '__main__':
         else:
             os.makedirs(scratchsetp)
 
-        # Setup first five processes
+        # Setup first six processes
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
         p0 = Process(target=process_illumall,args=args)     # All sources skyglow luminance & illuminance
         q1=Queue(); args=(Dataset[i],sets,Filter,q1)
@@ -330,17 +330,17 @@ if __name__ == '__main__':
         q5=Queue(); args=(Dataset[i], q5)
         p5 = Process(target=process_places,args=args)       # Places
 
-        # Execute first five processes
+        # Execute first six processes
         p0.start(); update_progressbar(0,i)
         p1.start(); update_progressbar(1,i)
         p2.start(); update_progressbar(2,i)
         p3.start(); update_progressbar(3,i)
         p4.start(); update_progressbar(4,i)
         p5.start(); update_progressbar(5,i)
-        p2.join() ; r2=q2.get(); update_progressbar(2,i,r2[0])
+        p5.join() ; r5=q5.get(); update_progressbar(5,i,r5)
         p3.join() ; r3=q3.get(); update_progressbar(3,i,r3[0])
         p4.join() ; r4=q4.get(); update_progressbar(4,i,r4[0])
-        p5.join() ; r5=q5.get(); update_progressbar(5,i,r5)
+        p2.join() ; r2=q2.get(); update_progressbar(2,i,r2[0])
         p0.join() ; r0=q0.get(); update_progressbar(0,i,r0[0])
         p1.join() ; r1=q1.get(); update_progressbar(1,i,r1[0])
 
@@ -361,8 +361,7 @@ if __name__ == '__main__':
         p7 = Process(target=process_drawmaps,args=args)
         p7.start(); update_progressbar(7,i)
         
-        # Wait for next three processes to finish
-        p5.join() ; r5=q5.get(); update_progressbar(5,i,r5)
+        # Wait for next two processes to finish
         p6.join() ; r6=q6.get(); update_progressbar(6,i,r6[0])
         p7.join() ; r7=q7.get(); update_progressbar(7,i,r7)
         skyqualityMetrics = r6[1]
