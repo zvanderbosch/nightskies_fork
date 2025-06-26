@@ -380,7 +380,7 @@ def save_illuminance_data(metrics, dnight, sets, filter):
 
     # Add sheets and set column/row header formats
     if sheet not in workbook.sheetnames:
-        workbook.create_sheet(sheet)
+        workbook.create_sheet(sheet,index=0)
         worksheet = writer.sheets[sheet]
         for i, value in enumerate(excelHeaders,1):
             cell = worksheet.cell(row=1, column=i)
