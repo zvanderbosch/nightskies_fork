@@ -26,7 +26,7 @@ from openpyxl.styles import PatternFill, Alignment, Border, Side, Font
 from openpyxl.utils import get_column_letter
 
 import os
-import stat
+import time
 import arcpy
 import numpy as n
 import pandas as pd
@@ -376,96 +376,126 @@ def save_illuminance_data(metrics, dnight, sets, filter):
         wrap_text=True
     )
 
-    # Add Excel sheets with column headers if it doesn't exist
-    with pd.ExcelWriter(excelFile, engine='openpyxl', mode='a') as writer:
+    # Create or open existing Excel sheet
+    if os.path.isfile(excelFile):
+        try:
+            writer = pd.ExcelWriter(
+                excelFile, 
+                engine='openpyxl'
+            )
+        except: # In case illumall module is using the file
+            time.sleep(5)
+            writer = pd.ExcelWriter(
+                excelFile, 
+                engine='openpyxl'
+            )
+    else:
+        try:
+            writer = pd.ExcelWriter(
+                excelFile, 
+                engine='openpyxl', 
+                if_sheet_exists='overlay', 
+                mode='a'
+            )
+        except: # In case illumall module is using the file
+            time.sleep(5)
+            writer = pd.ExcelWriter(
+                excelFile, 
+                engine='openpyxl', 
+                if_sheet_exists='overlay', 
+                mode='a'
+            )
 
-        # Create an openpyxl workbook object
-        workbook = writer.book
+    # Create an openpyxl workbook object
+    workbook = writer.book
 
-        # Add sheets and set column/row header formats
-        for sheet in excelSheets:
-            if sheet not in workbook.sheetnames:
-                workbook.create_sheet(sheet)
-                worksheet = writer.sheets[sheet]
-                for i, value in enumerate(excelHeaders,1):
-                    cell = worksheet.cell(row=1, column=i)
-                    cell.value = value
-                    cell.font = headerFont
-                    cell.border = headerBorder
-                    cell.fill = headerColor
-                    cell.alignment = headerAlignment
-                    colLetter = get_column_letter(i)
-                    worksheet.column_dimensions[colLetter].width = 12
-                for i, value in enumerate(excelStatRows,1):
-                    cell = worksheet.cell(row=i+1, column=1)
-                    cell.value = value
-                    cell.font = headerFont
-                    cell.border = headerBorder
-                    cell.fill = rowColor
-                    cell.alignment = headerAlignment
-                for i, value in enumerate(excelVertColumns,1):
-                    cell = worksheet.cell(row=10, column=i)
-                    cell.value = value
-                    cell.font = headerFont
-                    cell.border = headerBorder
-                    cell.fill = headerColor
-                    cell.alignment = headerAlignment
-                
-                # Set width of first column separately
-                worksheet.column_dimensions['A'].width = 20
-
-
-        # Iterate over each sheet
-        for i,sheet in enumerate(excelSheets):
-
-            # Grab the worksheet
+    # Add sheets and set column/row header formats
+    for sheet in excelSheets:
+        if sheet not in workbook.sheetnames:
+            workbook.create_sheet(sheet)
             worksheet = writer.sheets[sheet]
+            for i, value in enumerate(excelHeaders,1):
+                cell = worksheet.cell(row=1, column=i)
+                cell.value = value
+                cell.font = headerFont
+                cell.border = headerBorder
+                cell.fill = headerColor
+                cell.alignment = headerAlignment
+                colLetter = get_column_letter(i)
+                worksheet.column_dimensions[colLetter].width = 12
+            for i, value in enumerate(excelStatRows,1):
+                cell = worksheet.cell(row=i+1, column=1)
+                cell.value = value
+                cell.font = headerFont
+                cell.border = headerBorder
+                cell.fill = rowColor
+                cell.alignment = headerAlignment
+            for i, value in enumerate(excelVertColumns,1):
+                cell = worksheet.cell(row=10, column=i)
+                cell.value = value
+                cell.font = headerFont
+                cell.border = headerBorder
+                cell.fill = headerColor
+                cell.alignment = headerAlignment
+            
+            # Set width of first column separately
+            worksheet.column_dimensions['A'].width = 20
 
-            # Iterate over each data set
-            for s in sets:
 
-                # Convert set number to integer
-                setnum = int(s[0])
+    # Iterate over each sheet
+    for i,sheet in enumerate(excelSheets):
 
-                # Get metrics associated with the set/filter
-                setIndex = (
-                    (metrics['dataset'] == setnum) &
-                    (metrics['filter'] == filter)
-                )
-                setMetrics = metrics.loc[setIndex]
+        # Grab the worksheet
+        worksheet = writer.sheets[sheet]
 
-                # Add statistics values and format cells
-                worksheet.cell(row=2, column=setnum+1, value=setMetrics[f'min_vlum-{i}'].iloc[0])
-                worksheet.cell(row=3, column=setnum+1, value=setMetrics[f'max_vlum-{i}'].iloc[0])
-                worksheet.cell(row=4, column=setnum+1, value=setMetrics[f'mean_vlum-{i}'].iloc[0])
-                worksheet.cell(row=5, column=setnum+1, value=setMetrics[f'min_vlum_azimuth-{i}'].iloc[0])
-                worksheet.cell(row=6, column=setnum+1, value=setMetrics[f'max_vlum_azimuth-{i}'].iloc[0])
-                worksheet.cell(row=7, column=setnum+1, value=setMetrics[f'horizs{i}'].iloc[0])
-                worksheet.cell(row=2, column=setnum+1).number_format = '0.00000'
-                worksheet.cell(row=3, column=setnum+1).number_format = '0.00000'
-                worksheet.cell(row=4, column=setnum+1).number_format = '0.00000'
-                worksheet.cell(row=5, column=setnum+1).number_format = '0'
-                worksheet.cell(row=6, column=setnum+1).number_format = '0'
-                worksheet.cell(row=7, column=setnum+1).number_format = '0.00000'
+        # Iterate over each data set
+        for s in sets:
 
-                # Get vertical illuminance columns for the given sheet
-                vertCols = [c for c in metrics.columns if 'vert-' in c and int(c[-1]) == i]
+            # Convert set number to integer
+            setnum = int(s[0])
 
-                # Get azimuth and vertical illuminance
-                vertValues = setMetrics[vertCols].values[0]
-                azValues = [int(x.split("-")[1]) for x in vertCols]
+            # Get metrics associated with the set/filter
+            setIndex = (
+                (metrics['dataset'] == setnum) &
+                (metrics['filter'] == filter)
+            )
+            setMetrics = metrics.loc[setIndex]
 
-                # Add azimuth and vertical illuminance values to table
-                for j,(az,vert) in enumerate(zip(azValues,vertValues)):
-                    
-                    # Add azimuth values for first set only
-                    if setnum == 1:
-                        worksheet.cell(row=j+11, column=1, value=az)
-                        worksheet.cell(row=j+11, column=1).number_format = '0'
+            # Add statistics values and format cells
+            worksheet.cell(row=2, column=setnum+1, value=setMetrics[f'min_vlum-{i}'].iloc[0])
+            worksheet.cell(row=3, column=setnum+1, value=setMetrics[f'max_vlum-{i}'].iloc[0])
+            worksheet.cell(row=4, column=setnum+1, value=setMetrics[f'mean_vlum-{i}'].iloc[0])
+            worksheet.cell(row=5, column=setnum+1, value=setMetrics[f'min_vlum_azimuth-{i}'].iloc[0])
+            worksheet.cell(row=6, column=setnum+1, value=setMetrics[f'max_vlum_azimuth-{i}'].iloc[0])
+            worksheet.cell(row=7, column=setnum+1, value=setMetrics[f'horizs{i}'].iloc[0])
+            worksheet.cell(row=2, column=setnum+1).number_format = '0.00000'
+            worksheet.cell(row=3, column=setnum+1).number_format = '0.00000'
+            worksheet.cell(row=4, column=setnum+1).number_format = '0.00000'
+            worksheet.cell(row=5, column=setnum+1).number_format = '0'
+            worksheet.cell(row=6, column=setnum+1).number_format = '0'
+            worksheet.cell(row=7, column=setnum+1).number_format = '0.00000'
 
-                    # Add vertical illuminance values
-                    worksheet.cell(row=j+11, column=setnum+1, value=vert)
-                    worksheet.cell(row=j+11, column=setnum+1).number_format = '0.00000'
+            # Get vertical illuminance columns for the given sheet
+            vertCols = [c for c in metrics.columns if 'vert-' in c and int(c[-1]) == i]
+
+            # Get azimuth and vertical illuminance
+            vertValues = setMetrics[vertCols].values[0]
+            azValues = [int(x.split("-")[1]) for x in vertCols]
+
+            # Add azimuth and vertical illuminance values to table
+            for j,(az,vert) in enumerate(zip(azValues,vertValues)):
+                
+                # Add azimuth values for first set only
+                if setnum == 1:
+                    worksheet.cell(row=j+11, column=1, value=az)
+                    worksheet.cell(row=j+11, column=1).number_format = '0'
+
+                # Add vertical illuminance values
+                worksheet.cell(row=j+11, column=setnum+1, value=vert)
+                worksheet.cell(row=j+11, column=setnum+1).number_format = '0.00000'
+    
+    # Close the writer
+    writer.close()
 
 
 #-----------------------------------------------------------------------------#
