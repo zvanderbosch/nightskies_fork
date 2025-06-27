@@ -330,6 +330,9 @@ def save_illuminance_data(metrics, dnight, sets, filter):
     Function to save vertical & horizontal illuminance data to vert.xlsx
     '''
 
+    # Print status update
+    print(f'{PREFIX}Saving illuminance data to spreadsheet...')
+
     # Define excel filename and sheet names
     excelFile = f"{filepath.calibdata}{dnight}/vert.xlsx"
     excelSheets = ["Allsky_Artificial","ZA80_Artificial","ZA70_Artificial"]
