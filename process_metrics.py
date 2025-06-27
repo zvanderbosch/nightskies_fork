@@ -316,6 +316,14 @@ if __name__ == '__main__':
         else:
             os.makedirs(scratchsetp)
 
+        # Remove outputs from any prior runs
+        if os.path.isfile(f"{filepath.calibdata}{Dataset[i]}/vert.xlsx"):
+            os.remove(f"{filepath.calibdata}{Dataset[i]}/vert.xlsx")
+        if os.path.isfile(f"{filepath.calibdata}{Dataset[i]}/cities.xlsx"):
+            os.remove(f"{filepath.calibdata}{Dataset[i]}/cities.xlsx")
+        if os.path.isfile(f"{filepath.tables}{Dataset[i]}.xlsx"):
+            os.remove(f"{filepath.tables}{Dataset[i]}.xlsx")
+
         # Setup first six processes
         q0=Queue(); args=(Dataset[i],sets,Filter,q0)
         p0 = Process(target=process_illumall,args=args)     # All sources skyglow luminance & illuminance
