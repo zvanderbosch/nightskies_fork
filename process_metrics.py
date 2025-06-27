@@ -359,17 +359,15 @@ if __name__ == '__main__':
         siteALR = r3[1]
         siteAlbedo = r4[1]
 
-        # Sky quality metrics
+        # Setup the next two processes
         q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
-        p6 = Process(target=process_skyquality,args=args)
-        p6.start(); update_progressbar(6,i)
-
-        # Draw maps
+        p6 = Process(target=process_skyquality,args=args)   # Sky quality metrics
         q7=Queue(); args=(Dataset[i],sets,processor[i],int(centralAz[i]),location[i],q7)
-        p7 = Process(target=process_drawmaps,args=args)
-        p7.start(); update_progressbar(7,i)
+        p7 = Process(target=process_drawmaps,args=args)     # Draw maps
         
-        # Wait for next two processes to finish
+        # Execute next two processes
+        p6.start(); update_progressbar(6,i)
+        p7.start(); update_progressbar(7,i)
         p6.join() ; r6=q6.get(); update_progressbar(6,i,r6[0])
         p7.join() ; r7=q7.get(); update_progressbar(7,i,r7)
         skyqualityMetrics = r6[1]
