@@ -45,6 +45,7 @@ import sys
 import time
 import shutil
 import warnings
+import openpyxl
 import numpy as n
 import pandas as pd
 import astropy.units as u
@@ -378,7 +379,9 @@ def generate_calibreport(*args):
             zeropoint = extData['zeropoint_default'].iloc[i]
             extCoeff = extData['extinction_fixedZ'].iloc[i]
             extCoeffErr = extData['extinction_fixedZ_err'].iloc[i]
-            platescale = extData['avg_scale'].iloc[i] * 60
+            numStarsFit = extData['num_star_used'].iloc[i]
+            platescale = extData['avg_scale'].iloc[i] * 60 # arcsec/pix
+            platescaleFactor = 2.5*n.log10(platescale**2)
 
             # Save some extra info only during first set
             if i == 0:
@@ -392,7 +395,8 @@ def generate_calibreport(*args):
                 # Add general data-night values to worksheet
                 worksheet.cell(row=3 , column=2, value=datenow) # Processing Date
                 worksheet.cell(row=3 , column=4, value=args[4]) # Processor Name
-                worksheet.cell(row=4 , column=3, value=args[5])
+                worksheet.cell(row=3 , column=7, value=args[0]) # Data night folder
+                worksheet.cell(row=4 , column=3, value=args[5]) # Long-Format Park name
                 worksheet.cell(row=5 , column=3, value=firstHeader['LOCATION'])
                 worksheet.cell(row=6 , column=3, value=firstHeader['LONGITUD'])
                 worksheet.cell(row=7 , column=3, value=firstHeader['LATITUDE'])
@@ -413,13 +417,33 @@ def generate_calibreport(*args):
                 worksheet.cell(row=18, column=3, value=thermalFile)
                 worksheet.cell(row=15, column=3, value=flatFile)
 
+                # Remove existing data.jpg image if present
+                imagesKeep = []
+                for image in worksheet._images:
+                    if image.format == 'jpeg':
+                        pass
+                    else:
+                        imagesKeep.append(image)
+                worksheet._images = imagesKeep
+
+                # Add skybright data image
+                imgFile = f"{filepath.griddata}{args[0]}/S_{setnum:02d}/data.jpg"
+                img = openpyxl.drawing.image.Image(imgFile)
+                img.anchor = 'K4'
+                img.width = 280
+                img.height = 280
+                worksheet.add_image(img)
+
             # Add data-set specific values
             worksheet.cell(row=21+i*2, column=2, value=f"Start {firstLMTDayfrac:.2f}")
             worksheet.cell(row=22+i*2, column=2, value=f"End {lastLMTDayfrac:.2f}")
             worksheet.cell(row=21+i*2, column=3, value=zeropoint)
             worksheet.cell(row=21+i*2, column=4, value=extCoeff)
             worksheet.cell(row=21+i*2, column=5, value=extCoeffErr)
-            worksheet.cell(row=21+i*2, column=6, value=platescale)
+            worksheet.cell(row=21+i*2, column=6, value=numStarsFit)
+            worksheet.cell(row=21+i*2, column=7, value=platescale)
+            worksheet.cell(row=21+i*2, column=8, value=platescaleFactor)
+
 
 
 
@@ -522,49 +546,49 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # Set up processes for each pipeline step
-        q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K3+Q2)
-        q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
-        q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K2+Q4)
-        q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K3+Q5) 
-        q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K2+Q6)
-        q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K3+Q7)
-        q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
-        q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
+        # # Set up processes for each pipeline step
+        # q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K3+Q2)
+        # q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
+        # q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K2+Q4)
+        # q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K3+Q5) 
+        # q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K2+Q6)
+        # q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K3+Q7)
+        # q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
+        # q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # # Run processes
-        reduce_images(*K0)                            #image reduction   
-        register_coord(*K2)                           #pointing 
-        p2.start(); update_progressbar(2,i)           #pointing error
-        p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        p4.start(); update_progressbar(4,i)           #median filter
-        p2.join() ; update_progressbar(2,i,q2.get())
-        p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
-        p5.join() ; update_progressbar(5,i,q5.get())
-        p3.join() ; update_progressbar(3,i,q3.get())
-        p6.start(); update_progressbar(6,i)           #full mosaic
-        p7.start(); update_progressbar(7,i)           #galactic mosaic
-        p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        p9.start(); update_progressbar(9,i)           #median mosaic
-        p4.join() ; update_progressbar(4,i,q4.get())
-        p6.join() ; update_progressbar(6,i,q6.get())
-        p7.join() ; update_progressbar(7,i,q7.get())
-        p8.join() ; update_progressbar(8,i,q8.get())
-        p9.join() ; update_progressbar(9,i,q9.get())
+        # reduce_images(*K0)                            #image reduction   
+        # register_coord(*K2)                           #pointing 
+        # p2.start(); update_progressbar(2,i)           #pointing error
+        # p3.start(); update_progressbar(3,i)           #zeropoint & extinction
+        # p4.start(); update_progressbar(4,i)           #median filter
+        # p2.join() ; update_progressbar(2,i,q2.get())
+        # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+        # p5.join() ; update_progressbar(5,i,q5.get())
+        # p3.join() ; update_progressbar(3,i,q3.get())
+        # p6.start(); update_progressbar(6,i)           #full mosaic
+        # p7.start(); update_progressbar(7,i)           #galactic mosaic
+        # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
+        # p9.start(); update_progressbar(9,i)           #median mosaic
+        # p4.join() ; update_progressbar(4,i,q4.get())
+        # p6.join() ; update_progressbar(6,i,q6.get())
+        # p7.join() ; update_progressbar(7,i,q7.get())
+        # p8.join() ; update_progressbar(8,i,q8.get())
+        # p9.join() ; update_progressbar(9,i,q9.get())
         
-        #log the processing history
-        q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
-        for q in q_all:
-            while not q.empty():
-                loghistory(q.get())
+        # #log the processing history
+        # q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
+        # for q in q_all:
+        #     while not q.empty():
+        #         loghistory(q.get())
 
         # Create the calibreport excel sheet
         args = (Dataset[i],sets,Flat_V[i],Curve[i],Processor[i],location[i])
         generate_calibreport(*args)
         
-        #save the timing records for running the script
-        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
-        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_images.png')
+        # #save the timing records for running the script
+        # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
+        # barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_images.png')
         
     t2 = time.time()
     print(f'{PREFIX}Total image processing time: {(t2-t1)/60:.1f} min')
