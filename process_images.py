@@ -507,7 +507,7 @@ if __name__ == '__main__':
         barfig.canvas.manager.window.move(2755,0)  
     else:
         print('You have 5 seconds to adjust the position of the progress bar window')
-        plt.pause(0.1) #users have 5 seconds to adjust the figure position
+        plt.pause(5) #users have 5 seconds to adjust the figure position
     
     #Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -546,49 +546,49 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # # Set up processes for each pipeline step
-        # q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K3+Q2)
-        # q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
-        # q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K2+Q4)
-        # q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K3+Q5) 
-        # q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K2+Q6)
-        # q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K3+Q7)
-        # q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
-        # q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
+        # Set up processes for each pipeline step
+        q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K3+Q2)
+        q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
+        q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K2+Q4)
+        q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K3+Q5) 
+        q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K2+Q6)
+        q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K3+Q7)
+        q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
+        q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
-        # # Run processes
-        # reduce_images(*K0)                            #image reduction   
-        # register_coord(*K2)                           #pointing 
-        # p2.start(); update_progressbar(2,i)           #pointing error
-        # p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        # p4.start(); update_progressbar(4,i)           #median filter
-        # p2.join() ; update_progressbar(2,i,q2.get())
-        # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
-        # p5.join() ; update_progressbar(5,i,q5.get())
-        # p3.join() ; update_progressbar(3,i,q3.get())
-        # p6.start(); update_progressbar(6,i)           #full mosaic
-        # p7.start(); update_progressbar(7,i)           #galactic mosaic
-        # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        # p9.start(); update_progressbar(9,i)           #median mosaic
-        # p4.join() ; update_progressbar(4,i,q4.get())
-        # p6.join() ; update_progressbar(6,i,q6.get())
-        # p7.join() ; update_progressbar(7,i,q7.get())
-        # p8.join() ; update_progressbar(8,i,q8.get())
-        # p9.join() ; update_progressbar(9,i,q9.get())
+        # Run processes
+        reduce_images(*K0)                            #image reduction   
+        register_coord(*K2)                           #pointing 
+        p2.start(); update_progressbar(2,i)           #pointing error
+        p3.start(); update_progressbar(3,i)           #zeropoint & extinction
+        p4.start(); update_progressbar(4,i)           #median filter
+        p2.join() ; update_progressbar(2,i,q2.get())
+        p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+        p5.join() ; update_progressbar(5,i,q5.get())
+        p3.join() ; update_progressbar(3,i,q3.get())
+        p6.start(); update_progressbar(6,i)           #full mosaic
+        p7.start(); update_progressbar(7,i)           #galactic mosaic
+        p8.start(); update_progressbar(8,i)           #zodiacal mosaic
+        p9.start(); update_progressbar(9,i)           #median mosaic
+        p4.join() ; update_progressbar(4,i,q4.get())
+        p6.join() ; update_progressbar(6,i,q6.get())
+        p7.join() ; update_progressbar(7,i,q7.get())
+        p8.join() ; update_progressbar(8,i,q8.get())
+        p9.join() ; update_progressbar(9,i,q9.get())
         
-        # #log the processing history
-        # q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
-        # for q in q_all:
-        #     while not q.empty():
-        #         loghistory(q.get())
+        #log the processing history
+        q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
+        for q in q_all:
+            while not q.empty():
+                loghistory(q.get())
 
         # Create the calibreport excel sheet
         args = (Dataset[i],sets,Flat_V[i],Curve[i],Processor[i],location[i])
         generate_calibreport(*args)
         
-        # #save the timing records for running the script
-        # n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
-        # barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_images.png')
+        #save the timing records for running the script
+        n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
+        barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_images.png')
         
     t2 = time.time()
     print(f'{PREFIX}Total image processing time: {(t2-t1)/60:.1f} min')
