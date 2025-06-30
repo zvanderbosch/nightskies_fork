@@ -43,12 +43,15 @@
 import os
 import sys
 import time
+import shutil
 import warnings
 import numpy as n
 import pandas as pd
+import astropy.units as u
 import matplotlib.pyplot as plt
 
 from astropy.io import fits
+from astropy.time import Time
 from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
@@ -284,6 +287,143 @@ def mosaic_median(*args):
     args[-1].put(t2-t1)
     
 
+def utc_to_lmt(fitsHeader):
+    '''
+    Function to convert UTC to LMT using site longitude
+    and return both as datetime objects.
+    '''
+
+    # Get header values
+    dateobs = fitsHeader['DATE-OBS']
+    longitude = fitsHeader['LONGITUD']
+
+    # Get UTC date and time
+    t = Time(dateobs, format='isot', scale='utc')
+    utcDT = t.datetime
+    utcDate = utcDT.strftime("%d-%b-%Y").lstrip("0")
+    utcTime = dateobs.split("T")[1].lstrip("0")
+
+    # Compute LMT time in fractional hours of the day
+    dayShift = 0
+    hourfracUTC = t.ymdhms.hour + t.ymdhms.minute/60 + t.ymdhms.second/3600
+    hourfracLMT = hourfracUTC + longitude/15
+    if hourfracLMT < 0:
+        hourfracLMT += 24
+        dayShift -= 1
+
+    # Apply day shift
+    t = t + dayShift*u.day
+    lmtDT = t.datetime
+    lmtDate = lmtDT.strftime("%d-%b-%Y").lstrip("0")
+
+    return utcDT, lmtDT, hourfracLMT
+
+
+def generate_calibreport(*args):
+    '''
+    Function to initially generate and populate 
+    the calibreport.xlsx file.
+
+    Parameters:
+    -----------
+    args[0] = Data Night (e.g. ROMO241004)
+    args[1] = Lists of datasets to process
+    args[2] = V-band flat field file
+    args[3] = Linearity Curve file
+    args[4] = Processor name (e.g. J Doe)
+    args[5] = Location name (e.g. Rocky Mountain NP)
+    '''
+
+    # Copy calibreport template to calibdata folder
+    excelTemplate = f"{filepath.spreadsheets}calibreport_template.xlsx"
+    excelFile = f"{filepath.calibdata}{args[0]}/calibreport.xlsx"
+    if not os.path.exists(excelFile):
+        shutil.copy(excelTemplate, excelFile)
+
+    # Get current date/time
+    tnow = Dtime.now()
+    datenow = tnow.strftime("%m/%d/%Y").lstrip("0")
+
+    # Load in bestfit extinctino params
+    extFile = f"{filepath.calibdata}{args[0]}/extinction_fit_V.xlsx"
+    extData = pd.read_excel(extFile)
+
+    # Open calibreport for writing
+    with pd.ExcelWriter(
+        excelFile, 
+        engine='openpyxl', 
+        if_sheet_exists='overlay', 
+        mode='a') as writer:
+
+        # Grab the Report sheet
+        worksheet = writer.sheets['Report']
+
+        # Iterate over each dataset
+        for i,s in enumerate(args[1]):
+
+            # Convert first set number to integer
+            setnum = int(s[0])
+
+            # Load in zenith images for header info
+            firstImage = f"{filepath.calibdata}{args[0]}/S_{setnum:02d}/zenith1.fit"
+            lastImage = f"{filepath.calibdata}{args[0]}/S_{setnum:02d}/zenith2.fit"
+            firstHeader = fits.getheader(firstImage, ext=0)
+            lastHeader = fits.getheader(lastImage, ext=0)
+
+            # Get UTC and LMT datetimes
+            firstUTC, firstLMT, firstLMTDayfrac = utc_to_lmt(firstHeader)
+            lastUTC, lastLMT, lastLMTDayfrac = utc_to_lmt(lastHeader)
+
+            # Get extinction fit parameters
+            zeropoint = extData['zeropoint_default'].iloc[i]
+            extCoeff = extData['extinction_fixedZ'].iloc[i]
+            extCoeffErr = extData['extinction_fixedZ_err'].iloc[i]
+            platescale = extData['avg_scale'].iloc[i] * 60
+
+            # Save some extra info only during first set
+            if i == 0:
+
+                # Get names of calibration images
+                flatFile = f'{filepath.flats}{args[2]}'
+                curveFile = f'{filepath.lincurve}{args[3]}.txt'
+                biasFile = f'{filepath.calibdata}{args[0]}/S_{setnum:02d}/combias.fit'
+                thermalFile = f'{filepath.calibdata}{args[0]}/S_{setnum:02d}/corthermal.fit'
+
+                # Add general data-night values to worksheet
+                worksheet.cell(row=3 , column=2, value=datenow) # Processing Date
+                worksheet.cell(row=3 , column=4, value=args[4]) # Processor Name
+                worksheet.cell(row=4 , column=3, value=args[5])
+                worksheet.cell(row=5 , column=3, value=firstHeader['LOCATION'])
+                worksheet.cell(row=6 , column=3, value=firstHeader['LONGITUD'])
+                worksheet.cell(row=7 , column=3, value=firstHeader['LATITUDE'])
+                worksheet.cell(row=8 , column=3, value=firstHeader['ELEVATIO'])
+                worksheet.cell(row=9 , column=3, value=firstUTC.date())
+                worksheet.cell(row=10, column=3, value=firstUTC.time())
+                worksheet.cell(row=12, column=3, value=firstHeader['NOTES'])
+                worksheet.cell(row=4 , column=8, value=firstHeader['INSTRUME'])
+                worksheet.cell(row=5 , column=8, value=firstHeader['OBSERVER'])
+                worksheet.cell(row=6 , column=8, value=firstHeader['AMTEMP_F'])
+                worksheet.cell(row=7 , column=8, value=firstHeader['HUMID'])
+                worksheet.cell(row=8 , column=8, value=firstHeader['WIND_MPH'])
+                worksheet.cell(row=9 , column=8, value=firstHeader['CCD-TEMP'])
+                worksheet.cell(row=10, column=8, value=firstHeader['EXPTIME'])
+                worksheet.cell(row=15, column=3, value=flatFile)
+                worksheet.cell(row=16, column=3, value=curveFile)
+                worksheet.cell(row=17, column=3, value=biasFile)
+                worksheet.cell(row=18, column=3, value=thermalFile)
+                worksheet.cell(row=15, column=3, value=flatFile)
+
+            # Add data-set specific values
+            worksheet.cell(row=21+i*2, column=2, value=f"Start {firstLMTDayfrac:.2f}")
+            worksheet.cell(row=22+i*2, column=2, value=f"End {lastLMTDayfrac:.2f}")
+            worksheet.cell(row=21+i*2, column=3, value=zeropoint)
+            worksheet.cell(row=21+i*2, column=4, value=extCoeff)
+            worksheet.cell(row=21+i*2, column=5, value=extCoeffErr)
+            worksheet.cell(row=21+i*2, column=6, value=platescale)
+
+
+
+
 if __name__ == '__main__':
     t1 = time.time()
     #-----------------------------------------------------------------------------#    
@@ -310,6 +450,7 @@ if __name__ == '__main__':
     Curve = filelist['Curve'].values
     zeropoint = filelist['Zeropoint'].values
     Processor = filelist['Processor'].values
+    location = filelist['Location'].values
     
     #Check the calibration files exist    
     for i in range(len(filelist)):
@@ -342,7 +483,7 @@ if __name__ == '__main__':
         barfig.canvas.manager.window.move(2755,0)  
     else:
         print('You have 5 seconds to adjust the position of the progress bar window')
-        plt.pause(5) #users have 5 seconds to adjust the figure position
+        plt.pause(0.1) #users have 5 seconds to adjust the figure position
     
     #Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -391,7 +532,7 @@ if __name__ == '__main__':
         q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
-        # Run processes
+        # # Run processes
         reduce_images(*K0)                            #image reduction   
         register_coord(*K2)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
@@ -416,8 +557,11 @@ if __name__ == '__main__':
         for q in q_all:
             while not q.empty():
                 loghistory(q.get())
+
+        # Create the calibreport excel sheet
+        args = (Dataset[i],sets,Flat_V[i],Curve[i],Processor[i],location[i])
+        generate_calibreport(*args)
         
-    
         #save the timing records for running the script
         n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
         barfig.savefig(filepath.calibdata+Dataset[i]+'/processtime_images.png')
