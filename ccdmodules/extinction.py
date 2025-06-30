@@ -596,7 +596,6 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
 
         # Fit for the zeropoint and extinction coefficient
         stars = n.array((bestfit),dtype=object)
-        print(stars)
         M = n.float64(stars[:,2])            #V_mag, absolute
         elev = n.float64(stars[:,3])         #elevation[deg]
         #flux = n.float64(stars[:,8])        #PSF flux, background subtracted [DN]
