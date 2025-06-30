@@ -345,6 +345,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                 if H['PLTSOLVD']: pass
                 else: continue
             except KeyError:
+                print('Image not solved')
                 continue
             imagesSolved += 1
 
@@ -595,6 +596,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
 
         # Fit for the zeropoint and extinction coefficient
         stars = n.array((bestfit),dtype=object)
+        print(stars)
         M = n.float64(stars[:,2])            #V_mag, absolute
         elev = n.float64(stars[:,3])         #elevation[deg]
         #flux = n.float64(stars[:,8])        #PSF flux, background subtracted [DN]
@@ -675,7 +677,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         fig = plt.figure('zeropoint', figsize=(8,5))
         ax = fig.add_subplot(111)
         ax.plot(
-            airmass[clipped_index], M[clipped_index]-m[clipped_index], 'o', 
+            airmass[clipped_index], mdiff[clipped_index], 'o', 
             label=f'Hipparcos standard stars (N={Nfit})'
         )
         ax.plot(
