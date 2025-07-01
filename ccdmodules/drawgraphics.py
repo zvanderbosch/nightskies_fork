@@ -5,7 +5,8 @@
 #
 #Last updated: 2025/05/20
 #
-#This script generates all-sky graphics/panaoramas
+#This script generates the final output graphics including
+#all-sky panaoramas and vertical illuminance figures.
 #
 #Note: 
 #
@@ -159,6 +160,16 @@ def get_site_info(imageFile):
     dateString = f"{month} {day}, {year}  {midpointLMT:.1f} hours LMT"
 
     return siteName, observers, dateString
+
+
+def make_vertillum_figure():
+    '''
+    Function to generate figure comparing
+    vertical illuminance from all light sources
+    and from anthropogenic light only.
+    '''
+
+    
 
 
 def make_fullres_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
