@@ -201,7 +201,7 @@ def process_skyquality(*args):
     print(f'{PREFIX}Processing Time (skyquality): {t2-t1:.2f} seconds')
 
 
-def process_drawgrahpics(*args):
+def process_drawgraphics(*args):
     '''Generate panoramic graphics'''
     t1 = time.time()
     import drawgraphics as DG
