@@ -301,8 +301,6 @@ def utc_to_lmt(fitsHeader):
     # Get UTC date and time
     t = Time(dateobs, format='isot', scale='utc')
     utcDT = t.datetime
-    utcDate = utcDT.strftime("%d-%b-%Y").lstrip("0")
-    utcTime = dateobs.split("T")[1].lstrip("0")
 
     # Compute LMT time in fractional hours of the day
     dayShift = 0
@@ -312,12 +310,7 @@ def utc_to_lmt(fitsHeader):
         hourfracLMT += 24
         dayShift -= 1
 
-    # Apply day shift
-    t = t + dayShift*u.day
-    lmtDT = t.datetime
-    lmtDate = lmtDT.strftime("%d-%b-%Y").lstrip("0")
-
-    return utcDT, lmtDT, hourfracLMT
+    return utcDT, hourfracLMT
 
 
 def generate_calibreport(*args):
@@ -372,13 +365,13 @@ def generate_calibreport(*args):
             lastHeader = fits.getheader(lastImage, ext=0)
 
             # Get UTC and LMT datetimes
-            firstUTC, firstLMT, firstLMTDayfrac = utc_to_lmt(firstHeader)
-            lastUTC, lastLMT, lastLMTDayfrac = utc_to_lmt(lastHeader)
+            firstUTC, firstLMTDayfrac = utc_to_lmt(firstHeader)
+            lastUTC, lastLMTDayfrac = utc_to_lmt(lastHeader)
 
             # Get extinction fit parameters
             zeropoint = extData['zeropoint_default'].iloc[i]
             extCoeff = extData['extinction_fixedZ'].iloc[i]
-            extCoeffErr = extData['extinction_fixedZ_err'].iloc[i]
+            stdErr = extData['standard_error_fixedZ'].iloc[i]
             numStarsFit = extData['num_star_used'].iloc[i]
             platescale = extData['avg_scale'].iloc[i] * 60 # arcsec/pix
             platescaleFactor = 2.5*n.log10(platescale**2)
@@ -439,7 +432,7 @@ def generate_calibreport(*args):
             worksheet.cell(row=22+i*2, column=2, value=f"End {lastLMTDayfrac:.2f}")
             worksheet.cell(row=21+i*2, column=3, value=zeropoint)
             worksheet.cell(row=21+i*2, column=4, value=extCoeff)
-            worksheet.cell(row=21+i*2, column=5, value=extCoeffErr)
+            worksheet.cell(row=21+i*2, column=5, value=stdErr)
             worksheet.cell(row=21+i*2, column=6, value=numStarsFit)
             worksheet.cell(row=21+i*2, column=7, value=platescale)
             worksheet.cell(row=21+i*2, column=8, value=platescaleFactor)
