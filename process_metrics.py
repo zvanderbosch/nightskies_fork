@@ -201,11 +201,11 @@ def process_skyquality(*args):
     print(f'{PREFIX}Processing Time (skyquality): {t2-t1:.2f} seconds')
 
 
-def process_drawmaps(*args):
+def process_drawgrahpics(*args):
     '''Generate panoramic graphics'''
     t1 = time.time()
-    import ccdmodules.drawmaps as DM
-    DM.generate_graphics(*args[:-1])
+    import drawgraphics as DG
+    DG.generate_graphics(*args[:-1])
     t2 = time.time()
     args[-1].put(t2-t1)
     print(f'{PREFIX}Processing Time (drawmaps): {t2-t1:.2f} seconds')
@@ -363,13 +363,15 @@ if __name__ == '__main__':
         q6=Queue(); args=(Dataset[i],sets,Filter,siteAlbedo,q6)
         p6 = Process(target=process_skyquality,args=args)   # Sky quality metrics
         q7=Queue(); args=(Dataset[i],sets,processor[i],int(centralAz[i]),location[i],q7)
-        p7 = Process(target=process_drawmaps,args=args)     # Draw maps
+        p7 = Process(target=process_drawgraphics,args=args)     # Draw maps
         
         # Execute next two processes
         p6.start(); update_progressbar(6,i)
         p7.start(); update_progressbar(7,i)
         p6.join() ; r6=q6.get(); update_progressbar(6,i,r6[0])
         p7.join() ; r7=q7.get(); update_progressbar(7,i,r7)
+
+        # Get metrics from returned results
         skyqualityMetrics = r6[1]
 
         # Clear out scratch directory when finished
