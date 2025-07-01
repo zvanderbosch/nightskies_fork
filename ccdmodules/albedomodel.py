@@ -68,6 +68,9 @@ def calculate_albedo_model(dnight):
     # Filter paths
     F = {'V':'', 'B':'B/'}
 
+    # Print status update
+    print(f'{PREFIX}Processing {dnight}...')
+
     # Set ArcGIS working directories
     scratchsetp = f"{filepath.rasters}scratch_metrics/"
     arcpy.env.workspace = scratchsetp
