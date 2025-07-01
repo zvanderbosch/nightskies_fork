@@ -827,8 +827,8 @@ class Skybright(_SkyBrightObservedBase):
 
         # Add sky brightness layer to data frame
         layerFile = f"{gridsetp}/skybrightmags{self.set}.lyrx"
-        natskyLayer = arcpy.mp.LayerFile(layerFile)
-        mxd.addLayer(natskyLayer)
+        skybrightLayer = arcpy.mp.LayerFile(layerFile)
+        mxd.addLayer(skybrightLayer)
 
         # Save to JPEG from MapView object.
         # Mapview is only option with width/height params for exportToJPEG
