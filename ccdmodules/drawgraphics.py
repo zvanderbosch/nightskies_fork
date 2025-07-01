@@ -24,14 +24,16 @@
 
 from astropy.time import Time
 from astropy.io import fits
+from scipy.interpolate import make_interp_spline
 
 import os
 import sys
 import stat
 import arcpy
 import numpy as n
+import pandas as pd
 import astropy.units as u
-import astropy.coordinates as coord
+import matplotlib.pyplot as plt
 
 # Local Source
 import filepath
@@ -162,14 +164,42 @@ def get_site_info(imageFile):
     return siteName, observers, dateString
 
 
-def make_vertillum_figure():
+def make_vertillum_figure(dataNight):
     '''
     Function to generate figure comparing
     vertical illuminance from all light sources
     and from anthropogenic light only.
     '''
 
-    
+    # Load in vertical illuminance Excel sheet (vert.xlsx)
+    vertFile = f"{filepath.calibdata}{dataNight}/vert.xlsx"
+    vertDataAll = pd.read_excel(
+        vertFile, sheet_name="Allsky_All_Sources", skiprows=9
+    )
+    vertDataAnth = pd.read_excel(
+        vertFile, sheet_name="Allsky_Artificial", skiprows=9
+    )
+
+    # Get smoothed spline interpolations of data
+    xsmooth = n.linspace(0.,350.,1000)
+    splineInterpAll = make_interp_spline(
+        vertDataAll.Azimuth.values, 
+        vertDataAll['Vert Illum (mlux)'].values
+    )
+    splineInterpAnth = make_interp_spline(
+        vertDataAnth.Azimuth.values, 
+        vertDataAnth['Vert Illum (mlux)'].values
+    )
+    vertInterpAll = splineInterpAll(xsmooth)
+    vertInterpAnth = splineInterpAnth(xsmooth)
+
+    # Create figures to plot horizontal and vertical illuminances
+    fig = plt.figure('vert',figsize=(10,6))
+    ax = fig.add_subplot(111)
+
+    # Plot smoothed vertical illuminance
+    ax.plot(xsmooth, vertInterpAll , ls='-', lw=3, c='b', label='All Sources to 96 ZA')
+    ax.plot(xsmooth, vertInterpAnth, ls='-', lw=3, c='r', label='Artificial Skyglow Only')
 
 
 def make_fullres_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
