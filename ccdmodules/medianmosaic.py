@@ -213,7 +213,7 @@ def mosaic(dnight, sets, filter):
     extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.xlsx"
     extinctionData = pd.read_excel(extinctionFile)
     
-    for s in sets:
+    for i,s in enumerate(sets):
 
         # Convert set number to integer
         setnum = int(s[0])
@@ -373,6 +373,35 @@ def mosaic(dnight, sets, filter):
         arcpy.management.MakeRasterLayer(gridsetp+'skybrightmags', layerName)
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "ABSOLUTE")
+
+        # Export first data-set's mosaic to JPEG image for calibreport
+        if i == 0:
+
+            # Load in black-background ArcGIS project
+            print(f"{PREFIX}Exporting skybright mosaic to JPEG file...")
+            blankMap = f"{filepath.maps}blankmap/blankmap.aprx"
+            p = arcpy.mp.ArcGISProject(blankMap)
+
+            # Set map scale
+            mxd = p.listMaps("Layers")[0]
+            lyt = p.listLayouts()[0]
+            mf = lyt.listElements()[0]
+            mf.camera.scale = 120000000
+
+            # Add sky brightness layer to data frame
+            skybrightLayer = arcpy.mp.LayerFile(layerfile)
+            mxd.addLayer(skybrightLayer)
+
+            # Save to JPEG from MapView object
+            jpegFile = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}data.jpg"
+            mv = mxd.defaultView
+            mv.exportToJPEG(
+                jpegFile,         # output file
+                1600,             # width
+                1600,             # height
+                resolution=96,    # Default is 96
+                jpeg_quality=100, # Default is 80, highest quality = 100
+            )
         
         #Downscale the raster and save it as a fits file
         file = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}median/skybrightmags"
