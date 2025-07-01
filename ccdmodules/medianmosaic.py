@@ -374,7 +374,7 @@ def mosaic(dnight, sets, filter):
         arcpy.management.ApplySymbologyFromLayer(layerName, symbologyLayer)
         arcpy.management.SaveToLayerFile(layerName, layerfile, "ABSOLUTE")
 
-        # Export first data-set's mosaic to JPEG image for calibreport
+        # Export first dataset's mosaic to JPEG for use in calibreport
         if i == 0:
 
             # Load in black-background ArcGIS project
