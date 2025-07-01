@@ -31,6 +31,7 @@
 from datetime import datetime
 from astropy.io import fits
 from astropy.time import Time
+from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Border, Side, Font, NamedStyle
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -445,6 +446,8 @@ METADATA_MAPPINGS = {
     }
 
 }
+
+
 #------------------------------------------------------------------------------#
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
@@ -703,6 +706,15 @@ def append_night_metadata(excelFile, siteInfo):
     # Sheet name
     sheetName = "NIGHT METADATA"
 
+    # Load some data from calibreport
+    calibreportFile = f"{filepath.calibdata}{siteInfo['datanight']}/calibreport.xlsx"
+    calibreport = load_workbook(calibreportFile)
+    reportSheet = calibreport['Report']
+    bortleScale = reportSheet['H11'].value
+    zenithLimitingMag = reportSheet['J11'].value
+    narrative = reportSheet['A13'].value
+    calibreport.close()
+
     # Add to NIGHT METADATA sheet
     with pd.ExcelWriter(excelFile, engine='openpyxl', if_sheet_exists='overlay', mode='a') as writer:
 
@@ -750,15 +762,14 @@ def append_night_metadata(excelFile, siteInfo):
         worksheet.cell(row=5, column=21, value=zeropoint)                 # Zeropoint
         worksheet.cell(row=5, column=22, value=scaleOffset)               # Image Scale Offset
         worksheet.cell(row=5, column=23, value=siteInfo['numsets'])       # Number of Sets
-        # worksheet.cell(row=5, column=24, value=siteInfo['zlm'])         # Zenith Limiting Mag
-        # worksheet.cell(row=5, column=25, value=siteInfo['bortle'])      # Bortle
+        worksheet.cell(row=5, column=24, value=zenithLimitingMag)         # Zenith Limiting Mag
+        worksheet.cell(row=5, column=25, value=bortleScale)               # Bortle
         worksheet.cell(row=5, column=26, value=siteInfo['siteAlbedo'])    # Albedo
-        # worksheet.cell(row=5, column=27, value=siteInfo['sqm'])         # SQM
         worksheet.cell(row=5, column=28, value=siteInfo['observers'][0])  # Observer 1
         worksheet.cell(row=5, column=29, value=siteInfo['observers'][1])  # Observer 2
         worksheet.cell(row=5, column=30, value=siteInfo['observers'][2])  # Observer 3
         worksheet.cell(row=5, column=31, value=siteInfo['observers'][3])  # Observer 4
-        # worksheet.cell(row=5, column=32, value=siteInfo['narrative'])   # Narrative
+        worksheet.cell(row=5, column=32, value=narrative)                 # Narrative
         worksheet.cell(row=5, column=33, value=siteInfo['centralAZ'])     # Central Azimuth
 
         # Add instrument details when available
