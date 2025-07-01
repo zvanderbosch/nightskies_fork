@@ -982,7 +982,7 @@ def append_extinction(excelFile, dnight, sets):
     starsFit = extinctionData['num_star_used'].values
     starsRej = extinctionData['num_star_rejected'].values
     zpFree = extinctionData['zeropoint_free'].values
-    zpFreeErr = extinctionData['zeropoint_free_err'].values
+    stdErr = extinctionData['standard_error_fixedZ'].values
     zpFixed = extinctionData['zeropoint_default'].values
     extFixed = extinctionData['extinction_fixedZ'].values
     colorFixed = extinctionData['color_coeff_default'].values
@@ -1006,7 +1006,7 @@ def append_extinction(excelFile, dnight, sets):
             worksheet.cell(row=setnum+4, column=3 , value=imgSolved[setnum-1])   # Images solved
             worksheet.cell(row=setnum+4, column=4 , value=starsFit[setnum-1])    # Stars used
             worksheet.cell(row=setnum+4, column=5 , value=starsRej[setnum-1])    # Stars rejected
-            worksheet.cell(row=setnum+4, column=6 , value=zpFreeErr[setnum-1])   # Bestfit Zeropoint Error
+            worksheet.cell(row=setnum+4, column=6 , value=stdErr[setnum-1])      # Standard Error of y-estimate
             worksheet.cell(row=setnum+4, column=7 , value=zpFree[setnum-1])      # Bestfit Zeropoint
             worksheet.cell(row=setnum+4, column=8 , value=-colorFree[setnum-1])  # Bestfit Color Coeff
             worksheet.cell(row=setnum+4, column=9 , value=zpFixed[setnum-1])     # Default Zeropoint
@@ -1014,7 +1014,7 @@ def append_extinction(excelFile, dnight, sets):
             worksheet.cell(row=setnum+4, column=11, value=-extFixed[setnum-1])   # Bestfit Ext Coeff (Fixed ZP)
 
             # Set some cell number/date formats
-            worksheet.cell(row=setnum+4, column=6 ).number_format = '0.000'  # Bestfit Zeropoint Error
+            worksheet.cell(row=setnum+4, column=6 ).number_format = '0.000'  # Standard Error of y-estimate
             worksheet.cell(row=setnum+4, column=7 ).number_format = '0.000'  # Bestfit Zeropoint
             worksheet.cell(row=setnum+4, column=8 ).number_format = '0.000'  # Bestfit Color Coeff
             worksheet.cell(row=setnum+4, column=9 ).number_format = '0.000'  # Default Zeropoint

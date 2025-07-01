@@ -252,6 +252,23 @@ def poly_sigfit(x,y,signum=5,niter=10,fixedZ=False):
     return param, cov, fit_indices
 
 
+def calculate_stderr(known_y, predicted_y):
+    '''
+    Function to calculate the standard error of
+    the y-estimate by comparing the known y-values
+    and y-values prediceby a linear regression
+    '''
+
+    # Get number of measurements
+    N = len(known_y)
+
+    # Calculate standard error of y-estimate
+    sey = n.sqrt(sum((known_y - predicted_y)**2) / (N-2))
+
+    return sey
+
+
+
 def remove_readonly(func, path, excinfo):
     '''
     Error-catching function to handle removal of read-only folders
@@ -648,6 +665,15 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         Nfit = sum(clipped_index)                             # Number of sources used in fit
         Nrej = sum(~clipped_index)                            # Number of sources rejected in fit
 
+        # Calcuate standard errors
+        yestimateFree = extFree*airmass[clipped_index] + zpFree
+        yestimateFixed = extFixed*airmass[clipped_index] + zeropoint
+        stdErrFree = calculate_stderr(
+            mdiff[clipped_index], yestimateFree
+        )
+        stdErrFixed = calculate_stderr(
+            mdiff[clipped_index], yestimateFixed
+        )
 
         # Save the list of stars used for calculating the zeropoint
         fmt = ['%7s','%8s','%7.2f','%9.2f','%7.2f','%7.1f','%6.1f','%5.2f','%8.f','%8.f']
@@ -664,8 +690,8 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         # Save fit results to list
         fit_entry = [
             int(s[0]), imagesSolved, Nfit, Nrej,
-            zpFree, zpFree_err, extFree, extFree_err, 
-            zeropoint, extFixed, extFixed_err,
+            zpFree, zpFree_err, extFree, extFree_err, stdErrFree,
+            zeropoint, extFixed, extFixed_err, stdErrFixed,
             colorCoeff, colorCoeffFree, colorCoeffFree_err,
             sx, sy, sa, exp
         ]
@@ -719,9 +745,11 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         "zeropoint_free_err", 
         "extinction_free", 
         "extinction_free_err",
+        "standard_error_free",
         "zeropoint_default", 
         "extinction_fixedZ", 
         "extinction_fixedZ_err",
+        "standard_error_fixedZ",
         "color_coeff_default", 
         "color_coeff_free", 
         "color_coeff_free_err",
