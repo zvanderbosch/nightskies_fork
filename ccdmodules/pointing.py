@@ -243,6 +243,7 @@ def pointing_err(dnight, sets):
         ax.grid(ls=':', lw=0.5, c='silver')
         ax.text(0.5, -2.8, "Average Total Error:   " + '{:.3f}'.format(totErr.mean()) + u'\N{DEGREE SIGN}', fontsize=18)
         errorPlot.savefig(filepath.calibdata+dnight+'/pointerr_%s.png' %s[0])
+        plt.close('errorplot')
 
         #saving the output file        
         outfile = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
