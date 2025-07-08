@@ -369,12 +369,18 @@ def generate_calibreport(*args):
             lastUTC, lastLMTDayfrac = utc_to_lmt(lastHeader)
 
             # Get extinction fit parameters
-            zeropoint = extData['zeropoint_default'].iloc[i]
+            zeropointFixed = extData['zeropoint_default'].iloc[i]
+            zeropointFree = extData['zeropoint_free'].iloc[i]
             extCoeff = extData['extinction_fixedZ'].iloc[i]
             stdErr = extData['standard_error_fixedZ'].iloc[i]
             numStarsFit = extData['num_star_used'].iloc[i]
             platescale = extData['avg_scale'].iloc[i] * 60 # arcsec/pix
             platescaleFactor = 2.5*n.log10(platescale**2)
+
+            # Load pointing error data
+            pterrFile = f"{filepath.calibdata}{args[0]}/pointerr_{setnum}.txt"
+            pterrData = n.loadtxt(pterrFile)
+            pterrAvg = n.mean(pterrData[:,7])
 
             # Save some extra info only during first set
             if i == 0:
@@ -428,14 +434,16 @@ def generate_calibreport(*args):
                 worksheet.add_image(img)
 
             # Add data-set specific values
-            worksheet.cell(row=21+i*2, column=2, value=f"Start {firstLMTDayfrac:.2f}")
-            worksheet.cell(row=22+i*2, column=2, value=f"End {lastLMTDayfrac:.2f}")
-            worksheet.cell(row=21+i*2, column=3, value=zeropoint)
-            worksheet.cell(row=21+i*2, column=4, value=extCoeff)
-            worksheet.cell(row=21+i*2, column=5, value=stdErr)
-            worksheet.cell(row=21+i*2, column=6, value=numStarsFit)
-            worksheet.cell(row=21+i*2, column=7, value=platescale)
-            worksheet.cell(row=21+i*2, column=8, value=platescaleFactor)
+            worksheet.cell(row=21+i*2, column=2 , value=f"Start {firstLMTDayfrac:.2f}")
+            worksheet.cell(row=22+i*2, column=2 , value=f"End {lastLMTDayfrac:.2f}")
+            worksheet.cell(row=21+i*2, column=3 , value=zeropointFixed)
+            worksheet.cell(row=21+i*2, column=4 , value=zeropointFree)
+            worksheet.cell(row=21+i*2, column=5 , value=extCoeff)
+            worksheet.cell(row=21+i*2, column=6 , value=stdErr)
+            worksheet.cell(row=21+i*2, column=7 , value=numStarsFit)
+            worksheet.cell(row=21+i*2, column=8 , value=platescale)
+            worksheet.cell(row=21+i*2, column=9 , value=platescaleFactor)
+            worksheet.cell(row=21+i*2, column=10, value=pterrAvg)
 
 
 
@@ -552,25 +560,25 @@ if __name__ == '__main__':
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # Run processes
-        reduce_images(*K0)                            #image reduction   
-        register_coord(*K2)                           #pointing 
+        # reduce_images(*K0)                            #image reduction   
+        # register_coord(*K2)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        p4.start(); update_progressbar(4,i)           #median filter
+        # p4.start(); update_progressbar(4,i)           #median filter
         p2.join() ; update_progressbar(2,i,q2.get())
-        p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
-        p5.join() ; update_progressbar(5,i,q5.get())
+        # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+        # p5.join() ; update_progressbar(5,i,q5.get())
         p3.join() ; update_progressbar(3,i,q3.get())
         generate_calibreport(*report_args)            #generate calibreport
-        p6.start(); update_progressbar(6,i)           #full mosaic
-        p7.start(); update_progressbar(7,i)           #galactic mosaic
-        p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        p9.start(); update_progressbar(9,i)           #median mosaic
-        p4.join() ; update_progressbar(4,i,q4.get())
-        p6.join() ; update_progressbar(6,i,q6.get())
-        p7.join() ; update_progressbar(7,i,q7.get())
-        p8.join() ; update_progressbar(8,i,q8.get())
-        p9.join() ; update_progressbar(9,i,q9.get())
+        # p6.start(); update_progressbar(6,i)           #full mosaic
+        # p7.start(); update_progressbar(7,i)           #galactic mosaic
+        # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
+        # p9.start(); update_progressbar(9,i)           #median mosaic
+        # p4.join() ; update_progressbar(4,i,q4.get())
+        # p6.join() ; update_progressbar(6,i,q6.get())
+        # p7.join() ; update_progressbar(7,i,q7.get())
+        # p8.join() ; update_progressbar(8,i,q8.get())
+        # p9.join() ; update_progressbar(9,i,q9.get())
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]

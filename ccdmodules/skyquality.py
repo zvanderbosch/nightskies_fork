@@ -474,20 +474,11 @@ def append_to_calibreport(metrics):
             # Get the set number
             setnum = row['dataset']
 
-            # Perform some unit conversion
-            zenith_SKIES = 108468000 * 10**(-0.4*row['zenith_mag']) / 0.171918  # Not sure what these units are
-            allsky_mlux = 0.00254*10**(-0.4*row['allsky_mag']) # milli-Lux
-
             # Add metrics to Excel sheet
-            worksheet.cell(row=21+2*(setnum-1), column=9 , value=zenith_SKIES)
-            worksheet.cell(row=22+2*(setnum-1), column=9 , value=row['zenith_mag'])
-            worksheet.cell(row=21+2*(setnum-1), column=10, value=allsky_mlux)
-            worksheet.cell(row=22+2*(setnum-1), column=10, value=row['allsky_mag'])
-            worksheet.cell(row=21+2*(setnum-1), column=11, value=row['za70_mag'])
+            worksheet.cell(row=21+2*(setnum-1), column=11, value=row['zenith_mag'])
             worksheet.cell(row=21+2*(setnum-1), column=12, value=row['brightest_mag'])
             worksheet.cell(row=21+2*(setnum-1), column=13, value=row['faintest_mag'])
-            worksheet.cell(row=21+2*(setnum-1), column=14, value=row['SQI_allsky'])
-            worksheet.cell(row=22+2*(setnum-1), column=14, value=row['SQM_synthetic'])
+            worksheet.cell(row=21+2*(setnum-1), column=14, value=row['SQM_synthetic'])
 
 
 #------------------------------------------------------------------------------#
