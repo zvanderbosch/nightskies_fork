@@ -187,13 +187,21 @@ def mosaic(dnight, sets, filter):
     # Read in the best-fit enxtinction parameters
     extinctionFile = f"{filepath.calibdata}{dnight}/extinction_fit_{filter}.xlsx"
     extinctionData = pd.read_excel(extinctionFile)
+
+    # Clear out and/or create domain shapefile directories
+    for s in sets:
+        domainsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/{F[filter]}/domains/"
+        if os.path.exists(domainsetp):
+            shutil.rmtree(domainsetp, onerror=remove_readonly)
+        os.makedirs(domainsetp)
     
+    # Iterate over each data set
     for s in sets:
 
         # Convert set number to integer
         setnum = int(s[0])
 
-        # Define file paths
+        # Define file/folder paths
         calsetp = f"{filepath.calibdata}{dnight}/S_{setnum:02d}/{F[filter]}"
         gridsetp = f"{filepath.griddata}{dnight}/S_{setnum:02d}/{F[filter]}fullres/"
         scratchsetp = f"{filepath.rasters}scratch_fullres/"
@@ -204,15 +212,10 @@ def mosaic(dnight, sets, filter):
             shutil.rmtree(gridsetp, onerror=remove_readonly)
         os.makedirs(gridsetp)
 
-        # Remove and/or create domainsetp directory
-        if os.path.exists(domainsetp):
-            shutil.rmtree(domainsetp, onerror=remove_readonly)
-        os.makedirs(domainsetp)
-
         # Clear out the scratch directory
         clear_dir(scratchsetp)
                 
-        #read in the registered images coordinates
+        # Read in the registered images coordinates
         file = f"{filepath.calibdata}{dnight}/pointerr_{setnum}.txt"
         Obs_AZ, Obs_ALT = n.loadtxt(file, usecols=(3,4)).T
         Obs_AZ[n.where(Obs_AZ>180)] -= 360
