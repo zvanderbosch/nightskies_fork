@@ -560,25 +560,25 @@ if __name__ == '__main__':
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # Run processes
-        # reduce_images(*K0)                            #image reduction   
-        # register_coord(*K2)                           #pointing 
+        reduce_images(*K0)                            #image reduction   
+        register_coord(*K2)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        # p4.start(); update_progressbar(4,i)           #median filter
+        p4.start(); update_progressbar(4,i)           #median filter
         p2.join() ; update_progressbar(2,i,q2.get())
-        # p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
-        # p5.join() ; update_progressbar(5,i,q5.get())
+        p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+        p5.join() ; update_progressbar(5,i,q5.get())
         p3.join() ; update_progressbar(3,i,q3.get())
         generate_calibreport(*report_args)            #generate calibreport
-        # p6.start(); update_progressbar(6,i)           #full mosaic
-        # p7.start(); update_progressbar(7,i)           #galactic mosaic
-        # p8.start(); update_progressbar(8,i)           #zodiacal mosaic
-        # p9.start(); update_progressbar(9,i)           #median mosaic
-        # p4.join() ; update_progressbar(4,i,q4.get())
-        # p6.join() ; update_progressbar(6,i,q6.get())
-        # p7.join() ; update_progressbar(7,i,q7.get())
-        # p8.join() ; update_progressbar(8,i,q8.get())
-        # p9.join() ; update_progressbar(9,i,q9.get())
+        p6.start(); update_progressbar(6,i)           #full mosaic
+        p7.start(); update_progressbar(7,i)           #galactic mosaic
+        p8.start(); update_progressbar(8,i)           #zodiacal mosaic
+        p9.start(); update_progressbar(9,i)           #median mosaic
+        p4.join() ; update_progressbar(4,i,q4.get())
+        p6.join() ; update_progressbar(6,i,q6.get())
+        p7.join() ; update_progressbar(7,i,q7.get())
+        p8.join() ; update_progressbar(8,i,q8.get())
+        p9.join() ; update_progressbar(9,i,q9.get())
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
