@@ -171,38 +171,45 @@ def make_vertillum_figure(dataNight, setNumber):
     and from anthropogenic light only.
     '''
 
+    # Status update
+    print(f'{PREFIX}Generating final vertical illummination figure...')
+
     # Load in vertical illuminance Excel sheet (vert.xlsx)
     vertFile = f"{filepath.calibdata}{dataNight}/vert.xlsx"
     vertDataAll = pd.read_excel(
         vertFile, 
         sheet_name="Allsky_All_Sources", 
-        skiprows=9,
+        skiprows=10,
+        header=None,
+        names=['Azimuth','VertIllum'],
         usecols=(0,setNumber)
     )
     vertDataAnth = pd.read_excel(
         vertFile, 
         sheet_name="Allsky_Artificial", 
-        skiprows=9,
+        skiprows=10,
+        header=None,
+        names=['Azimuth','VertIllum'],
         usecols=(0,setNumber)
     )
 
     # Copy values at 0 degrees to 360 degrees
     vertDataAll.loc[len(vertDataAll)] = [
-        360., vertDataAll['Vert Illum (mlux)'].iloc[0]
+        360., vertDataAll['VertIllum'].iloc[0]
     ]
     vertDataAnth.loc[len(vertDataAnth)] = [
-        360., vertDataAnth['Vert Illum (mlux)'].iloc[0]
+        360., vertDataAnth['VertIllum'].iloc[0]
     ]
 
     # Get smoothed spline interpolations of data
     xsmooth = n.linspace(0.,360.,1000)
     splineInterpAll = make_interp_spline(
         vertDataAll['Azimuth'].values, 
-        vertDataAll['Vert Illum (mlux)'].values
+        vertDataAll['VertIllum'].values
     )
     splineInterpAnth = make_interp_spline(
         vertDataAnth['Azimuth'].values, 
-        vertDataAnth['Vert Illum (mlux)'].values
+        vertDataAnth['VertIllum'].values
     )
     vertInterpAll = splineInterpAll(xsmooth)
     vertInterpAnth = splineInterpAnth(xsmooth)
