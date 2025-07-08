@@ -164,7 +164,7 @@ def get_site_info(imageFile):
     return siteName, observers, dateString
 
 
-def make_vertillum_figure(dataNight):
+def make_vertillum_figure(dataNight, setNumber):
     '''
     Function to generate figure comparing
     vertical illuminance from all light sources
@@ -174,20 +174,34 @@ def make_vertillum_figure(dataNight):
     # Load in vertical illuminance Excel sheet (vert.xlsx)
     vertFile = f"{filepath.calibdata}{dataNight}/vert.xlsx"
     vertDataAll = pd.read_excel(
-        vertFile, sheet_name="Allsky_All_Sources", skiprows=9
+        vertFile, 
+        sheet_name="Allsky_All_Sources", 
+        skiprows=9,
+        usecols=(0,setNumber)
     )
     vertDataAnth = pd.read_excel(
-        vertFile, sheet_name="Allsky_Artificial", skiprows=9
+        vertFile, 
+        sheet_name="Allsky_Artificial", 
+        skiprows=9,
+        usecols=(0,setNumber)
     )
 
+    # Copy values at 0 degrees to 360 degrees
+    vertDataAll.loc[len(vertDataAll)] = [
+        360., vertDataAll['Vert Illum (mlux)'].iloc[0]
+    ]
+    vertDataAnth.loc[len(vertDataAnth)] = [
+        360., vertDataAnth['Vert Illum (mlux)'].iloc[0]
+    ]
+
     # Get smoothed spline interpolations of data
-    xsmooth = n.linspace(0.,350.,1000)
+    xsmooth = n.linspace(0.,360.,1000)
     splineInterpAll = make_interp_spline(
-        vertDataAll.Azimuth.values, 
+        vertDataAll['Azimuth'].values, 
         vertDataAll['Vert Illum (mlux)'].values
     )
     splineInterpAnth = make_interp_spline(
-        vertDataAnth.Azimuth.values, 
+        vertDataAnth['Azimuth'].values, 
         vertDataAnth['Vert Illum (mlux)'].values
     )
     vertInterpAll = splineInterpAll(xsmooth)
@@ -200,6 +214,31 @@ def make_vertillum_figure(dataNight):
     # Plot smoothed vertical illuminance
     ax.plot(xsmooth, vertInterpAll , ls='-', lw=3, c='b', label='All Sources to 96 ZA')
     ax.plot(xsmooth, vertInterpAnth, ls='-', lw=3, c='r', label='Artificial Skyglow Only')
+
+    # Add legend
+    ax.legend(
+        loc='best', 
+        handlelength=2.0,
+        fontsize=11, 
+        ncol=1,
+        facecolor='gainsboro',
+        framealpha=1.0
+    )
+
+    # Adjust plot appearances
+    ax.set_xlim(0, 360)
+    ax.set_ylim(0, ax.get_ylim()[1])
+    ax.set_xticks(n.arange(0,361,30))
+    ax.set_axisbelow(True)
+    ax.grid(ls=':', c='silver', lw=0.75)
+    ax.set_xlabel('Azimuth (deg)',fontsize=14)
+    ax.set_ylabel('Vertical Illumination (mLux)',fontsize=14)
+    ax.set_title(f"{dataNight} Data Set {setNumber}", fontsize=16)
+
+    # Save figure to file
+    fileName = f"{filepath.graphics}{dataNight}_vert_{setNumber}.png"
+    plt.savefig(fileName, dpi=300, bbox_inches='tight')
+    plt.close('vert')
 
 
 def make_fullres_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
@@ -378,6 +417,9 @@ def generate_graphics(dnight,sets,processorName,centralAzimuth,locationName):
         mapTitle.text = titleText
         mapCollBy.text = observers
         mapProcBy.text = processorName.replace("_"," ")
+
+        # Make vertical illumination figure
+        make_vertillum_figure(dnight, setnum)
 
         # Make full-resolution panorama
         make_fullres_panorama(mxd, layout, mapSubtitle, gridsetp, dnight, setnum, centralAzimuth)
