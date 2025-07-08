@@ -524,11 +524,13 @@ if __name__ == '__main__':
             Filter.append('B')
             Filterset['B'] = Flat_B[i]
         
+        #Define input arguments for various functions
         sets = dnight_sets[Dataset[i]]
         K0 = (Dataset[i],sets,Filterset,Curve[i])
         K1 = (Dataset[i],sets,Filter,zeropoint[i])
         K2 = (Dataset[i],sets,Filter) 
-        K3 = (Dataset[i],sets)  
+        K3 = (Dataset[i],sets)
+        report_args = (Dataset[i],sets,Flat_V[i],Curve[i],Processor[i],location[i])
 
         # Check provided zeropoint against known defaults
         check_zeropoint(zeropoint[i], Dataset[i], sets[0])
@@ -559,6 +561,7 @@ if __name__ == '__main__':
         p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         p5.join() ; update_progressbar(5,i,q5.get())
         p3.join() ; update_progressbar(3,i,q3.get())
+        generate_calibreport(*report_args)            #generate calibreport
         p6.start(); update_progressbar(6,i)           #full mosaic
         p7.start(); update_progressbar(7,i)           #galactic mosaic
         p8.start(); update_progressbar(8,i)           #zodiacal mosaic
@@ -574,10 +577,6 @@ if __name__ == '__main__':
         for q in q_all:
             while not q.empty():
                 loghistory(q.get())
-
-        # Create the calibreport excel sheet
-        args = (Dataset[i],sets,Flat_V[i],Curve[i],Processor[i],location[i])
-        generate_calibreport(*args)
         
         #save the timing records for running the script
         n.savetxt(filepath.calibdata+Dataset[i]+'/processtime_images.txt', Z, fmt='%4.1f')
