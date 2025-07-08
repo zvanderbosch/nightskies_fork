@@ -227,7 +227,7 @@ def make_vertillum_figure(dataNight, setNumber):
 
     # Adjust plot appearances
     ax.set_xlim(0, 360)
-    ax.set_ylim(0, ax.get_ylim()[1])
+    ax.set_ylim(0, 1.1*ax.get_ylim()[1])
     ax.set_xticks(n.arange(0,361,30))
     ax.set_axisbelow(True)
     ax.grid(ls=':', c='silver', lw=0.75)
