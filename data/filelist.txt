@@ -1,3 +1,0 @@
-# Dataset    V_band  B_band  Flat_V                 Flat_B                Curve   Zeropoint   Processor       Central_AZ  Location
-ROMO241004   Yes     No      ML3Flat_V_2023.fit     ML3Flat_B_2023.fit    ML3     14.78       J_Doe           180         Rocky_Mountain_NP
-NIOB240830   Yes     Yes     ML3Flat_V_2023.fit     ML3Flat_B_2023.fit    ML3     14.78       J_Doe           90          Niobrara_NSR
