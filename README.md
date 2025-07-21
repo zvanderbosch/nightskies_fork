@@ -191,6 +191,10 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > └─── PLUMES           -Volcanic plume coverage (0-100%)
 > └─── PCT20            -20-micron particle count (ppm)
 > └─── COLLECTION_NOTES -Data collection notes
+>
+> CALIBRATION Sheet:
+> └─── BAD_FRAMES       -Number of bad images
+> └─── CALIB_NOTES      -Calibration quality notes
 > ```
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
