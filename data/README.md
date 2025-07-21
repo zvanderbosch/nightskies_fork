@@ -18,6 +18,7 @@ CCD
 │    │    └─── scratch_metrics     -ArcGIS workspace for claculating skyglow metrics
 │    │    └─── scratch_natsky      -ArcGIS workspace for natural sky mosaics
 │    │    └─── scratch_zodiacal    -ArcGIS workspace for Zodiacal model mosaics
+│    └─── spreadsheets             -Spreadsheet templates and various catalogs
 │    └─── standards                -Standard star catalogs for photometric calibration
 │    └─── tables                   -Summary tables with metadata and light pollution metrics
 │ 
@@ -30,12 +31,13 @@ CCD
 
 This file tells the pipeline which data sets to process. It should be placed in the `CCD --> Data` directory and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
+   - `Process`: Yes or No, whether to process this dataset
    - `V_band`: Yes or No, whether to process V-band images
    - `B_band`: Yes or No, whether to process B-band images
    - `Flat_V`: Name of master flat file used to calibrate V-band images
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
    - `Zeropoint`: The default zeropoint (mag) for the CCD camera used
-   - `Processor`: Name of data processor with an **underscore** between first initial and last name (e.g. J_Doe)
+   - `Processor`: Name of data processor with first initial and last name (e.g. J Doe)
    - `Central_AZ`: Azimuth coordinate to place at the center of final panoramic graphics
-   - `Location`: Descriptive park name (e.g. Rocky_Mountain_NP), using **underscores** instead of spaces
+   - `Location`: Descriptive park name (e.g. Rocky Mountain NP)
