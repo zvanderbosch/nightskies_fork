@@ -36,7 +36,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
 ### Required Software
   - ArcGIS Pro 3.3 or later
   - Adobe Photoshop
-  - conda (recommened to use [Miniforge](https://github.com/conda-forge/miniforge) for new installs)
+  - conda (recommended to use [Miniforge](https://github.com/conda-forge/miniforge) for new installs)
   - Python packages:
     - `arcpy astropy matplotlib scikit-image photutils numpy pandas scipy pillow dbfread`
 
@@ -87,12 +87,15 @@ CCD
 │    │    └─── scratch_metrics     -ArcGIS workspace for claculating skyglow metrics
 │    │    └─── scratch_natsky      -ArcGIS workspace for natural sky mosaics
 │    │    └─── scratch_zodiacal    -ArcGIS workspace for Zodiacal model mosaics
+│    └─── spreadsheets             -Spreadsheet templates and various catalogs
 │    └─── standards                -Standard star catalogs for photometric calibration
 │    └─── tables                   -Summary tables with metadata and light pollution metrics
 │ 
 └─── Images
-     └─── Linearity Curves         -Master linearity curves per CCD camera
-     └─── Master                   -Master Flat/Bias/Thermal images per CCD camera
+│    └─── Linearity Curves         -Master linearity curves per CCD camera
+│    └─── Master                   -Master Flat/Bias/Thermal images per CCD camera
+│ 
+└─── Scripts                       -Houses the pipeline scripts contained in this repository
 ```
 
 Raw data that will be processed by the pipeline lives in the `CCD --> Data --> fielddata` directory, where each night of data should be separated into individual sub-folders named using the 4-letter park code and UTC date of data collection (e.g. ROMO241004 for data collected from Rocky Mountain NP on 2024 October 4th). Within a night's data folder will be additional sub-folders, one per data set collected:
@@ -111,10 +114,15 @@ CCD
 ### Before running the processing pipeline, you will need to:
 
 1. Setup up the CCD directory tree as shown above. You can download the [zipped CCD Folder](data/CCD.zip) which contains the proper directory structure, though it is empty of any data, calibration, or ArcGIS grid files you will need to run the pipeline. If you wish to run the pipeline, please [contact the Natural Sounds and Night Skies Division](https://www.nps.gov/subjects/nightskies/contactus.htm) to inquire about obtaining the necessary calibration and grid files.
-2. Ensure raw data is placed in the `fielddata` directory.
-3. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
-4. In the `filepath.py` script, update the `apikey` parameter with your own [Astrometry.net](https://nova.astrometry.net/) API key. This will be needed for image plate solving.
-5. Modify the `filelist.xlsx` file, which should be located in the `CCD --> Data` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.xlsx` file is provided [here](data/filelist.xlsx), and has the following fields:
+2. Within the `CCD` directory, clone this repository into a folder named `Scripts`:
+```
+cd "\path\to\CCD"
+git clone https://github.com/zvanderbosch/nightskies_fork.git Scripts
+```
+3. Ensure raw data is placed in the `fielddata` directory.
+4. In the `filepath.py` script, make sure the `base` parameter points to the location of the `CCD` directory on your local machine.
+5. In the `filepath.py` script, update the `apikey` parameter with your own [Astrometry.net](https://nova.astrometry.net/) API key. This will be needed for image plate solving.
+6. Modify the `filelist.xlsx` file, which should be located in the `CCD --> Data` directory. This file tells the pipeline which data sets are going to be processed. An example `filelist.xlsx` file is provided [here](data/filelist.xlsx), and has the following fields:
    - `Dataset`: Name of data night to process (e.g. ROMO241004)
    - `Process`: Yes or No, whether to process this dataset
    - `V_band`: Yes or No, whether to process V-band images
@@ -123,9 +131,9 @@ CCD
    - `Flat_B`: Name of master flat file used to calibrate B-band images
    - `Curve`: Name of linearity response curve file used to calibrated images
    - `Zeropoint`: The default zeropoint (mag) for the CCD camera used
-   - `Processor`: Name of data processor with an **underscore** between first initial and last name (e.g. J_Doe)
+   - `Processor`: Name of data processor with first initial and last name (e.g. J Doe)
    - `Central_AZ`: Azimuth coordinate to place at the center of final panoramic graphics
-   - `Location`: Descriptive park name (e.g. Rocky_Mountain_NP), using **underscores** instead of spaces
+   - `Location`: Descriptive park name (e.g. Rocky Mountain NP)
 
 ## Running the Pipeline
 
@@ -141,22 +149,24 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > ### Step 1: Activate conda Environment and Process Images
 > ```powershell
 > conda activate ccd
-> cd "\path\to\pipeline\code"
+> cd "\path\to\CCD\Scripts"
 > python process_images.py
 > ```
-> ### Step 2: Edit the Terrain Mask
+> ### Step 2: Data Entry in Calibration Report Excel File
+> Use Excel to open the `calibreport.xlsx` file saved in `CCD --> Data --> calibdata --> ROMO241004`. Manually edit the **DATA QUALITY**, **BORTLE CLASS**, **ZLM**, and **NARRATIVE** fields with approriate values based on visual obserations from the data collection site, and save changes to the file.
+> ### Step 3: Edit the Terrain Mask
 > Use Adobe Photoshop to edit the `mask.tif` file saved in `CCD --> Data --> griddata --> ROMO241004 --> mask`, refining the horizon boundary and setting all above-horizon pixels as white and all below-horizon pixels as black.
-> ### Step 3: Generate the Natural Sky Model
+> ### Step 4: Generate the Natural Sky Model
 > ```powershell
 > python naturalsky.py ROMO241004 1 V --airglowzenith=45
 > ```
-> ### Step 4: Data Entry for Natural Sky Model
+> ### Step 5: Data Entry for Natural Sky Model
 > The `naturalsky.py` script will generate an Excel file `natsky_model_params.xlsx` located in the `CCD --> Data --> calibdata --> ROMO241004` folder. Edit the **Quality Flag** and **Notes** columns for each data set, indicating the quality of the natural sky model subtraction on a scale of 0 (bad) to 5 (excellent) and using the Notes column to describe any problems encountered.
-> ### Set 5: Generate Light Pollution Metrics 
+> ### Step 6: Generate Light Pollution Metrics 
 > ```powershell
 > python process_metrics.py
 > ```
-> ### Step 6: Final Data Entry
+> ### Step 7: Final Data Entry
 > The `process_metrics.py` script will save a summary of the data processing results into an Excel file named `ROMO241004.xlsx`, located in the `CCD --> Data --> tables` folder. A few data fields, listed below, require manual entry and/or checking to make sure values are correct:
 > ```
 > NIGHT METADATA Sheet:
@@ -164,7 +174,23 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > └─── LENS             -Lens type
 > └─── FILTER           -Filter ID code
 > └─── INSTRUMENT       -Instrument name
+> └─── ZLM              -Zenith limiting magnitude (from calibreport.xlsx)
+> └─── BORTLE           -Bortle class (from calibreport.xlsx)
+> └─── SQM              -SQM measured value
 > └─── OBS_1 - OBS_4    -Observer names
+> └─── NARRATIVE        -Visual observations narrative (from calibreport.xlsx)
+>
+> SET METADATA Sheet:
+> └─── GLARE            -Glare quality rating (0-5)
+> └─── ATMOSPHERE       -Atmospheric quality rating (0-5)
+> └─── COLLECTION       -Data collection quality rating (0-5)
+> └─── PROCESSING       -Data processing quality rating (0-5)
+> └─── REFERENCE        -Reference data set for the night? (Y or N)
+> └─── USEABLE          -Is data set useable? (Y or N)
+> └─── CLOUDS           -Cloud cover (0-100%)
+> └─── PLUMES           -Volcanic plume coverage (0-100%)
+> └─── PCT20            -20-micron particle count (ppm)
+> └─── COLLECTION_NOTES -Data collection notes
 > ```
 
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
