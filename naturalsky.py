@@ -12,7 +12,8 @@
 #
 #Usage:
 #
-# python naturalsky.py DATANIGHT DATASET FILTER [--airglowzenith, --airglowheight, --airglowext, --adlfactor, --galext, --zodext]
+# python naturalsky.py DATANIGHT DATASET FILTER 
+#        [--airglowzenith, --airglowheight, --airglowext, --adlfactor, --galext, --zodext]
 #
 # Required Arguments
 # ------------------
