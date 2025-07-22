@@ -10,7 +10,27 @@
 #components. The combined model is subtracted from the observed
 #sky brightness to generate the anthrogenic light mosaic.
 #
-#Note: 
+#Usage:
+#
+# python naturalsky.py DATANIGHT DATASET FILTER [--airglowzenith, --airglowheight, --airglowext, --adlfactor, --galext, --zodext]
+#
+# Required Arguments
+# ------------------
+#   DATANIGHT : Name of data night to process (e.g. ROMO241004)
+#   DATASET   : Data set to process (e.g. 1, 2, 3, etc.)
+#   FILTER    : Filter to process (e.g. V or B)
+#
+# Optional Arguments
+# ------------------
+#   --airglowzenith : Zenight Airglow [nL] (Default = 20)
+#   --airglowheight : Height of emitting airglow layer [km] (Default = 90)
+#   --airglowext    : Airglow extinction factor (Default = 0.6)
+#   --adlfactor     : Atmospheric Diffuse Light factor (Default = 1.2)
+#   --galext        : Galactic light extinction factor (Default = 0.9)
+#   --zodext        : Zodiacal light extinction factor (Default = 0.6)
+#
+# Example Usage:   python naturalsky.py ROMO241004 1 V --airglowzenith=45
+#
 #
 #
 #Input: 
