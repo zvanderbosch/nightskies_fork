@@ -32,15 +32,20 @@
 # Example Usage:   python naturalsky.py ROMO241004 1 V --airglowzenith=45
 #
 #
-#
 #Input: 
 #   (1) 
 #   (2) 
 #   (3) 
 #
 #Output:
-#   (1) 
-#   (2) 
+#   (1) anthlightmags<DATASET>.lyrx - Layer file for Anthropogenic Light Only mosaic, one per data set
+#   (2) natskymags<DATASET>.lyrx - Layer file for Natural Sky Model mosaic, one per data set
+#   (3) data.jpg - Fisheye JPEG image on observed sky brightness, one per data set
+#   (4) model.jpg - Fisheye JPEG of natural sky model, one per data set
+#   (5) artificial.jpg - Fisheye JPEG of anthropogenic light only (observed - model), one per data set
+#   (6) hist.jpg - Histogram of pixel values in anthropogenic mosaic, one per data set
+#   (7) natsky_model_fit.jpeg - Combined data, model, artificial, and hist image, one per data set
+#   (8) <DATANIGHT>_<DATASET>_natsky_model_fit.png - Copy of natsky_model_fit.jpg saved to graphics folder
 #
 #History:
 #	Dan Duriscoe -- Created as "natskyv4.py"
