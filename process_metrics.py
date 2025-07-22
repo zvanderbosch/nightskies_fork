@@ -19,8 +19,9 @@
 #
 #Input: 
 #   (1) filelist.xlsx
-#   (2) Sky brightness mosaic (skybrightnl)
-#   (3) Anthropogenic light mosaic (anthlightnl)
+#   (2) calibreport.xlsx
+#   (3) Sky brightness mosaic (skybrightnl)
+#   (4) Anthropogenic light mosaic (anthlightnl)
 #
 #Output:
 #   (1) List of nearby cities ranked by Walker's Law values (calibdata)
