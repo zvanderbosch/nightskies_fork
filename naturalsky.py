@@ -33,19 +33,20 @@
 #
 #
 #Input: 
-#   (1) 
-#   (2) 
+#   (1) mask.tif - Terrain mask after Photoshop editing
+#   (2) extinction_fit_<FILTER>.xlsx - Bestfit extinction parameters
 #   (3) 
 #
 #Output:
 #   (1) anthlightmags<DATASET>.lyrx - Layer file for Anthropogenic Light Only mosaic, one per data set
 #   (2) natskymags<DATASET>.lyrx - Layer file for Natural Sky Model mosaic, one per data set
-#   (3) data.jpg - Fisheye JPEG image on observed sky brightness, one per data set
-#   (4) model.jpg - Fisheye JPEG of natural sky model, one per data set
-#   (5) artificial.jpg - Fisheye JPEG of anthropogenic light only (observed - model), one per data set
-#   (6) hist.jpg - Histogram of pixel values in anthropogenic mosaic, one per data set
-#   (7) natsky_model_fit.jpeg - Combined data, model, artificial, and hist image, one per data set
-#   (8) <DATANIGHT>_<DATASET>_natsky_model_fit.png - Copy of natsky_model_fit.jpg saved to graphics folder
+#   (3) maskd.tif - Terrain mask projected into fisheye equal area coordinate system
+#   (4) data.jpg - Fisheye JPEG image on observed sky brightness, one per data set
+#   (5) model.jpg - Fisheye JPEG of natural sky model, one per data set
+#   (6) artificial.jpg - Fisheye JPEG of anthropogenic light only (observed - model), one per data set
+#   (7) hist.jpg - Histogram of pixel values in anthropogenic mosaic, one per data set
+#   (8) natsky_model_fit.jpeg - Combined data, model, artificial, and hist image, one per data set
+#   (9) <DATANIGHT>_<DATASET>_natsky_model_fit.png - Copy of natsky_model_fit.jpg saved to graphics folder
 #
 #History:
 #	Dan Duriscoe -- Created as "natskyv4.py"
@@ -278,7 +279,7 @@ class Model(object):
         to Pickering, K. A. (2002). This model has taken the atmospheric 
         refraction into account. See the airmass summary on Wikipedia.
         """
-        h = 90.-self.za                                # apparent altitude [deg]
+        h = 90.-self.za  # apparent altitude [deg]
         airmass = 1./n.sin(n.deg2rad(h+244./(165+47*h**1.1)))
         self.airmass = airmass[:,n.newaxis]
         
