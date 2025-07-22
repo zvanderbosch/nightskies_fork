@@ -35,7 +35,14 @@
 #Input: 
 #   (1) mask.tif - Terrain mask after Photoshop editing
 #   (2) extinction_fit_<FILTER>.xlsx - Bestfit extinction parameters
-#   (3) 
+#   (3) zenithangle - Raster dataset providing zenith angle across the sky
+#   (4) airmass_05 - Raster dataset providing airmass across the sky
+#   (5) adl_05 - Raster dataset providing atmospheric diffuse light profile
+#   (6) galtopmags - Galactic light model in mag/arcsec^2
+#   (7) zodtopmags - Zodiacal light model in mag/arcsec^2
+#   (8) skybrightmags - Observed sky brightness in mag/arcsec^2
+#   (9) blankmap.aprx - Blank ArcGIS map project used to generate JPEG exports
+#   (10) zenith_area.shp - Shapefile for regional sky brightness statistics at Zenith
 #
 #Output:
 #   (1) anthlightmags<DATASET>.lyrx - Layer file for Anthropogenic Light Only mosaic, one per data set
@@ -47,6 +54,12 @@
 #   (7) hist.jpg - Histogram of pixel values in anthropogenic mosaic, one per data set
 #   (8) natsky_model_fit.jpeg - Combined data, model, artificial, and hist image, one per data set
 #   (9) <DATANIGHT>_<DATASET>_natsky_model_fit.png - Copy of natsky_model_fit.jpg saved to graphics folder
+#   (10) airglownl - Extincted airglow model in nL units
+#   (11) galnl - Extincted galactic light model in nL units
+#   (12) zodnl - Extincted zodiacal light model in nL units
+#   (13) skybrightnl - Observed sky brightness in nL units
+#   (14) airglowave.dbf - Zonal statistics table for sky brightness measurements
+#   (15) natsky_model_params.xlsx - Excel sheet summarizing natural sky model parameters & statistics
 #
 #History:
 #	Dan Duriscoe -- Created as "natskyv4.py"
