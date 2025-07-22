@@ -55,11 +55,11 @@
 #   (7) hist.jpg - Histogram of pixel values in anthropogenic mosaic, one per data set
 #   (8) natsky_model_fit.jpeg - Combined data, model, artificial, and hist image, one per data set
 #   (9) <DATANIGHT>_<DATASET>_natsky_model_fit.png - Copy of natsky_model_fit.jpg saved to graphics folder
-#   (10) airglownl - Extincted airglow model in nL units
-#   (11) galnl - Extincted galactic light model in nL units
-#   (12) zodnl - Extincted zodiacal light model in nL units
-#   (13) skybrightnl - Observed sky brightness in nL units
-#   (14) airglowave.dbf - Zonal statistics table for sky brightness measurements
+#   (10) airglownl - Extincted airglow model in nL units, one per data set
+#   (11) galnl - Extincted galactic light model in nL units, one per data set
+#   (12) zodnl - Extincted zodiacal light model in nL units, one per data set
+#   (13) skybrightnl - Observed sky brightness in nL units, one per data set
+#   (14) airglowave.dbf - Zonal statistics table for sky brightness measurements, one per data set
 #   (15) natsky_model_params.xlsx - Excel sheet summarizing natural sky model parameters & statistics
 #
 #History:
