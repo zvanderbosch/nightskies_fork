@@ -16,7 +16,7 @@
 #   (1) siteALR - The site-specific ALR value (float)
 #
 #History:
-#	Zach Vanderbosch -- Created script
+#	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
 #
 #-----------------------------------------------------------------------------#
 
