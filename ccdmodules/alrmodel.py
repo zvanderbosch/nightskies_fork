@@ -3,17 +3,17 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/19
+#Last updated: 2025/07/23
 #
 #This script computes All-sky Light pollution Ratio (ALR) model
 #
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) alrmodel - Raster dataset providing base ALR model
 #
 #Output:
-#   (1) 
+#   (1) siteALR - The site-specific ALR value (float)
 #
 #History:
 #	Zach Vanderbosch -- Created script
