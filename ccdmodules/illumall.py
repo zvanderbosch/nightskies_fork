@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/15
+#Last updated: 2025/07/23
 #
 #This script computes sky luminance and illuminance
 #statistics for all light sources using the skybright
@@ -12,10 +12,38 @@
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) horizillf
+#           Raster dataset providing all-sky cos-theta horizontal illuminance factors
+#   (2) vertf<ANGLE>
+#           Raster datasets providing all-sky cos-theta vertical illuminance factors
+#   (3) maskd.tif
+#           Terrain mask
+#   (4) arearasterf
+#           Mask to 6-degrees below horizon
+#   (5) hemirasterf
+#           Mask to flat horizon
+#   (6) skybrightnl
+#           Sky brightness mosaic in nL units
 #
 #Output:
-#   (1) 
+#   (1) skyhemisall.dbf
+#           All-sky zonal luminance statistics to 6-deg below horizon
+#   (2) skyhemismasked.dbf
+#           All-sky zonal luminance statistics to masked horizon
+#   (3) skyhemisall1.dbf
+#           All-sky zonal luminous emittance statistics to 6-deg below horizon
+#   (4) skyhemisall2.dbf
+#           All-sky zonal luminous emittance statistics to masked horizon
+#   (5) skyscalar.dbf
+#           All-sky zonal scalar luminance statistics to flat horizon
+#   (6) skyhoriz.dbf
+#           All-sky zonal horizontal illuminance statistics to flat horizon
+#   (7) skyvert0all.dbf
+#           All-sky zonal vertical illuminance statistics to flat horizon at each azimuth
+#   (8) vert.xlsx
+#           Tabulated horizontal and vertical illuminance values
+#   (9) illumallOutput
+#           Pandas dataframe containing all calculated metrics
 #
 #History:
 #	Zach Vanderbosch -- Created script
