@@ -569,7 +569,6 @@ if __name__ == '__main__':
         p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         p5.join() ; update_progressbar(5,i,q5.get())
         p3.join() ; update_progressbar(3,i,q3.get())
-        generate_calibreport(*report_args)            #generate calibreport
         p6.start(); update_progressbar(6,i)           #full mosaic
         p7.start(); update_progressbar(7,i)           #galactic mosaic
         p8.start(); update_progressbar(8,i)           #zodiacal mosaic
@@ -579,6 +578,9 @@ if __name__ == '__main__':
         p7.join() ; update_progressbar(7,i,q7.get())
         p8.join() ; update_progressbar(8,i,q8.get())
         p9.join() ; update_progressbar(9,i,q9.get())
+
+        # Generate the calibreport file
+        generate_calibreport(*report_args)
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
