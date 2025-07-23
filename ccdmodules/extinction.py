@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/12/02
+#Last updated: 2025/07/23
 #
 #This script finds the best-fit extinction coefficient and the instrumental
 #zeropoint by:
@@ -19,16 +19,17 @@
 #Input: 
 #   (1) Calibrated images
 #   (2) hipparcos_standards.txt
-#   (3) plot_img number (optional) -- if given, the script will display the 
-#       bestfit standard stars contours overlaid on the image data
+#   (3) plot_img number (optional)
+#           If given, the script will display the bestfit 
+#           standard stars contours overlaid on the image data.
 #
 #Output:
-#   (1) extinction_stars_<FILTER>_<SET>.txt 
-#       -- list of the standard stars used for fitting
-#   (2) extinction_fit_<FILTER>_<SET>.png 
-#       -- graphical display of the fitting result
+#   (1) extinction_stars_<FILTER>_<DATASET>.txt 
+#           List of the standard stars used for fitting
+#   (2) extinction_fit_<FILTER>_<DATASET>.png 
+#           Graphical display of the fitting result
 #   (3) extinction_fit_<FILTER>.xlsx 
-#       -- best-fit extinction coefficient and zeropoint
+#           Best-fit extinction coefficient and zeropoint
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic as "extinction v4.vbs"
