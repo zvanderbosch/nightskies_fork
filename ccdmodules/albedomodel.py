@@ -3,17 +3,18 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/19
+#Last updated: 2025/07/23
 #
 #This script computes an albedo model
 #
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) ws_albedo - Raster dataset providing albedo values for CONUS
+#   (2) wsa_20020610 - Secondary albedo raster, only used for its coordinate system
 #
 #Output:
-#   (1) 
+#   (1) siteAlbedo - Site-specific albedo value (float)
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
@@ -74,7 +75,7 @@ def calculate_albedo_model(dnight):
     arcpy.env.workspace = scratchsetp
     arcpy.env.scratchWorkspace = scratchsetp
 
-    # Load in the ALR raster
+    # Load in the albedo raster
     albedoRaster = arcpy.sa.Raster(f"{filepath.rasters}ws_albedo")
 
     # Get site longitude and latitude
@@ -97,13 +98,13 @@ def calculate_albedo_model(dnight):
     pointGeoms = [arcpy.PointGeometry(point)]
     arcpy.management.CopyFeatures(pointGeoms, pointShapefile)
 
-    # Define coordinate system of point shapefile using alrmodel raster
+    # Define coordinate system of point shapefile using albedo raster
     dsc = arcpy.Describe(f"{filepath.rasters}wsa_20020610")
     arcpy.management.DefineProjection(
         pointShapefile, dsc.spatialReference
     )
 
-    # Get ALR value from raster for point location
+    # Get albedo value from raster for point location
     arcpy.sa.ExtractMultiValuesToPoints(
         pointShapefile, [[albedoRaster, "albedo"]], "NONE"
     )
