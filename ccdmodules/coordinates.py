@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/12/16
+#Last updated: 2025/07/23
 #
 #This script calculates ecliptic and galactic coordinates and rotation angles of
 #the images. The output will be used in producing natural sky model for a given 
@@ -14,7 +14,7 @@
 #   (2) Obs_AZ and Obs_ALT from pointerr_%s.txt
 #
 #Output:
-#   (1) coordinates_%s.txt with all units in degree
+#   (1) coordinates_<DATASET>.txt with all units in degree
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic "compute image coordinates v4.vbs"
