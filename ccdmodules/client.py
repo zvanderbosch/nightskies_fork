@@ -10,19 +10,10 @@ import os
 import sys
 import time
 import json
-import base64
 
 # py3
 from urllib.parse import urlencode, quote
 from urllib.request import urlopen, Request
-from urllib.error import HTTPError, URLError
-
-
-#from exceptions import Exception
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.application  import MIMEApplication
-from email.encoders import encode_noop
 
 # local imports
 import printcolors as pc
