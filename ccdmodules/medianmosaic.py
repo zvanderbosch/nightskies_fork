@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/02/05
+#Last updated: 2025/07/23
 #
 #This script makes the whole sky mosaic from the median filtered images 
 #according to the location of observed sky. The temporary files generated during
@@ -13,18 +13,18 @@
 #
 #Input: 
 #   (1) median filtered tiff files in the filepath.calibdata
-#   (2) pointerr_<SET>.txt
+#   (2) pointerr_<DATASET>.txt
 #   (3) extinction_fit_<FILTER>.txt
 #   (4) raster files in the filepath.rasters folder
 #
 #Output:
-#   (1) layer files skybrightmags<SET>.lyrx for median mosaic
+#   (1) layer files skybrightmags<DATASET>.lyrx for median mosaic
 #   (2) mask.tif for making the horizontal mask in the later process
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
-#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.5.2
 #
 #-----------------------------------------------------------------------------#
 from glob import glob
