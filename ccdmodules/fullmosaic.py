@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/02/05
+#Last updated: 2025/07/23
 #
 #This script makes the whole sky mosaic from the full resolution images 
 #according to the location of observed sky. The temporary files generated during
@@ -12,18 +12,18 @@
 #
 #
 #Input: 
-#   (1) full resolution tiff files in the filepath.calibdata
-#   (2) pointerr_<SET>.txt
+#   (1) full resolution TIFF files in the filepath.calibdata
+#   (2) pointerr_<DATASET>.txt
 #   (3) extinction_fit_<FILTER>.txt
 #   (4) raster files in the filepath.rasters folder
 #
 #Output:
-#   (1) layer files skytopomags<SET>.lyrx for full-resolution mosaic
+#   (1) layer files skytopomags<DATASET>.lyrx for full-resolution mosaic
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
-#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.5.2
 #
 #-----------------------------------------------------------------------------#
 
