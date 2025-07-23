@@ -3,13 +3,13 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2017/05/01
+#Last updated: 2025/07/23
 #
 #This script uses multiprocessing to apply median filter to each image. The 
 #filter is a circle with 1 degree diameter. This filter size was selected to 
-#ensure most (or all) point sources are effectively filtered out. Here, MaxIM DL
-#is needed to convert the fits images to tiff images that are compatible with 
-#ArcGIS to make mosaics. 
+#ensure most (or all) point sources are effectively filtered out. Here, the
+#Python Imaging Library (PIL/Pillow) is used to convert the FITS images to 
+#TIFF images that are compatible with ArcGIS Pro to make mosaics. 
 #
 #Input: 
 #   (1) Calibrated image data
