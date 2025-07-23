@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/02/05
+#Last updated: 2025/07/23
 #
 #This script makes the whole sky mosaic of the galactic model according to the 
 #time and location of the observed sky. The temporary files generated during the 
@@ -13,16 +13,16 @@
 #
 #Input: 
 #   (1) raster files in the filepath.rasters folder
-#   (2) coordinates_%s.txt
-#   (3) pointerr_%s.txt
+#   (2) coordinates_<DATASET>.txt
+#   (3) pointerr_<DATASET>.txt
 #
 #Output:
-#   (1) layer files galtopmags%s.lyrx for galactic mosaic
+#   (1) layer files galtopmags<DATASET>.lyrx for galactic mosaic
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
-#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.5.2
 #
 #-----------------------------------------------------------------------------#
 from glob import glob
