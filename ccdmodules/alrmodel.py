@@ -23,9 +23,7 @@
 from glob import glob
 from astropy.io import fits
 
-import os
 import sys
-import stat
 import arcpy
 
 # Local Source
