@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/06/24
+#Last updated: 2025/07/24
 #
 #This script generates the final output tables consolidating
 #data night attributes, calibration, and light pollution 
@@ -12,16 +12,32 @@
 #Note: 
 #
 #Input:
-#   (1) extinction_fit_<FILTER>.xlsx - Best-fit extinction parameters
-#   (2) cities.xlsx - List of nearby cities ranked by Walker's Law
-#   (3) filelist.xlsx - List of datasets to be processed
-#   (4) pointerr_<SET>.txt - Pointing error data
-#   (5) coordinates_<SET>.txt - Image coordinate data
-#   (6) natsky_model_params.xlsx - Natural sky model parameters & metrics
-#   (7) ib001.fit and zenith1.fit per SET - Calibrated FITS images
+#   (1) extinction_fit_<FILTER>.xlsx
+#           Best-fit extinction parameters
+#           (filepath.calibdata/DATANIGHT)
+#   (2) cities.xlsx
+#           List of nearby cities ranked by Walker's Law
+#           (filepath.calibdata/DATANIGHT)
+#   (3) filelist.xlsx
+#           List of datasets to be processed
+#           (filepath.processlist)
+#   (4) pointerr_<SET>.txt
+#           Pointing error data
+#           (filepath.calibdata/DATANIGHT)
+#   (5) coordinates_<SET>.txt
+#           Image coordinate data
+#           (filepath.calibdata/DATANIGHT)
+#   (6) natsky_model_params.xlsx
+#           Natural sky model parameters & metrics
+#           (filepath.calibdata/DATANIGHT)
+#   (7) ib001.fit, zenith1.fit
+#           Calibrated FITS images
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #
 #Output:
-#   (1) <DATANIGHT>.xlsx - Summary tables for metadata and metrics
+#   (1) <DATANIGHT>.xlsx
+#           Summary tables for metadata and metrics
+#           (filepath.tables)
 #
 #History:
 #	Zach Vanderbosch -- Created script
@@ -466,11 +482,11 @@ def nl_to_mags(x):
     return 26.3308 - 2.5*n.log10(x)
 
 
-def nl_to_mlux(raster):
+def nl_to_mlux(x):
     '''
     Unit conversion from nano-Lamberts to milli-Lux
     '''
-    return (0.000000761544 * raster) / 314.159
+    return (0.000000761544 * x) / 314.159
 
 
 def mags_to_mccd(x):
@@ -497,6 +513,11 @@ def mlux_to_nl(x):
 def create_excel_template(excelFile):
     '''
     Function that creates the Excel template for storing output tables.
+
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
     '''
 
     # Initial creation and formatting of excel file
@@ -606,6 +627,16 @@ def get_site_info(imageFile):
     and returns the site location name and observer
     names along with a formatted string containing 
     date and time info.
+
+    Parameters:
+    -----------
+    imageFile: string
+        Path + filename for FITS file
+    
+    Returns:
+    --------
+    siteInfo: dict
+        Dict containing site metadata
     '''
 
     # Load image header
@@ -702,6 +733,16 @@ def get_site_info(imageFile):
 
 
 def append_night_metadata(excelFile, siteInfo):
+    '''
+    Function that appends data to NIGHT METADATA sheet
+
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    siteInfo: dict
+        Dict containing site metadata
+    '''
 
     # Sheet name
     sheetName = "NIGHT METADATA"
@@ -811,6 +852,13 @@ def append_cities(excelFile, dnight):
     '''
     Function to append top 100 cities ranked by
     Walker Law values to CITIES sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
     '''
 
     # Sheet name
@@ -863,6 +911,18 @@ def append_cities(excelFile, dnight):
 
 
 def append_set_metadata(excelFile, dnight, sets):
+    '''
+    Function that appends data to SET METADATA sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    '''
 
     # Sheet name
     sheetName = "SET METADATA"
@@ -913,6 +973,18 @@ def append_set_metadata(excelFile, dnight, sets):
 
 
 def append_calibration(excelFile, dnight, sets):
+    '''
+    Function that appends data to CALIBRATION sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    '''
 
     # Sheet name
     sheetName = "CALIBRATION"
@@ -982,6 +1054,18 @@ def append_calibration(excelFile, dnight, sets):
 
 
 def append_extinction(excelFile, dnight, sets):
+    '''
+    Function that appends data to EXTINCTION sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    '''
 
     # Sheet name
     sheetName = "EXTINCTION"
@@ -1041,6 +1125,18 @@ def append_extinction(excelFile, dnight, sets):
 
 
 def append_coordinates(excelFile, dnight, sets):
+    '''
+    Function that appends data to IMG COORDS sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    '''
 
     # Sheet name
     sheetName = "IMG COORDS"
@@ -1106,6 +1202,18 @@ def append_coordinates(excelFile, dnight, sets):
 
 
 def append_natsky_params(excelFile, dnight, sets):
+    '''
+    Function that appends data to NATSKY sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    '''
 
     # Sheet name
     sheetName = "NATSKY"
@@ -1180,6 +1288,20 @@ def append_natsky_params(excelFile, dnight, sets):
 
 
 def append_photometryV2(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to V2 PHOTOMETRY sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "V2 PHOTOMETRY"
@@ -1239,6 +1361,20 @@ def append_photometryV2(excelFile, dnight, sets, metrics):
 
 
 def append_photometryV4(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to V4 PHOTOMETRY sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "V4 PHOTOMETRY"
@@ -1351,6 +1487,20 @@ def append_photometryV4(excelFile, dnight, sets, metrics):
 
 
 def append_lp_allsky(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to LP sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "LP"
@@ -1464,6 +1614,20 @@ def append_lp_allsky(excelFile, dnight, sets, metrics):
 
 
 def append_lp_za80(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to LP80 sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "LP80"
@@ -1563,6 +1727,20 @@ def append_lp_za80(excelFile, dnight, sets, metrics):
 
 
 def append_lp_za70(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to LP70 sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "LP70"
@@ -1662,6 +1840,20 @@ def append_lp_za70(excelFile, dnight, sets, metrics):
 
 
 def append_zones(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to ZONES sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "ZONES"
@@ -1755,6 +1947,20 @@ def append_zones(excelFile, dnight, sets, metrics):
 
 
 def append_percentiles_all(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to V4 PECENTILES ALL sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "V4 PERCENTILES ALL"
@@ -1828,6 +2034,20 @@ def append_percentiles_all(excelFile, dnight, sets, metrics):
 
 
 def append_percentiles_lp(excelFile, dnight, sets, metrics):
+    '''
+    Function that appends data to V4 PECENTILES LP sheet
+    
+    Parameters:
+    -----------
+    excelFile: string
+        Path + filename for Excel file
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
 
     # Sheet name
     sheetName = "V4 PERCENTILES LP"
@@ -1902,6 +2122,28 @@ def append_percentiles_lp(excelFile, dnight, sets, metrics):
 #------------------------------------------------------------------------------#
 
 def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
+    '''
+    Function that creates the final Excel table summarizing
+    data collection, calibration, and light pollution metrics,
+    progressively appending data to each sheet.
+
+    
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night being processed
+    sets: list
+        List of data sets being processed
+    processor: str
+        Name of data processor
+    centralAZ: float or int
+        Central azimuth used for panoramic images (deg)
+    unitName: str
+        Long-format name of observing site
+    metrics: dict
+        Dict containing sky brightness and light pollution metrics
+    '''
+
 
     # Initial status update for data set
     print(f'{PREFIX}Saving summary tables for {dnight}...')
