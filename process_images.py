@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/14
+#Last updated: 2025/07/24
 #
 #This script uses multiprocessing to reduce, calibrate, and process the images 
 #collected by the NPS Night Skies Program. This script does the following:
@@ -23,14 +23,18 @@
 #
 #
 #Input:
-#   (1) filelist.xlsx - input list of file folders to be processed and the 
-#       associated calibration files. 
+#   (1) filelist.xlsx
+#           input list of file folders to be processed and associated parameters
+#           (filepath.processlist)
 #
 #
 #Output:
-#   (1) Calibdata folder (calibrated images, processlog.txt, and other outputs) 
-#   (2) Griddata folder (4 photometrically calibrated panoramic images: galactic 
-#       model, zodiacal model, median-filtered data, and full-resolution data)
+#   (1) Calibdata folder 
+#           Calibrated images, processlog.txt, and other outputs (filepath.calibdata)
+#   (2) Griddata folder
+#           Photometrically calibrated mosaics including the galactic model, 
+#           zodiacal model, median-filtered data, and full-resolution data
+#           (filepath.griddata)
 #
 #
 #History:
@@ -560,11 +564,11 @@ if __name__ == '__main__':
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # Run processes
-        reduce_images(*K0)                            #image reduction   
-        register_coord(*K2)                           #pointing 
+        #reduce_images(*K0)                            #image reduction   
+        #register_coord(*K2)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
-        p4.start(); update_progressbar(4,i)           #median filter
+        # p4.start(); update_progressbar(4,i)           #median filter
         p2.join() ; update_progressbar(2,i,q2.get())
         p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
         p5.join() ; update_progressbar(5,i,q5.get())
@@ -573,7 +577,7 @@ if __name__ == '__main__':
         p7.start(); update_progressbar(7,i)           #galactic mosaic
         p8.start(); update_progressbar(8,i)           #zodiacal mosaic
         p9.start(); update_progressbar(9,i)           #median mosaic
-        p4.join() ; update_progressbar(4,i,q4.get())
+        #p4.join() ; update_progressbar(4,i,q4.get())
         p6.join() ; update_progressbar(6,i,q6.get())
         p7.join() ; update_progressbar(7,i,q7.get())
         p8.join() ; update_progressbar(8,i,q8.get())
