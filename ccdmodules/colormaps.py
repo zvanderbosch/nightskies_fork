@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2018/04/16
+#Last updated: 2025/07/24
 #
 #This script generates a customized color map for displaying NPS night sky 
 #panoramic data. This color map replicated the existing ArcGIS color map by 
@@ -11,10 +11,11 @@
 #24 magnitudes. 
 #
 #Input: 
-#   (1) colormap_magnitudeslyr.txt -- the RGB values from magnitudes.lyr
+#   (1) colormap_magnitudeslyr.txt
+#           The RGB values from magnitudes.lyr
 #
 #Output:
-#   (1) registered plt color map 'NPS_mag'
+#   (1) registered pyplot color map 'NPS_mag'
 #
 #History:
 #	Li-Wei Hung -- Created

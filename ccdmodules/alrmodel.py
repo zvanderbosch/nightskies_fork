@@ -3,17 +3,20 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script computes All-sky Light pollution Ratio (ALR) model
 #
 #Note: 
 #
 #Input:
-#   (1) alrmodel - Raster dataset providing base ALR model
+#   (1) alrmodel
+#           Raster dataset providing base ALR model
+#           (filepath.rasters)
 #
 #Output:
-#   (1) siteALR - The site-specific ALR value (float)
+#   (1) siteALR
+#           The site-specific ALR value
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
@@ -61,6 +64,16 @@ def clear_memory(objectList):
 def calculate_alr_model(dnight):
     '''
     Main program for computing the numnber/fraction of visible stars
+
+    Parameters:
+    -----------
+    dnight: string
+        Name of data night to process
+
+    Returns:
+    --------
+    siteALR: float
+        Site-specific ALR
     '''
 
     # Filter paths

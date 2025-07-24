@@ -3,18 +3,23 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script computes an albedo model
 #
 #Note: 
 #
 #Input:
-#   (1) ws_albedo - Raster dataset providing albedo values for CONUS
-#   (2) wsa_20020610 - Secondary albedo raster, only used for its coordinate system
+#   (1) ws_albedo
+#           Raster dataset providing albedo values for continental U.S.
+#           (filepath.rasters)
+#   (2) wsa_20020610
+#           Secondary albedo raster, only used for its coordinate system
+#           (filepath.rasters)
 #
 #Output:
-#   (1) siteAlbedo - Site-specific albedo value (float)
+#   (1) siteAlbedo
+#           Site-specific albedo value
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
@@ -62,6 +67,16 @@ def clear_memory(objectList):
 def calculate_albedo_model(dnight):
     '''
     Main program for computing the site albedo model
+
+    Parameters:
+    -----------
+    dnight: string
+        Name of data night to process
+
+    Returns:
+    --------
+    siteAlbedo: float
+        Site-specific albedo
     '''
 
     # Filter paths

@@ -10,11 +10,17 @@
 #location, date, and time.
 #
 #Input: 
-#   (1) Calibrated and solved image headers
-#   (2) Obs_AZ and Obs_ALT from pointerr_%s.txt
+#   (1) ib###.fit
+#           Calibrated and solved images for header values
+#           (filepath.calibdata/DATANIGHT/S_0#)
+#   (2) pointerr_<DATASET>.txt
+#           Obs_AZ and Obs_ALT from pointing error file
+#           (filepath.calibdata/DATANIGHT)
 #
 #Output:
-#   (1) coordinates_<DATASET>.txt with all units in degree
+#   (1) coordinates_<DATASET>.txt 
+#           Image coordinates, all in degree units
+#           (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic "compute image coordinates v4.vbs"
@@ -44,14 +50,32 @@ def bearing_angle(lat1, lon1, lat2, lon2):
     '''
     Calculate the bearing angle of (lat2, lon2) with respect to (lat1, lon1). 
     The bearing angle ranges from 0 to 360 degrees, with zero at due north 
-    and increasing clockwise. Both the inputs and outputs are in degrees. 
+    and increasing clockwise. Both the inputs and outputs are in degrees.
+
+    Parameters:
+    -----------
+    lat1: float
+        First latitude coordinate (deg)
+    lon1: float
+        First longitude coordinate (deg)
+    lat2: float
+        Second latitude coordinate (deg)
+    lon2: float
+        Second longitude coordinate (deg)
+
+    Returns:
+    --------
+    bearing: float
+        Bearing angle in range 0-360, measured CW from North
+
     '''
     lat1, lon1, lat2, lon2 = n.deg2rad([lat1, lon1, lat2, lon2])
     x = n.cos(lat1)*n.sin(lat2) - n.sin(lat1)*n.cos(lat2)*n.cos(lon1-lon2)
     y = n.sin(lon1-lon2)*n.cos(lat2)
     bearing = n.rad2deg(n.arctan(y/x))
     if x < 0: bearing += 180
-    return -bearing % 360.
+    bearing = -bearing % 360
+    return bearing
 
 
 def wcs_position_angle(hdr):
@@ -91,6 +115,13 @@ def galactic_ecliptic_coords(dnight, sets):
     '''
     This module computes the galactic and ecliptic coordinates needed for 
     building the natural sky model. 
+
+    Parameters:
+    -----------
+    dnight: string
+        Name of data night to process
+    sets: list
+        List of data sets to process
     '''
     
     # Define the ecliptic and galactic N-poles in RA-Dec coords
