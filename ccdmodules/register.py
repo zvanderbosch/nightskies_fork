@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/11/10
+#Last updated: 2025/07/24
 #
 #This script will register the pointing of the image to the sky coordinates 
 #using the standard stars captured in the image. Specifically, it uses the 
