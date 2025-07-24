@@ -51,6 +51,11 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 def clear_memory(objectList):
     '''
     Function for clearing variables from memory
+
+    Parameters:
+    -----------
+    objectList: list
+        List of objects to delete from memory
     '''
     for obj in objectList:
         if obj:
