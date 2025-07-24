@@ -13,12 +13,15 @@
 #Input:
 #   (1) Places21k.xlsx
 #           2010 Census Data for incorporated and unincorporated places
+#           (filepath.spreadsheets)
 #   (2) ib###.fit
 #           Calibrated images for site Longitude/Latitude information
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #
 #Output:
 #   (1) cities.xlsx
 #           List of nearby cities ranked by Walker's Law
+#           (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from places21g.vbs)
@@ -136,6 +139,11 @@ def calculate_places(dnight):
     '''
     Main program for computing great circle distances and Walker's
     Law values for nearby cities and towns using 2010 Census data.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
     '''
 
     # Print status update
