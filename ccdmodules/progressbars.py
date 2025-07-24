@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2017/03/10
+#Last updated: 2025/07/24
 #
 #This script makes an empty figure template for showing the progress of the data 
 #processing stages. This template will then be returned to the main program to 
