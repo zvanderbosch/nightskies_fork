@@ -87,6 +87,11 @@ def clear_scratch(scratch_dir):
     '''
     Function to clear out all files and folders from
     the scratch directory.
+
+    Parameters:
+    -----------
+    scratch_dir: str
+        Path to scratch directory
     '''
     for root, dirs, files in os.walk(scratch_dir, topdown=False):
         for name in files:
@@ -152,6 +157,11 @@ def get_site_info(imageFile):
     and returns the site location name and observer
     names along with a formatted string containing 
     date and time info.
+
+    Parameters:
+    -----------
+    imageFile: str
+        Path to FITS file used for site information
     '''
 
     # Load image header
@@ -200,6 +210,13 @@ def make_vertillum_figure(dataNight, setNumber):
     Function to generate figure comparing
     vertical illuminance from all light sources
     and from anthropogenic light only.
+
+    Parameters:
+    -----------
+    dataNight: str
+        Name of data night
+    dataNumber: int
+        Data set number
     '''
 
     # Status update
@@ -282,6 +299,23 @@ def make_vertillum_figure(dataNight, setNumber):
 def make_fullres_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
     '''
     Function to generate full resolution panorama graphic
+
+    Parameters:
+    -----------
+    mapObj: arcpy._mp.Map
+        Arcpy map object
+    layoutObj: arcpy._mp.Layout
+        Arcpy layout object
+    subtitleTextElement: arcpy._mp.TextElement
+        Arcpy map subtitle object
+    gridPath: str
+        Path to griddata folder for given data night
+    dataNight: str
+        Name of data night
+    dataNumber: int
+        Data set number
+    centAz: int
+        Central azimuth used for panorama (deg)
     '''
 
     # Add full-resolution mosaic to template
@@ -307,6 +341,23 @@ def make_fullres_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, data
 def make_skybright_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
     '''
     Function to generate sky brightness panorama graphic
+
+    Parameters:
+    -----------
+    mapObj: arcpy._mp.Map
+        Arcpy map object
+    layoutObj: arcpy._mp.Layout
+        Arcpy layout object
+    subtitleTextElement: arcpy._mp.TextElement
+        Arcpy map subtitle object
+    gridPath: str
+        Path to griddata folder for given data night
+    dataNight: str
+        Name of data night
+    dataNumber: int
+        Data set number
+    centAz: int
+        Central azimuth used for panorama (deg)
     '''
 
     # Add full-resolution mosaic to template
@@ -332,6 +383,23 @@ def make_skybright_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, da
 def make_anthropogenic_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
     '''
     Function to generate anthropogenic light panorama graphic
+
+    Parameters:
+    -----------
+    mapObj: arcpy._mp.Map
+        Arcpy map object
+    layoutObj: arcpy._mp.Layout
+        Arcpy layout object
+    subtitleTextElement: arcpy._mp.TextElement
+        Arcpy map subtitle object
+    gridPath: str
+        Path to griddata folder for given data night
+    dataNight: str
+        Name of data night
+    dataNumber: int
+        Data set number
+    centAz: int
+        Central azimuth used for panorama (deg)
     '''
 
     # Add full-resolution mosaic to template
@@ -357,6 +425,23 @@ def make_anthropogenic_panorama(mapObj, layoutObj, subtitleTextElement, gridPath
 def make_naturalsky_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, dataNight, setNumber, centAz):
     '''
     Function to generate natural sky model panorama graphic
+
+    Parameters:
+    -----------
+    mapObj: arcpy._mp.Map
+        Arcpy map object
+    layoutObj: arcpy._mp.Layout
+        Arcpy layout object
+    subtitleTextElement: arcpy._mp.TextElement
+        Arcpy map subtitle object
+    gridPath: str
+        Path to griddata folder for given data night
+    dataNight: str
+        Name of data night
+    dataNumber: int
+        Data set number
+    centAz: int
+        Central azimuth used for panorama (deg)
     '''
 
     # Add full-resolution mosaic to template
@@ -385,8 +470,21 @@ def make_naturalsky_panorama(mapObj, layoutObj, subtitleTextElement, gridPath, d
 
 def generate_graphics(dnight,sets,processorName,centralAzimuth,locationName):
     '''
-    Main program for computing sky luminance and illuminance
-    statistics from only anthropogenic sources. 
+    Main program for generating the final vertical illuminance
+    and panoramic image graphics.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    processorName: str
+        Name of data processor
+    centralAzimuth: int or str
+        Central azimuth used for panorama (deg)
+    locationName: str
+        Long-format name of data collection site
     '''
 
     # Filter paths
@@ -431,7 +529,6 @@ def generate_graphics(dnight,sets,processorName,centralAzimuth,locationName):
     mapSubtitle = layout.listElements("text_element","Subtitle")[0]
     mapCollBy = layout.listElements("text_element","collected by")[0]
     mapProcBy = layout.listElements("text_element","processed by")[0]
-
 
     # Loop through each data set
     for s in sets:
