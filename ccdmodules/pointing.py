@@ -19,13 +19,17 @@
 #Note: In order to use the ACP objects, the Python must be a 32-bit version. 
 #
 #Input: 
-#   (1) Calibrated images
+#   (1) ib###.fit
+#           Calibrated images
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #
 #Output:
 #   (1) pointerr_<DATASET>.txt
 #           Pointing error data per image
+#           (filepath.calibdata/DATANIGHT)
 #   (2) pointerr_<DATASET>.png
 #           Figure plotting Alt, Az, and total pointing errors
+#           (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic as "calc_pointing_error_v4.vbs"
@@ -55,12 +59,27 @@ import ccdmodules.printcolors as pc
 scriptName = 'pointing.py'
 PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
-#-----------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+#-------------------            Define Functions            -------------------#
+#------------------------------------------------------------------------------#
     
 def interp_coord(filenames, solved_outputs):
     '''
     Interpolate the True_AZ and True_ALT for images that are not solved and 
     update the RA and DEC with the interpolated values in the header.
+
+    Parameters:
+    -----------
+    filenames: array
+        Array of filenames for unsolved FITS images
+    solved_outputs: array
+        Array of pointing error data for solved images
+
+    Returns:
+    --------
+    solved_outputs: array
+        Pointing error data updated with interpolated unsolved images
     '''
 
     # Parse the inputs
@@ -125,10 +144,21 @@ def interp_coord(filenames, solved_outputs):
             
     return solved_outputs.T
 
-    
+
+#------------------------------------------------------------------------------#
+#-------------------              Main Program              -------------------#
+#------------------------------------------------------------------------------#
+
 def pointing_err(dnight, sets):
     '''
     This module is calculating the pointing error of each image.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
     '''
     
     #looping through all the sets in that night
