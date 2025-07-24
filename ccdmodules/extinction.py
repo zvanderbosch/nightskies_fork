@@ -302,6 +302,11 @@ def calculate_stderr(known_y, predicted_y):
         Known y-values
     predicted_y: array
         Y-values predicted by a best-fit regression
+
+    Returns:
+    --------
+    sey: float
+        Standard error of y-estimate
     '''
 
     # Get number of measurements
