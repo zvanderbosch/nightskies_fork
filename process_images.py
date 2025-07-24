@@ -24,7 +24,7 @@
 #
 #Input:
 #   (1) filelist.xlsx
-#           input list of file folders to be processed and associated parameters
+#           Input list of file folders to be processed and associated parameters
 #           (filepath.processlist)
 #
 #
