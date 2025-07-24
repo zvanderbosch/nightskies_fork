@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script makes the whole sky mosaic from the full resolution images 
 #according to the location of observed sky. The temporary files generated during
@@ -12,13 +12,23 @@
 #
 #
 #Input: 
-#   (1) full resolution TIFF files in the filepath.calibdata
+#   (1) ib###.tif, ib###.tfw
+#           Full resolution TIFF files and associated TIFF World files (.tfw)
+#           (filepath.calibdata/DATANIGHT/S_0#/tiff)
 #   (2) pointerr_<DATASET>.txt
-#   (3) extinction_fit_<FILTER>.txt
-#   (4) raster files in the filepath.rasters folder
+#           Pointing error data for image coordinates
+#           (filepath.calibdata/DATANIGHT)
+#   (3) extinction_fit_<FILTER>.xlsx
+#           Best-fit extinction parameters
+#           (filepath.calibdata/DATANIGHT)
 #
 #Output:
-#   (1) layer files skytopomags<DATASET>.lyrx for full-resolution mosaic
+#   (1) skytopomags
+#           Full resolution mosaic
+#           (filepath.griddata/DATANIGHT/S_0#/fullres)
+#   (2) skytopomags<DATASET>.lyrx 
+#           Layer file for full-resolution mosaic
+#           (filepath.griddata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py

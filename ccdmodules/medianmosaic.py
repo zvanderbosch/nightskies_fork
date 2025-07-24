@@ -12,14 +12,30 @@
 #
 #
 #Input: 
-#   (1) median filtered tiff files in the filepath.calibdata
+#   (1) median_ib###.tif, median_ib###.tfw
+#           Median-filtered TIFF files and associated TIFF World files (.tfw)
+#           (filepath.calibdata/DATANIGHT/S_0#/tiff)
 #   (2) pointerr_<DATASET>.txt
-#   (3) extinction_fit_<FILTER>.txt
-#   (4) raster files in the filepath.rasters folder
+#           Pointing error data for image coordinates
+#           (filepath.calibdata/DATANIGHT)
+#   (3) extinction_fit_<FILTER>.xlsx
+#           Best-fit extinction parameters
+#           (filepath.calibdata/DATANIGHT)
 #
 #Output:
-#   (1) layer files skybrightmags<DATASET>.lyrx for median mosaic
-#   (2) mask.tif for making the horizontal mask in the later process
+#   (1) skybright
+#           Median-filtered sky brightness mosaic in ADU units after resampling
+#           (filepath.griddata/DATANIGHT/S_0#/median)
+#   (2) skybrightmags
+#           Median-filtered sky brightness mosaic (mag/arcsec^2)
+#           (filepath.griddata/DATANIGHT/S_0#/median)
+#   (3) skybrightmags<DATASET>.lyrx 
+#           Layer file for median-filtered sky brightness mosaic (mag/arcsec^2)
+#           (filepath.griddata/DATANIGHT)
+#   (4) mask.tif
+#           Used to make horizon mask with PhotoShop in later process
+#           (filepath.griddata/DATANIGHT/mask)
+#
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py

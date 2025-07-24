@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/02/05
+#Last updated: 2025/07/24
 #
 #This script makes the whole sky mosaic of the zodiacal model according to the 
 #time and location of the observed sky. The temporary files generated during the 
@@ -12,17 +12,31 @@
 #
 #
 #Input: 
-#   (1) raster files in the filepath.rasters folder
-#   (2) coordinates_%s.txt
-#   (3) pointerr_%s.txt
+#   (1) pointerr_<DATASET>.txt
+#           Pointing error data for image Alt/Az coordinates
+#           (filepath.calibdata/DATANIGHT)
+#   (2) coordinates_<DATASET>.txt
+#           Solved image coordinates for Ecliptic coordinates
+#           (filepath.calibdata/DATANIGHT)
+#   (3) zodiacal_01
+#           Raster dataset for zodiacal light model (eastern sky)
+#           (filepath.rasters)
+#   (4) zodiacal_180
+#           Raster dataset for zodiacal light model (western sky)
+#           (filepath.rasters)
 #
 #Output:
-#   (1) layer files zodtopmags%s.lyrx for zodiacal mosaic
+#   (1) zodtopmags
+#           Zodiacal light model mosaic
+#           (filepath.griddata/DATANIGHT/S_0#/zod)
+#   (2) zodtopmags<DATASET>.lyrx 
+#           Layer file for zodiacal light model mosaic
+#           (filepath.griddata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
 #	Li-Wei Hung -- Cleaned and improved the code
-#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.3.1
+#   Zach Vanderbosch -- Updated to Python 3.11 and ArcGIS Pro 3.5.2
 #
 #-----------------------------------------------------------------------------#
 from glob import glob

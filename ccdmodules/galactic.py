@@ -12,12 +12,33 @@
 #
 #
 #Input: 
-#   (1) raster files in the filepath.rasters folder
+#   (1) pointerr_<DATASET>.txt
+#           Pointing error data for image Alt/Az coordinates
+#           (filepath.calibdata/DATANIGHT)
 #   (2) coordinates_<DATASET>.txt
-#   (3) pointerr_<DATASET>.txt
+#           Solved image coordinates for Galactic coordinates
+#           (filepath.calibdata/DATANIGHT)
+#   (3) galmagsnew
+#           Raster dataset for galactic model (eastern sky)
+#           (filepath.rasters)
+#   (4) galmagsnew180
+#           Raster dataset for galactic model (western sky)
+#           (filepath.rasters)
+#   (5) galnewnorth
+#           Raster dataset for galactic model (northern sky)
+#           (filepath.rasters)
+#   (6) galnewsouth
+#           Raster dataset for galactic model (southern sky)
+#           (filepath.rasters)
 #
 #Output:
-#   (1) layer files galtopmags<DATASET>.lyrx for galactic mosaic
+#   (1) galtopmags
+#           Galactic model mosaic
+#           (filepath.griddata/DATANIGHT/S_0#/gal)
+#   (2) galtopmags<DATASET>.lyrx 
+#           Layer file for galactic model mosaic
+#           (filepath.griddata/DATANIGHT)
+#
 #
 #History:
 #	Dan Duriscoe -- Created as a module in firstbatchv4vb.py
