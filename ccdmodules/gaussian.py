@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/11/29
+#Last updated: 2025/07/24
 #
 #This script demonstrates how users can fit a 2D Gaussian to a star in an image
 #that might contain more than one stars. This is a standalone script. 
@@ -29,10 +29,29 @@ def Gaussian_2d(xy, x0, y0, sigma, V):
     '''
     This module returns the (x,y) value of the 2D gaussian function with the 
     given parameters. V is the volume under the curve. 
+
+    Parameters:
+    -----------
+    xy: tuple
+        Tuple (x,y) of x and y image pixel coordinates
+    x0: float
+        X-centroid of Gaussian function
+    y0: float
+        Y-centroid of Gaussian function
+    sigma: float
+        standard deviation (symmetrical in x and y directions)
+    V: float
+        Amplitude of Gaussian function, also the volume under the curve
+
+    Returns:
+    --------
+    g1D: array
+        The evaluated 2D gaussian with values flattened into a 1D-array
     '''
     x,y = xy
     g = V/(2*n.pi*sigma**2)*n.exp(-((x-x0)**2+(y-y0)**2)/(2*sigma**2))
-    return g.ravel()
+    g1D = g.ravel()
+    return g1D
 
 
 if __name__ ==  "__main__": 
