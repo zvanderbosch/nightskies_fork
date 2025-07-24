@@ -9,7 +9,7 @@
 #contains 371 standard stars from the Hipparcos Catalog. This list serves as a 
 #standard star library for doing zeropoint and extinction correction. This 
 #script should only need to be run once; once the text file is generated, this 
-#script does not need to be used again. The starndard stars are ploted; the 
+#script does not need to be used again. The standard stars are plotted; the 
 #three output plots are identical except for the colors used. 
 #
 #Input: 
