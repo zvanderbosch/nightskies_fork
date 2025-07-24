@@ -19,29 +19,20 @@
 #
 #Input: 
 #   (1) filelist.xlsx
-#   (2) calibreport.xlsx
-#   (3) Sky brightness mosaic (skybrightnl)
-#   (4) Anthropogenic light mosaic (anthlightnl)
+#           Input list of file folders to be processed and associated parameters
+#           (filepath.processlist)
+#   (2) natsky_model_params.xlsx
+#           Natural sky model input parameters & stats 
+#           (filepath.calibdata/DATANIGHT)
 #
 #Output:
-#   (1) List of nearby cities ranked by Walker's Law values (calibdata)
-#       a. cities.xlsx
-#   (2) Vertical & Horizontal Illuminance tables & plots (calibdata)
-#       a. illuminance_horizon.png
-#       b. illuminance_za80.png
-#       c. illuminance_za70.png
-#       d. vert.xlsx
-#   (3) Panoramic graphics (graphics)
-#       a. <DATANIGHT>_fullres_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#       b. <DATANIGHT>_skybright_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#       c. <DATANIGHT>_natsky_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#       d. <DATANIGHT>_artificial_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#   (4) Sky Brightness and Light Pollution Metrics (tables)
-#       a. <DATANIGHT>.xlsx
-#   (5) Processing summaries
-#       a. processing_metrics.png
-#       b. processing_metrics.txt
-#
+#   (1) processing_metrics.png
+#           Progress bar figure with processing times
+#   (2) processing_metrics.txt
+#           Processing time data
+#   (3) Light pollution metrics
+#           Outputs from individual modules are saved in calibdata, griddata,
+#           graphics, and tables folders summarizing light pollution metrics.
 #
 #
 #History:
@@ -58,7 +49,6 @@ import numpy as n
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from datetime import datetime as Dtime
 from multiprocessing import Process, Queue
 
 # Add path to ccdmodules
