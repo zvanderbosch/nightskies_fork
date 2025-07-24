@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script generates the final output graphics including
 #all-sky panaoramas and vertical illuminance figures.
@@ -13,28 +13,39 @@
 #Input:
 #   (1) templatemap.aprx
 #           Template map layout for panoramic images
+#           (filepath.maps/templatemap)
 #   (2) vert.xlsx
 #           Vert/Horiz illumnance data spreadsheet
+#           (filepath.calibdata/DATANIGHT)
 #   (3) skytopomags<DATASET>.lyrx
 #           Observed full-resolution mosaic layer file
+#           (filepath.gridata/DATANIGHT)
 #   (4) skybrightmags<DATASET>.lyrx
 #           Observed sky brightness mosaic layer file
+#           (filepath.gridata/DATANIGHT)
 #   (5) anthlightmags<DATASET>.lyrx
 #           Anthropogenic light mosaic layer file
+#           (filepath.gridata/DATANIGHT)
 #   (6) natskymags<DATASET>.lyrx
 #           Natural sky model mosaic layer file
+#           (filepath.gridata/DATANIGHT)
 #
 #Output:
 #   (1) <DATANIGHT>_vert_<DATASET>.png
-#           Vertical illuminance figure saved to graphics folder
+#           Vertical illuminance figure
+#           (filepath.graphics)
 #   (2) <DATANIGHT>_fullres_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#           Full-resolution panorama saved to graphics folder
+#           Full-resolution panorama
+#           (filepath.graphics)
 #   (3) <DATANIGHT>_skybright_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#           Sky brightness panorama saved to graphics folder
+#           Sky brightness panorama
+#           (filepath.graphics)
 #   (4) <DATANIGHT>_artificial_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#           Artificial light panorama saved to graphics folder
+#           Artificial light panorama
+#           (filepath.graphics)
 #   (5) <DATANIGHT>_natsky_<DATASET>_HA<CENTRAL-AZIMUTH>.jpg
-#           Artificial light panorama saved to graphics folder
+#           Artificial light panorama
+#           (filepath.graphics)
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from secondbatchv4.py
