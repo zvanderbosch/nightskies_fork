@@ -14,12 +14,10 @@
 #      progress_bars.xlsx.
 #
 #Input: 
-#   (1) Name of the data to be processed
-#   (2) Number of data sets associated with each data name
+#   None
 #
 #Output:
 #   (1) Pop-out: A plot showing the progress of the data processing stage
-#   (2) Returns: the figure and axis
 #
 #History:
 #	Li-Wei Hung -- Created
@@ -38,6 +36,21 @@ import filepath
 #-----------------------------------------------------------------------------#
 
 def bar_images(dnight, nset):
+    '''
+    Function that defines a progress bar figure for process_images.py
+    
+    Parameters:
+    -----------
+    dnight: array
+        Array with names of data nights being processed
+    nset: list
+        List containing number of data sets for each data night
+
+    Returns:
+    --------
+    (fig, ax): tuple
+        The matplotlib figure and axes objects
+    '''
 
     #process names
     pname = [
@@ -101,17 +114,6 @@ def bar_images(dnight, nset):
     C = plt.colorbar(Bar, orientation='horizontal',aspect=60,pad=0.05)
     C.set_label('Processing time (min)',size='medium')
     
-    '''
-    #Plot the individual progress cell
-    Z = n.zeros((len(dnight),len(pname)-1))
-    Z = rand(Z.shape[0],Z.shape[1])*15
-    
-    ax.pcolor(x[hmerge+1:hmerge+len(pname)+1],
-                    y[vmerge:vmerge+len(dnight)+1],
-                    Z, cmap='Greens', vmin=tmin, vmax=tmax)
-                    #, norm=PowerNorm(gamma=0.5))
-    '''
-    
     #more plot setting
     plt.title('', fontsize='x-large')
     plt.xlim(0,x[-1])
@@ -127,6 +129,21 @@ def bar_images(dnight, nset):
 
 
 def bar_metrics(dnight, nset):
+    '''
+    Function that defines a progress bar figure for process_metrics.py
+    
+    Parameters:
+    -----------
+    dnight: array
+        Array with names of data nights being processed
+    nset: list
+        List containing number of data sets for each data night
+
+    Returns:
+    --------
+    (fig, ax): tuple
+        The matplotlib figure and axes objects
+    '''
     
     #process names
     pname = [
@@ -189,17 +206,6 @@ def bar_metrics(dnight, nset):
     Bar = ax.pcolor([-1,0],[-2,-1,0],n.array(([tmin],[tmax])),cmap='Greens')
     C = plt.colorbar(Bar, orientation='horizontal',aspect=60,pad=0.05)
     C.set_label('Processing time (min)',size='medium')
-    
-    '''
-    #Plot the individual progress cell
-    Z = n.zeros((len(dnight),len(pname)-1))
-    Z = rand(Z.shape[0],Z.shape[1])*15
-    
-    ax.pcolor(x[hmerge+1:hmerge+len(pname)+1],
-                    y[vmerge:vmerge+len(dnight)+1],
-                    Z, cmap='Greens', vmin=tmin, vmax=tmax)
-                    #, norm=PowerNorm(gamma=0.5))
-    '''
     
     #more plot setting
     plt.title('', fontsize='x-large')
