@@ -93,12 +93,25 @@ mpl.rcParams.update(
     }
 )
 
-#-----------------------------------------------------------------------------#
+#------------------------------------------------------------------------------#
+#-------------------            Define Functions            -------------------#
+#------------------------------------------------------------------------------#
 
 def plot_fit_result(data, x, y, popt_list):
     '''
     This module provides the visual presentation of the bestfit standard stars
     contours overlaid on the image data.
+
+    Parameters:
+    -----------
+    data: array
+        Numpy array containing image pixel data
+    x: array
+        X meshgrid values for image
+    y: array
+        Y meshgrid values for image
+    popt_list: list
+        List of best-fit Gaussian parameters for each star
     '''
     # plot the image data
     plt.close()
@@ -163,12 +176,32 @@ def angular_separation(ra1, de1, ra2, de2):
 
 
 def linear_func_Zfree(x,slope,yint):
-    '''Linear model with slope and y-intercept as free parameters'''
+    '''
+    Linear model with slope and y-intercept as free parameters
+
+    Parameters:
+    -----------
+    x: array
+        Array of x-values
+    slope: float
+        Slope of linear model
+    yint: float
+        Y-intercept of linear model
+    '''
     return slope*x + yint
 
 
 def linear_func_Zfixed(x,slope):
-    '''Linear model with only slope as free parameter'''
+    '''
+    Linear model with only slope as free parameter
+    
+    Parameters:
+    -----------
+    x: array
+        Array of x-values
+    slope: float
+        Slope of linear model
+    '''
     return slope*x
 
 
@@ -257,7 +290,14 @@ def calculate_stderr(known_y, predicted_y):
     '''
     Function to calculate the standard error of
     the y-estimate by comparing the known y-values
-    and y-values prediceby a linear regression
+    and y-values predicted by a linear regression
+
+    Parameters:
+    -----------
+    known_y: array
+        Known y-values
+    predicted_y: array
+        Y-values predicted by a best-fit regression
     '''
 
     # Get number of measurements
@@ -269,14 +309,24 @@ def calculate_stderr(known_y, predicted_y):
     return sey
 
 
-
-def remove_readonly(func, path, excinfo):
+def remove_readonly(func, path):
     '''
     Error-catching function to handle removal of read-only folders
+
+    Parameters:
+    -----------
+    func: python function
+        Function to execute on path after chmod operation
+    path: str
+        Path to operate on
     '''
     os.chmod(path, stat.S_IWRITE)
     func(path)
 
+
+#------------------------------------------------------------------------------#
+#-------------------              Main Program              -------------------#
+#------------------------------------------------------------------------------#
 
 def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     '''
@@ -284,12 +334,25 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     point. It returns the number of stars used for the fit and the location of
     the file containing the best-fit extinction coefficient, zeropoint, and
     their uncertainties. 
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    set: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
+    zeropoint: float or string
+        Default zeropoint to use for camera
+    plot_img: int
+        Which image number to plot
     '''
 
     # List to save fit results for each dataset
     zeropoint_dnight = []
 
-    # Convert deafult zeropoint to float
+    # Convert default zeropoint to float
     zeropoint = float(zeropoint)
     
     #read in the standard star catalog
