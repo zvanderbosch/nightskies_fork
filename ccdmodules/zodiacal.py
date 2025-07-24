@@ -67,8 +67,26 @@ geogcs = (
     "]"
 )
           
-#-----------------------------------------------------------------------------#
+#------------------------------------------------------------------------------#
+#-------------------            Define Functions            -------------------#
+#------------------------------------------------------------------------------#
+
 def zod_envelope(lon,lat):
+    '''
+    Returns clipping boundaries for the zodiacal model
+
+    Parameters:
+    -----------
+    lon: float
+        Longitude coordinate
+    lat: float
+        Latitude coordinate
+
+    Returns:
+    --------
+    boundary: str
+        Coordinate boundaries for galactic model
+    '''
     if abs(lat)<71:
         #expansion angle
         if abs(lat)<55: ang = 22/n.cos(n.deg2rad(lat))
@@ -77,10 +95,28 @@ def zod_envelope(lon,lat):
         bond = [lon-ang, lat-19, lon+ang, lat+19] 
     else:
         bond = [-2000000, -2000000, 2000000, 2000000]  
-    return ' '.join(str(i) for i in bond) #'xmin ymin xmax ymax' 
+    boundary = ' '.join(str(i) for i in bond) #'xmin ymin xmax ymax'
+    return boundary 
     
     
 def clip_envelope(AZ, ALT, i):
+    '''
+    Function to generate rectangular clipping boundaries for an image.
+
+    Parameters:
+    -----------
+    AZ: array
+        Array of azimuth coordinates for each image center
+    ALT: array
+        Array of altitude coordinates for each image center
+    i: int
+        Image number
+
+    Returns:
+    --------
+    boundary: str
+        Coordinate boundaries for a given image
+    '''
     if i < 15:
         bond = [AZ[i]-13,-6,AZ[i]+13,ALT[i]+12.9] 
     elif i < 30: 
@@ -89,12 +125,25 @@ def clip_envelope(AZ, ALT, i):
         bond = [AZ[i]-18.6,ALT[i]-12.7,AZ[i]+18.6,ALT[i]+12.6] 
     elif i < 45:
         bond = [AZ[i]-39.6,ALT[i]-12.7,AZ[i]+39.6,ALT[i]+12.7] 
-    return ' '.join(str(i) for i in bond) #'xmin ymin xmax ymax' 
+    boundary = ' '.join(str(i) for i in bond) #'xmin ymin xmax ymax'
+    return boundary 
     
     
 def tc(lon,lat):
     '''
     Returns the topocentric coordinate setting in WKT format
+
+    Parameters:
+    -----------
+    lon: float
+        Longitude coordinate
+    lat: float
+        Latitude coordinate
+
+    Returns:
+    --------
+    topoCoord: str
+        WKT formatted coordinate setting
     '''
     topoCoord = (
         "PROJCS["
@@ -112,6 +161,17 @@ def tc(lon,lat):
     
 
 def get_zodgn(lon,lat):
+    '''
+    Generates zodiacal model projected and clipped 
+    to local site.
+
+    Parameters:
+    -----------
+    lon: float
+        Longitude coordinate
+    lat: float
+        Latitude coordinate
+    '''
     rectangle = zod_envelope(lon,lat)
     if abs(lat)<71:
         if abs(lon)<90: arcpy.management.Clip(zodraster,rectangle,"zodclip.tif")
@@ -124,17 +184,33 @@ def get_zodgn(lon,lat):
         arcpy.management.ProjectRaster(zodraster, "zodtemp.tif", *p)
         arcpy.management.Clip('zodtemp.tif', rectangle, 'zodgn.tif')
 
+
 def remove_readonly(func, path, excinfo):
     '''
     Error-catching function to handle removal of read-only folders
+
+    Parameters:
+    -----------
+    func: python function
+        Function to execute on path after chmod operation
+    path: str
+        Path to operate on
+    excinfo: unknown
+        Unused, but required by shutil
     '''
     os.chmod(path, stat.S_IWRITE)
     func(path)
-  
+
+
 def clear_scratch(scratch_dir):
     '''
     Function to clear out all files and folders from
     the scratch directory.
+
+    Parameters:
+    -----------
+    scratch_dir: str
+        Directory path to operate on
     '''
     for root, dirs, files in os.walk(scratch_dir, topdown=False):
         for name in files:
@@ -143,10 +219,21 @@ def clear_scratch(scratch_dir):
             os.chmod(os.path.join(root, name), stat.S_IWRITE)
             os.rmdir(os.path.join(root, name))
 
+
 def check_file(filename):
     ''' 
     Check that a file exists and is no longer
     being written to by another program.
+
+    Parameters:
+    -----------
+    filename: str
+        File to check
+
+    Returns:
+    --------
+    bool
+        Indicator for whether file exists or not
     '''
     
     if os.path.isfile(filename):
@@ -161,9 +248,20 @@ def check_file(filename):
         return False
 
 
+#------------------------------------------------------------------------------#
+#-------------------              Main Program              -------------------#
+#------------------------------------------------------------------------------#
+
 def mosaic(dnight, sets):
     '''
     This module creates the mosaic of the zodiacal model for each data set.
+    
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
     '''
     #set arcpy environment variables part 2/2
     arcpy.CheckOutExtension("Spatial")

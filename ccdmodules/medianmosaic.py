@@ -190,7 +190,7 @@ def set_null_values(rasterFile):
     outSetNull.save(rasterFile)
 
 
-def remove_readonly(func, path):
+def remove_readonly(func, path, excinfo):
     '''
     Error-catching function to handle removal of read-only folders
 
@@ -200,6 +200,8 @@ def remove_readonly(func, path):
         Function to execute on path after chmod operation
     path: str
         Path to operate on
+    excinfo: unknown
+        Unused, but required by shutil
     '''
     os.chmod(path, stat.S_IWRITE)
     func(path)
