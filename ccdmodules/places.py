@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/19
+#Last updated: 2025/07/24
 #
 #This script calculates great-circle distances and Walker's law values
 #to nearby places (cities/towns) using 2010 Census Data.
@@ -11,10 +11,14 @@
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) Places21k.xlsx
+#           2010 Census Data for incorporated and unincorporated places
+#   (2) ib###.fit
+#           Calibrated images for site Longitude/Latitude information
 #
 #Output:
-#   (1) 
+#   (1) cities.xlsx
+#           List of nearby cities ranked by Walker's Law
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from places21g.vbs)
