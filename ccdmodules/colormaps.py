@@ -32,7 +32,7 @@ import filepath
 #-----------------------------------------------------------------------------#
 
 #RGB values originally from magnitudes.lyr
-colormap_file = filepath.rasters+'colormap_magnitudeslyr.txt'
+colormap_file = f"{filepath.rasters}colormap_magnitudeslyr.txt"
 mag_start, mag_end, R, G, B = n.loadtxt(colormap_file).T    #RGB in 0-255 scale 
 
 #RGB values in 0-1 scale
