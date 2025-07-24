@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script uses multiprocessing to apply median filter to each image. The 
 #filter is a circle with 1 degree diameter. This filter size was selected to 
@@ -12,11 +12,14 @@
 #TIFF images that are compatible with ArcGIS Pro to make mosaics. 
 #
 #Input: 
-#   (1) Calibrated image data
-#   (2) Plate scale from image header
+#   (1) ib###.fit
+#           Calibrated image data and headers
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #
 #Output:
-#   (1) Median filtered images in median_ib###.tif format
+#   (1) median_ib###.tif
+#           Median filtered images in TIFF format
+#           (filepath.calibdata/DATANIGHT/S_0#/tiff)
 #
 #History:
 #	Dan Duriscoe -- Created in java script as "med1.js"; used PixInsight
@@ -46,8 +49,14 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 #-----------------------------------------------------------------------------#    
 def FilterImage(arg):
     '''
-    Apply the median filter using the given mask size and save the images in 
-    .tif format.
+    Apply the median filter using the given mask size and save
+    the images in .tif format.
+
+    Parameters:
+    -----------
+    arg: tuple
+        Tuple containing name of FITS file to be filtered, and
+        a numpy array defining the median filter mask.
     '''
 
     # Parse input
@@ -84,6 +93,15 @@ def filter(dnight, sets, filter):
     '''
     This module creats a mask and calls the FilterImage module to apply median 
     filter to the calibrated images through multiprocessing.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
     '''
         
     #filter paths
