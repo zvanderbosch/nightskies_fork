@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script computes sky luminance and illuminance
 #statistics for all light sources using the skybright
@@ -14,36 +14,48 @@
 #Input:
 #   (1) horizillf
 #           Raster dataset providing all-sky cos-theta horizontal illuminance factors
-#   (2) vertf<ANGLE>
+#           (filepath.rasters)
+#   (2) vertf-<AZIMUTH>
 #           Raster datasets providing all-sky cos-theta vertical illuminance factors
+#           (filepath.rasters/vertgrids2)
 #   (3) maskd.tif
 #           Terrain mask
+#           (filepath.griddata/DATANIGHT)
 #   (4) arearasterf
 #           Mask to 6-degrees below horizon
+#           (filepath.rasters)
 #   (5) hemirasterf
 #           Mask to flat horizon
+#           (filepath.rasters)
 #   (6) skybrightnl
 #           Sky brightness mosaic in nL units
+#           (filepath.griddata/DATANIGHT/S_0#/median)
 #
 #Output:
 #   (1) skyhemisall.dbf
 #           All-sky zonal luminance statistics to 6-deg below horizon
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (2) skyhemismasked.dbf
 #           All-sky zonal luminance statistics to masked horizon
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (3) skyhemisall1.dbf
 #           All-sky zonal luminous emittance statistics to 6-deg below horizon
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (4) skyhemisall2.dbf
 #           All-sky zonal luminous emittance statistics to masked horizon
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (5) skyscalar.dbf
 #           All-sky zonal scalar luminance statistics to flat horizon
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (6) skyhoriz.dbf
 #           All-sky zonal horizontal illuminance statistics to flat horizon
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (7) skyvert0all.dbf
 #           All-sky zonal vertical illuminance statistics to flat horizon at each azimuth
+#           (filepath.griddata/DATANIGHT/S_0#)
 #   (8) vert.xlsx
 #           Tabulated horizontal and vertical illuminance values
-#   (9) illumallOutput
-#           Pandas dataframe containing all calculated metrics
+#           (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Zach Vanderbosch -- Created script
@@ -107,6 +119,11 @@ coordinateSystem = (
 def clear_memory(objectList):
     '''
     Function for clearing variables from memory
+
+    Parameters:
+    -----------
+    objectList: list
+        List of objects to delete from memory
     '''
     for obj in objectList:
         if obj:
@@ -116,14 +133,35 @@ def clear_memory(objectList):
 def nl_to_mlux(raster):
     '''
     Unit conversion from nano-Lamberts to milli-Lux
+
+    Parameters:
+    -----------
+    raster: arcpy.sa.Raster
+        Raster object to operate on
     '''
     return (0.000000761544 * raster) / 314.159
 
 
 def calc_sky_area_luminance(mosaic, zoneRaster, gridPath, results):
     '''
-    Function for calculating observed sky luminance is full area
+    Function for calculating observed sky luminance in full area
     down to Zenith Angle 96, including below horizon values.
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Calculate zonal stats
@@ -147,6 +185,22 @@ def calc_sky_mask_luminance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating observed all-sky luminance,
     excluding below horizon values.
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Calculate zonal stats
@@ -170,6 +224,22 @@ def calc_area_luminouos_emittance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating observed luminous emittance in full
     area down to Zenith Angle 96, including below horizon values.
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Convert from nL to mlux units
@@ -195,6 +265,22 @@ def calc_mask_luminouos_emittance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating observed luminous emittance,
     excluding below-horizon values
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Convert from nL to mlux units
@@ -220,6 +306,22 @@ def calc_scalar_illuminance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating observed scalar luminance, using
     all values down to Zenith Angle 90 (full hemisphere).
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Convert from nL to mlux units
@@ -243,6 +345,22 @@ def calc_scalar_illuminance(mosaic, zoneRaster, gridPath, results):
 def calc_horizontal_illuminance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating horizontal illuminance metrics
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Load in horizontal illuminance factor grid
@@ -271,6 +389,22 @@ def calc_horizontal_illuminance(mosaic, zoneRaster, gridPath, results):
 def calc_vertical_illuminance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating vertical illuminance metrics
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Convert from nL to mlux units
@@ -320,6 +454,17 @@ def calc_vertical_illuminance(mosaic, zoneRaster, gridPath, results):
 def save_illuminance_data(metrics, dnight, sets, filter):
     '''
     Function to save vertical & horizontal illuminance data to vert.xlsx
+
+    Parameters:
+    -----------
+    metrics: DataFrame
+        DataFrame containing all the metrics to be saved
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
     '''
 
     # Print status update
@@ -496,7 +641,21 @@ def save_illuminance_data(metrics, dnight, sets, filter):
 def calculate_statistics(dnight,sets,filter):
     '''
     Main program for computing sky luminance and illuminance
-    statistics from only anthropogenic sources. 
+    statistics from only anthropogenic sources.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
+
+    Returns:
+    --------
+    illumallOutput: DataFrame
+        Dataframe storing results of metric calculations
     '''
 
     # Filter paths
