@@ -347,6 +347,11 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         Default zeropoint to use for camera
     plot_img: int
         Which image number to plot
+
+    Returns:
+    --------
+    outputDF: DataFrame
+        Extinction fit results
     '''
 
     # List to save fit results for each dataset
