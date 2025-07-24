@@ -13,6 +13,7 @@
 #Input: 
 #   (1) colormap_magnitudeslyr.txt
 #           The RGB values from magnitudes.lyr
+#           (filepath.rasters)
 #
 #Output:
 #   (1) registered pyplot color map 'NPS_mag'
