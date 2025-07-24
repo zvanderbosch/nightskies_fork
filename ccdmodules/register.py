@@ -17,13 +17,19 @@
 #Note: In order to use the ACP objects, the Python must be a 32-bit version. 
 #
 #Input: 
-#   (1) Calibrated images
-#   (2) Tycho2 catalog
+#   (1) ib###.fit
+#           Calibrated images
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #
 #Output:
-#   (1) Original calibrated images with updated header
-#   (2) Returns a list of files solved with the cropped images and a list of 
-#       files that are failed to be solved
+#   (1) ib###c.fits
+#           Cropped images from the lowest altitude row used
+#           for plate solving to avoid below-horizon areas.
+#   (2) ib###s.fits
+#           If initial solve fails, images are cropped to central
+#           200x200 pixel regions and retried.
+#   (3) ib###.fit
+#           Original calibrated images with updated header
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic as "solve_images_v4b.vbs"
@@ -51,7 +57,10 @@ import printcolors as pc
 scriptName = 'register.py'
 PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
-#-----------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+#-------------------            Define Functions            -------------------#
+#------------------------------------------------------------------------------#
 
 def update_fits(fn, message):
     """
@@ -177,6 +186,23 @@ def update_fits(fn, message):
 
 
 def solve(fn):
+    '''
+    Function that sends an image to Astrometry.net for
+    plate solving using the client.py script
+
+    Parameters:
+    -----------
+    fn: str
+        FITS filename
+
+    Returns:
+    --------
+    message: list
+        [solve_status (str), fn_orig (str)]
+        A 2-element list containing the solve status
+        and the name of the associated FITS file. The 
+        solve status can be normal, cropped, or failed.
+    '''
     
     fn_orig = fn
     astsetp = "%s/astrometry/"%(fn.split("\\")[0])
@@ -258,7 +284,34 @@ def solve(fn):
     return message
 
 
+#------------------------------------------------------------------------------#
+#-------------------              Main Program              -------------------#
+#------------------------------------------------------------------------------#
+
 def matchstars(dnight, sets, filter):
+    '''
+    Function that iterates over all calibrated images,
+    sends them to Astrometry.net to be solved, and then
+    updates the FITS headers with solve status and WCS
+    keywords.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
+
+    Returns:
+    --------
+    (cropped_fn, failed_fn): tuple
+        Tuple containing two lists of FITS file names
+        that indicate which images were solved after 
+        cropping to central 200x200 pixel region (cropped_fn) 
+        and which images failed to solve (failed_fn).
+    '''
     
     # Lists to store cropped and failed images
     cropped_fn = []
