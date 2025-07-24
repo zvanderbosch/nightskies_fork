@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/11/15
+#Last updated: 2025/07/24
 #
 #This script performs basic image reduction on the image data collected by the 
 #NPS Night Skies Program. The script corrects images for:
@@ -14,14 +14,27 @@
 #
 #Note: Camera temperature must be matched to linearity curve
 #
-#Input: Either from the raw data folder or the info passed by process.py
-#   (1) Raw data -- dark, bias, and science frames
-#   (2) Master images -- flat
-#   (3) Linearity curves
+#Input:
+#   (1) ib###.fit, zenith#.fit, biasc#.fit, mbias#.fit, dark#.fit
+#           Raw dark, bias, and science frames (filepath.fielddata/DATANIGHT)
+#   (2) Master Flat FITS file
+#           Master flat-field calibration file (filepath.flats)
+#   (3) Linearity curve TXT file
+#           Linearity curve calibration file (filepath.lincurve)
 #
 #Output:
-#   (1) Calibrated science images in fits and tiff formats
-#   (2) Measured bias drift in txt file and png image
+#   (1) combias.fit
+#           Master bias calibration file (filepath.calibdata/DATANIGHT/S_0#)
+#   (2) corthermal.fit
+#           Master dark calibration file (filepath.calibdata/DATANIGHT/S_0#)
+#   (3) ib###.fit
+#           Calibrated images in FITS format (filepath.calibdata/DATANIGHT/S_0#)
+#   (4) ib###.tif
+#           Calibrated images in TIFF format (filepath.calibdata/DATANIGHT/S_0#/tiff)
+#   (5) biasdrift_<DATASET>.txt
+#           Measured bias drift per image in ADU (filepath.calibdata/DATANIGHT)
+#   (6) biasdrift_<DATASET>.png
+#           Figure showing brias drift data per image (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created in 2011 in visual basic as "calibrate images.vbs"
@@ -64,6 +77,17 @@ def stretch_to_range(values, new_min, new_max):
 def reducev(dnight, sets, flatname, curve):
     '''
     This module is for calibrating the V-band data.
+
+    Parameters:
+    -----------
+    dnight: string
+        Name of data night to process (e.g. ROMO241004)
+    sets: list
+        List of data sets to process
+    flatname: string
+        Name of master flat field FITS file
+    curve: string
+        Name of linearity curve TXT file
     '''
     #read in the linearity curve (ADU, multiplying factor)
     xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
@@ -173,6 +197,17 @@ def reduceb(dnight, sets, flatname, curve):
     '''
     This module is for calibrating the B-band data. Some of the computation is 
     dependent from the output from the reducev module.
+
+    Parameters:
+    -----------
+    dnight: string
+        Name of data night to process (e.g. ROMO241004)
+    sets: list
+        List of data sets to process
+    flatname: string
+        Name of master flat field FITS file
+    curve: string
+        Name of linearity curve TXT file
     '''
     #read in the linearity curve (ADU, multiplying factor)
     xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
