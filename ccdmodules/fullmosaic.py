@@ -122,6 +122,11 @@ def clip_envelope(AZ, ALT, i):
         Array of altitude coordinates for each image center
     i: int
         Image number
+
+    Returns:
+    --------
+    boundary: str
+        Coordinate boundaries for a given image
     '''
     if i < 15:
         bond = [AZ[i]-13,-6,AZ[i]+13,ALT[i]+12.9] 
@@ -131,7 +136,8 @@ def clip_envelope(AZ, ALT, i):
         bond = [AZ[i]-18.6,ALT[i]-12.7,AZ[i]+18.6,ALT[i]+12.6] 
     elif i < 45:
         bond = [AZ[i]-39.6,ALT[i]-12.7,AZ[i]+39.6,ALT[i]+12.7] 
-    return ' '.join(str(i) for i in bond) #'xmin ymin xmax ymax' 
+    boundary = ' '.join(str(i) for i in bond) #'xmin ymin xmax ymax'
+    return boundary 
     
     
 def tc(lon,lat):
