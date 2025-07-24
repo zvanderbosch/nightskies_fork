@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2016/11/15
+#Last updated: 2025/07/24
 #
 #This script calculates the actual pointed azimuth (AZ) and altitude (ALT) using
 #the solved RA and Dec values from the image headers. If the images are not 
@@ -22,7 +22,10 @@
 #   (1) Calibrated images
 #
 #Output:
-#   (1) pointerr_%s.txt
+#   (1) pointerr_<DATASET>.txt
+#           Pointing error data per image
+#   (2) pointerr_<DATASET>.png
+#           Figure plotting Alt, Az, and total pointing errors
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic as "calc_pointing_error_v4.vbs"
