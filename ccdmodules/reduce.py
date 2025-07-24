@@ -16,25 +16,37 @@
 #
 #Input:
 #   (1) ib###.fit, zenith#.fit, biasc#.fit, mbias#.fit, dark#.fit
-#           Raw dark, bias, and science frames (filepath.fielddata/DATANIGHT)
+#           Raw dark, bias, and science frames 
+#           (filepath.fielddata/DATANIGHT)
 #   (2) Master Flat FITS file
-#           Master flat-field calibration file (filepath.flats)
+#           Master flat-field calibration file 
+#           (filepath.flats)
 #   (3) Linearity curve TXT file
-#           Linearity curve calibration file (filepath.lincurve)
+#           Linearity curve calibration file 
+#           (filepath.lincurve)
 #
 #Output:
 #   (1) combias.fit
-#           Master bias calibration file (filepath.calibdata/DATANIGHT/S_0#)
+#           Master bias calibration file
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #   (2) corthermal.fit
-#           Master dark calibration file (filepath.calibdata/DATANIGHT/S_0#)
+#           Master dark calibration file
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #   (3) ib###.fit
-#           Calibrated images in FITS format (filepath.calibdata/DATANIGHT/S_0#)
+#           Calibrated images in FITS format
+#           (filepath.calibdata/DATANIGHT/S_0#)
 #   (4) ib###.tif
-#           Calibrated images in TIFF format (filepath.calibdata/DATANIGHT/S_0#/tiff)
+#           Calibrated images in TIFF format
+#           (filepath.calibdata/DATANIGHT/S_0#/tiff)
+#   (5) ib###.tfw, median_ib###.tif
+#           TIFF World files (.tfw), copied from filepath.rasters/tiff_tfws
+#           (filepath.calibdata/DATANIGHT/S_0#/tiff)
 #   (5) biasdrift_<DATASET>.txt
-#           Measured bias drift per image in ADU (filepath.calibdata/DATANIGHT)
+#           Measured bias drift per image in ADU
+#           (filepath.calibdata/DATANIGHT)
 #   (6) biasdrift_<DATASET>.png
-#           Figure showing brias drift data per image (filepath.calibdata/DATANIGHT)
+#           Figure showing brias drift data per image
+#           (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created in 2011 in visual basic as "calibrate images.vbs"
@@ -61,18 +73,9 @@ import printcolors as pc
 scriptName = 'reduce.py'
 PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 
-#-----------------------------------------------------------------------------#
-
-def stretch_to_range(values, new_min, new_max):
-    '''
-    Function to perform a linear stretch of an array of values 
-    to fit within a new min and max range.
-    '''
-    old_min = min(values.flatten())
-    old_max = max(values.flatten())
-    new_values = ((values - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-    return new_values
-
+#------------------------------------------------------------------------------#
+#-------------------            Define Functions            -------------------#
+#------------------------------------------------------------------------------#
 
 def reducev(dnight, sets, flatname, curve):
     '''
