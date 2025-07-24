@@ -106,8 +106,23 @@ target_pnt = (
     "'419597 419597';'-419597 419597';'-419597 -419597';'419597 -419597'"
 )
           
-#-----------------------------------------------------------------------------#
+#------------------------------------------------------------------------------#
+#-------------------            Define Functions            -------------------#
+#------------------------------------------------------------------------------#
+
 def clip_envelope(AZ, ALT, i):
+    '''
+    Function to generate rectangular clipping boundaries for an image.
+
+    Parameters:
+    -----------
+    AZ: array
+        Array of azimuth coordinates for each image center
+    ALT: array
+        Array of altitude coordinates for each image center
+    i: int
+        Image number
+    '''
     if i < 15:
         bond = [AZ[i]-13,-6,AZ[i]+13,ALT[i]+12.9] 
     elif i < 30: 
@@ -122,6 +137,13 @@ def clip_envelope(AZ, ALT, i):
 def tc(lon,lat):
     '''
     Returns the topocentric coordinate setting in WKT format
+
+    Parameters:
+    -----------
+    lon: float
+        Longitude coordinate
+    lat: float
+        Latitude coordinate
     '''
     topoCoord = (
         "PROJCS["
@@ -141,6 +163,11 @@ def tc(lon,lat):
 def set_null_values(rasterFile):
     '''
     Function to set values within raster File to NoData
+
+    Parameters:
+    -----------
+    rasterFile: string
+        Path to raster File
     '''
     outSetNull = arcpy.sa.SetNull(
         rasterFile, 
@@ -150,9 +177,16 @@ def set_null_values(rasterFile):
     outSetNull.save(rasterFile)
 
 
-def remove_readonly(func, path, excinfo):
+def remove_readonly(func, path):
     '''
     Error-catching function to handle removal of read-only folders
+
+    Parameters:
+    -----------
+    func: python function
+        Function to execute on path after chmod operation
+    path: str
+        Path to operate on
     '''
     os.chmod(path, stat.S_IWRITE)
     func(path)
@@ -162,6 +196,11 @@ def clear_dir(dir_path):
     '''
     Function to clear out all files and folders from
     the specified directory.
+
+    Parameters:
+    -----------
+    dir_path: str
+        Directory path to operate on
     '''
     for root, dirs, files in os.walk(dir_path, topdown=False):
         for name in files:
@@ -171,9 +210,22 @@ def clear_dir(dir_path):
             os.rmdir(os.path.join(root, name))
     
 
+#------------------------------------------------------------------------------#
+#-------------------              Main Program              -------------------#
+#------------------------------------------------------------------------------#
+
 def mosaic(dnight, sets, filter):
     '''
     This module creates the mosaic of full-resolution images for each data set.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
     '''
     #set arcpy environment variables part 2/2
     arcpy.CheckOutExtension("Spatial")

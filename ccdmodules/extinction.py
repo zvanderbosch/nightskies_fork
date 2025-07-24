@@ -339,7 +339,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     -----------
     dnight: str
         Name of data night to process
-    set: list
+    sets: list
         List of data sets to process
     filter: str
         Name of photometric filter
