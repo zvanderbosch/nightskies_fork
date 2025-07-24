@@ -150,6 +150,11 @@ def tc(lon,lat):
         Longitude coordinate
     lat: float
         Latitude coordinate
+
+    Returns:
+    --------
+    topoCoord: str
+        WKT formatted coordinate setting
     '''
     topoCoord = (
         "PROJCS["
