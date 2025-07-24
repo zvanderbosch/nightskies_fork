@@ -224,11 +224,14 @@ def pointing_err(dnight, sets):
             axis=1
         )
 
-        #create a pointing error plot
-        errorPlot = plt.figure('errplot',figsize=(20,10))
-        ax = errorPlot.add_subplot(111)
-        plt.suptitle("Pointing Error by Image Number", fontsize=25, verticalalignment='top')
-        ax.set_title("Data Set " + s[0], fontsize=20)
+        #################################################
+        # Create a pointing error plot
+
+        # Create figure/axis
+        fig = plt.figure('errplot',figsize=(20,10))
+        ax = fig.add_subplot(111)
+        
+        # Add pointing error data
         ax.plot(pErr[0], azmErr, linestyle="-.", marker="o", markerfacecolor='None', 
             markersize=4, color = "darkorange", alpha=0.7, label="Azimuth Error")
         ax.plot(pErr[0], altErr, linestyle="--", marker="o", 
@@ -236,17 +239,34 @@ def pointing_err(dnight, sets):
         ax.plot(pErr[0], totErr, linestyle="-", linewidth=2, marker="o", 
             markersize=6, color = "black", alpha=1, label="Total Error")
         ax.axhline(0, color="black", linestyle="-", alpha=0.5, zorder=-10)
+
+        # Configure axes appearances
         ax.set_ylim(-4, 4)
         ax.set_ylabel("Error in Degrees", fontsize=20, labelpad = 10)
         ax.set_xlabel("Image Number", fontsize=20, labelpad = 15)
         ax.set_xticks(n.arange(0, 50, 5))
-        ax.legend(loc='upper left', markerscale=1.8, fontsize=18, framealpha=0.3)
         ax.minorticks_on()
         ax.tick_params(which='both', top=True, right=True, labelsize=15)
         ax.grid(ls=':', lw=0.5, c='silver')
-        ax.text(0.5, -2.8, "Average Total Error:   " + '{:.3f}'.format(totErr.mean()) + u'\N{DEGREE SIGN}', fontsize=18)
-        errorPlot.savefig(filepath.calibdata+dnight+'/pointerr_%s.png' %s[0])
-        plt.close('errorplot')
+
+        # Add legend
+        ax.legend(loc='upper left', markerscale=1.8, fontsize=18, framealpha=0.3)
+
+        # Add text for total pointing error
+        ax.text(
+            0.5, -2.8, 
+            f"Average Total Error:   {totErr.mean():.3f}\N{DEGREE SIGN}", 
+            fontsize=18
+        )
+        
+        # Add titles
+        plt.suptitle("Pointing Error by Image Number", fontsize=25, verticalalignment='top')
+        ax.set_title(f"Data Set " + s[0], fontsize=20)
+
+        # Save figure
+        plt.savefig(filepath.calibdata+dnight+'/pointerr_%s.png' %s[0])
+        plt.close('errplot')
+        #################################################
 
         #saving the output file        
         outfile = filepath.calibdata+dnight+'/pointerr_%s.txt' %s[0]
