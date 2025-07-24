@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/23
+#Last updated: 2025/07/24
 #
 #This script finds the best-fit extinction coefficient and the instrumental
 #zeropoint by:
@@ -17,19 +17,23 @@
 #Note: In order to use the ACP objects, the Python must be a 32-bit version.
 #
 #Input: 
-#   (1) Calibrated images
-#   (2) hipparcos_standards.txt
-#   (3) plot_img number (optional)
-#           If given, the script will display the bestfit 
-#           standard stars contours overlaid on the image data.
+#   (1) ib###.fit
+#           Calibrated images
+#           (filepath.calibdata/DATANIGHT/S_0#)
+#   (2) hipparcos_gaia_standards_6pixAper.csv
+#           Hipparcos standard star catalog
+#           (filepath.standards)
 #
 #Output:
 #   (1) extinction_stars_<FILTER>_<DATASET>.txt 
 #           List of the standard stars used for fitting
+#           (filepath.calibdata/DATANIGHT)
 #   (2) extinction_fit_<FILTER>_<DATASET>.png 
 #           Graphical display of the fitting result
+#           (filepath.calibdata/DATANIGHT)
 #   (3) extinction_fit_<FILTER>.xlsx 
 #           Best-fit extinction coefficient and zeropoint
+#           (filepath.calibdata/DATANIGHT)
 #
 #History:
 #	Dan Duriscoe -- Created in visual basic as "extinction v4.vbs"
