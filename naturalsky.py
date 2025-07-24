@@ -34,33 +34,58 @@
 #
 #
 #Input: 
-#   (1) mask.tif - Terrain mask after Photoshop editing
-#   (2) extinction_fit_<FILTER>.xlsx - Bestfit extinction parameters
-#   (3) zenithangle - Raster dataset providing zenith angle across the sky
-#   (4) airmass_05 - Raster dataset providing airmass across the sky
-#   (5) adl_05 - Raster dataset providing atmospheric diffuse light profile
-#   (6) galtopmags - Galactic light model in mag/arcsec^2
-#   (7) zodtopmags - Zodiacal light model in mag/arcsec^2
-#   (8) skybrightmags - Observed sky brightness in mag/arcsec^2
-#   (9) blankmap.aprx - Blank ArcGIS map project used to generate JPEG exports
-#   (10) zenith_area.shp - Shapefile for regional sky brightness statistics at Zenith
+#   (1) mask.tif
+#           Terrain mask after Photoshop editing (filepath.griddata/mask)
+#   (2) extinction_fit_<FILTER>.xlsx
+#           Bestfit extinction parameters (filepath.calibdata)
+#   (3) zenithangle
+#           Raster dataset providing zenith angle across the sky (filepath.rasters)
+#   (4) airmass_05
+#           Raster dataset providing airmass across the sky (filepath.rasters)
+#   (5) adl_05
+#           Raster dataset providing atmospheric diffuse light profile (filepath.rasters)
+#   (6) galtopmags
+#           Galactic light model in mag/arcsec^2 (filepath.griddata/S_0#/gal)
+#   (7) zodtopmags
+#           Zodiacal light model in mag/arcsec^2 (filepath.griddata/S_0#/zod)
+#   (8) skybrightmags
+#           Observed sky brightness in mag/arcsec^2 (filepath.griddata/S_0#/median)
+#   (9) blankmap.aprx
+#           Blank ArcGIS map project used to generate JPEG exports (filepath.maps/blankmap)
+#   (10) zenith_area.shp
+#           Shapefile for regional sky brightness statistics at Zenith (filepath.rasters/shapefiles)
 #
 #Output:
-#   (1) anthlightmags<DATASET>.lyrx - Layer file for Anthropogenic Light Only mosaic, one per data set
-#   (2) natskymags<DATASET>.lyrx - Layer file for Natural Sky Model mosaic, one per data set
-#   (3) maskd.tif - Terrain mask projected into fisheye equal area coordinate system
-#   (4) data.jpg - Fisheye JPEG image on observed sky brightness, one per data set
-#   (5) model.jpg - Fisheye JPEG of natural sky model, one per data set
-#   (6) artificial.jpg - Fisheye JPEG of anthropogenic light only (observed - model), one per data set
-#   (7) hist.jpg - Histogram of pixel values in anthropogenic mosaic, one per data set
-#   (8) natsky_model_fit.jpeg - Combined data, model, artificial, and hist image, one per data set
-#   (9) <DATANIGHT>_<DATASET>_natsky_model_fit.png - Copy of natsky_model_fit.jpg saved to graphics folder
-#   (10) airglownl - Extincted airglow model in nL units, one per data set
-#   (11) galnl - Extincted galactic light model in nL units, one per data set
-#   (12) zodnl - Extincted zodiacal light model in nL units, one per data set
-#   (13) skybrightnl - Observed sky brightness in nL units, one per data set
-#   (14) airglowave.dbf - Zonal statistics table for sky brightness measurements, one per data set
-#   (15) natsky_model_params.xlsx - Excel sheet summarizing natural sky model parameters & statistics
+#   (1) anthlightmags<DATASET>.lyrx
+#           Layer file for Anthropogenic Light Only mosaic (filepath.griddata)
+#   (2) natskymags<DATASET>.lyrx
+#           Layer file for Natural Sky Model mosaic (filepath.griddata)
+#   (3) maskd.tif
+#           Terrain mask projected into fisheye equal area coordinate system (filepath.griddata/mask)
+#   (4) data.jpg
+#           Fisheye JPEG image on observed sky brightness (filepath.griddata/S_0#)
+#   (5) model.jpg
+#           Fisheye JPEG of natural sky model (filepath.griddata/S_0#)
+#   (6) artificial.jpg
+#           Fisheye JPEG of anthropogenic light only (filepath.griddata/S_0#)
+#   (7) hist.jpg
+#           Histogram of pixel values in anthropogenic mosaic (filepath.griddata/S_0#)
+#   (8) natsky_model_fit.jpeg
+#           Combined data, model, artificial, and hist image (filepath.griddata/S_0#)
+#   (9) <DATANIGHT>_<DATASET>_natsky_model_fit.png
+#           Copy of natsky_model_fit.jpg (filepath.graphics)
+#   (10) airglownl
+#           Extincted airglow model in nL units (filepath.griddata/S_0#/airglow)
+#   (11) galnl
+#           Extincted galactic light model in nL units (filepath.griddata/S_0#/gal)
+#   (12) zodnl
+#           Extincted zodiacal light model in nL units (filepath.griddata/S_0#/zod)
+#   (13) skybrightnl
+#           Observed sky brightness in nL units (filepath.griddata/S_0#/median)
+#   (14) airglowave.dbf
+#           Zonal statistics table for sky brightness measurements (filepath.calibdata/S_0#)
+#   (15) natsky_model_params.xlsx
+#           Excel sheet summarizing natural sky model parameters & statistics (filepath.calibdata)
 #
 #History:
 #	Dan Duriscoe -- Created as "natskyv4.py"
