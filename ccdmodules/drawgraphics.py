@@ -175,7 +175,7 @@ def get_site_info(imageFile):
     t = Time(
         H['DATE-OBS'], 
         format='isot', 
-        scale='utc'#,
+        scale='utc',
     )
 
     # Convert UTC to LMT using site longitude
