@@ -52,7 +52,7 @@
 #           (filepath.griddata/DATANIGHT/S_0#)
 #   (8) sqitbl.dbf, sqitbl80.dbf, sqitbl70.dbf
 #           Sky quality index histogram tables for various horizon limits
-#           (filepath.griddata/DATANIGHT)
+#           (filepath.griddata/DATANIGHT/S_0#)
 #           
 #
 #History:

@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/06/23
+#Last updated: 2025/07/25
 #
 #This script computes sky quality index (SQI) and synthetic
 #sky quality meter (SQM) values, alogn with a few photometric
@@ -13,23 +13,26 @@
 #Note: 
 #
 #Input:
-#   (1) extinction_fit_<FILTER>.xlsx - Best-fit extinction parameters
-#   (2) Calibrated images (ib###.fit, zenith1.fit, zenith2.fit)
-#   (3) SQI tables (sqitbl.df, sqitbl80.dbf, sqitbl70.dbf) from naturalsky.py
+#   (1) extinction_fit_<FILTER>.xlsx
+#           Best-fit extinction parameters
+#           (filepath.calibdata/DATANIGHT)
+#   (2) ib###.fit, zenith#.fit
+#           Calibrated images
+#           (filepath.calibdata/DATANIGHT/S_0#)
+#   (3) sqitbl.df, sqitbl80.dbf, sqitbl70.dbf
+#           Sky quality index (SQI) histogram tables from skyglow module
+#           (filepath.griddata/DATANIGHT/S_0#)
+#   (4) calibreport.xlsx
+#           Calibration report spreadsheet
+#           (filepath.calibdata/DATANIGHT)
+#   (5) skybright_positions.xlsx
+#           Spreadsheet containing pixel locations per image
+#           where photometric measurements will be made
+#           (filepath.spreadsheets)
 #
 #Output:
-#   (1) sqOutput - Pandas dataframe containing light pollution metrics:
-#       - SQI_allsky    -- Sky quality index, observed horizon
-#       - SQI_ZA80      -- Sky Quality index, zenith angle 80
-#       - SQI_ZA70      -- Sky quality index, zenith angle 70
-#       - SQM_sky       -- Synthetic SQM, sky background only
-#       - SQM_synthetic -- Synthetic SQM, sky + stars + planets
-#       - zenith_mag    -- Zenith luminance from zenith2.fit
-#       - allsky_mag    -- All-sky luminance, observed horizon
-#       - za70_mag      -- All-sky luminance, zenith angle 70
-#       - brightest_mag -- Brightest pixel above horizon
-#       - faintest_mag  -- Faintest pixel above horizon
-#       - scalar_illum  -- Scalar illuminance
+#   None
+#
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from sqiv4.vbs)
@@ -65,6 +68,18 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 def get_site_info(imageFile):
     '''
     Function to grab observing site and time info
+
+    Parameters:
+    -----------
+    imageFile: str
+        Path to FITS file used for site information
+
+    Returns:
+    --------
+    obsTime: astropy.time.Time
+        Time object representation observation time in UTC
+    obsSite: EarthLocation 
+        Astropy EarthLocation object for observing site
     '''
 
     # Load image header
@@ -87,6 +102,16 @@ def measure_skybrightness(imgPath):
     '''
     Function to perform sky brightness aperture
     photometry for SQM calculations.
+
+    Parameters:
+    -----------
+    imgPath: str
+        Path to directory where calibrated FITS files exist
+
+    Returns:
+    --------
+    allPhot: DataFrame
+        Dataframe containing photometric measurements
     '''
 
     # Load in skybright positions spreadsheet
@@ -132,6 +157,20 @@ def measure_skybrightness(imgPath):
 
 
 def measure_zenith_images(imgPath):
+    '''
+    Function to perform sky brightness aperture
+    photometry for just the central portion of zenith images.
+
+    Parameters:
+    -----------
+    imgPath: str
+        Path to directory where calibrated FITS files exist
+
+    Returns:
+    --------
+    allPhot: DataFrame
+        Dataframe containing photometric measurements
+    '''
 
     # Measure sky brightness at center of zenith images
     allPhot = []
@@ -169,6 +208,26 @@ def planet_brightness(planet, time, site, dEarthSun):
     '''
     Function to calculate apparent magnitude of a
     solar system planet at a given time and location.
+
+    Parameters:
+    -----------
+    planet: str
+        Name of planet to process
+    time: astropy.time.Time
+        Observation time (UTC)
+    site: EarthLocation
+        Astropy EarthLocation for observation site
+    dEarthSun: float
+        Distance between Earth and Sun at given time (AU)
+
+    Returns:
+    --------
+    pmag: float
+        Planet apparent magnitude (mag)
+    pTopoCoord.az: float
+        Planet Azimuth coordinate (deg)
+    pTopoCoord.alt: float
+        Planet Altitude coordinate (deg)
     '''
 
     # Metadata for each planet
@@ -227,6 +286,16 @@ def planet_brightness(planet, time, site, dEarthSun):
 def calculate_airmass(za):
     '''
     Function to calculate airmass using Kasten & Young (1989) equation
+
+    Parameters:
+    -----------
+    za: array
+        Zenith angles (deg)
+    
+    Returns:
+    --------
+    airmass: array
+        Airmass values
     '''
 
     # Use Kasten & Young (1989) equation for airmass
@@ -237,7 +306,22 @@ def calculate_airmass(za):
     return airmass
 
 
-def calc_SQI(gridPath,mask):
+def calc_SQI(gridPath, mask):
+    '''
+    Function to calculate Sky Quality Index (SQI)
+
+    Parameters:
+    -----------
+    gridPath: str
+        Path to data night's griddata directory
+    mask: str
+        String indicating the mask to use. Must be horizon, ZA80, or ZA70.
+
+    Returns:
+    --------
+    sqi: float
+        The sky quality index value
+    '''
 
     # Set static weighting factors
     weightingNaturalSky = n.array(
@@ -302,6 +386,22 @@ def calc_skyonly_SQM(dataNight, setNum, filterName):
     '''
     Function to calculate synthetic Sky Quality Meter (SQM)
     metric using just the measured background sky brightness.
+
+    Parameters:
+    -----------
+    dataNight: str
+        Name of data night
+    setNum: int
+        Data set number
+    filterName: str
+        Name of photometric filter
+
+    Returns:
+    --------
+    sqm: float
+        Synthethic sky-only Sky Quality Meter (SQM) value
+    photometry: DataFrame
+        DataFrame containing photometric measurements
     '''
     
     # Get zeropoint, extinction coeff, plate scale, & exposure time
@@ -343,6 +443,22 @@ def calc_synthetic_SQM(dataNight, setNum, filterName, skySQM):
     Function to calculate synthetic Sky Quality Meter (SQM)
     metric using measured background sky brightness and
     including flux contributed from visible stars and planets.
+
+    Parameters:
+    -----------
+    dataNight: str
+        Name of data night
+    setNum: int
+        Data set number
+    filterName: str
+        Name of photometric filter
+    skySQM: float
+        Synthetic sky-only SQM from calc_skyonly_SQM
+
+    Returns:
+    --------
+    sqm: float
+        Synthethic Sky Quality Meter (SQM) including sky and planets
     '''
 
     # Get zeropoint, extinction coeff, plate scale, & exposure time
@@ -448,6 +564,11 @@ def append_to_calibreport(metrics):
     '''
     Functin to add sky brightness metrics to
     calibreport Excel file.
+
+    Parameters:
+    -----------
+    metrics: DataFrame
+        DataFrame containing calculated metrics
     '''
 
     # Get path to calibreport Excel file
@@ -489,6 +610,22 @@ def calculate_sky_quality(dnight,sets,filter,albedo):
     '''
     Main program for computing SQI and SQM metrics and simple
     aperture photometry metrics.
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
+    albedo: float
+        Site-specific albedo
+
+    Returns:
+    --------
+    sqOutput: DataFrame
+        Dataframe containing light pollution metrics
     '''
 
     # Filter paths
