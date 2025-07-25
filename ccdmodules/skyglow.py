@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/05/15
+#Last updated: 2025/07/25
 #
 #This script computes sky luminance and illuminance
 #statistics for the anthropogenic skyglow mosaic.
@@ -11,13 +11,52 @@
 #Note: 
 #
 #Input:
-#   (1) 
+#   (1) allbands.shp
+#           Shapefile defining five circular/annular zonal bands on sky
+#           (filepath.rasters/shapefiles)
+#   (2) 80zamaskf.shp
+#           Shapefile defining circular region down to ZA80
+#           (filepath.rasters/shapefiles)
+#   (3) 70zamaskf.shp
+#           Shapefile defining circular region down to ZA70
+#           (filepath.rasters/shapefiles)
+#   (4) maskd.tif
+#           Terrain mask raster
+#           (filepath.griddata/DATANIGHT/mask)
+#   (5) vertf-<AZIMUTH>
+#           Raster datasets providing all-sky cos-theta vertical illuminance factors
+#           (filepath.rasters/vertgrids)
 #
 #Output:
-#   (1) vert.xlsx - Table of vert/horiz illuminance values & stats
+#   (1) vert.xlsx
+#           Tabulated horizontal and vertical illuminance values
+#           (filepath.calibdata/DATANIGHT)
+#   (2) illuminance_horizon.png
+#           Figure displaying vert/horiz illuminance to terrain mask horizon
+#           (filepath.calibdata/DATANIGHT)
+#   (3) illuminance_za80.png
+#           Figure displaying vert/horiz illuminance to ZA 80
+#           (filepath.calibdata/DATANIGHT)
+#   (4) illuminance_za70.png
+#           Figure displaying vert/horiz illuminance to ZA 70
+#           (filepath.calibdata/DATANIGHT)
+#   (5) skyhemis<MOSAIC>.dbf
+#           All-sky luminance statistics for each MOSAIC. Same filename is used
+#           for sky luminance, luminous emittance, and horizontal illuminance
+#           (filepath.griddata/DATANIGHT/S_0#)
+#   (6) skyzones.dbf
+#           Zonal luminance statistics
+#           (filepath.griddata/DATANIGHT/S_0#)
+#   (7) skyvert<MOSAIC>.dbf
+#           Vertical illuminance statistics to flat horizon for each MOSAIC
+#           (filepath.griddata/DATANIGHT/S_0#)
+#   (8) sqitbl.dbf, sqitbl80.dbf, sqitbl70.dbf
+#           Sky quality index histogram tables for various horizon limits
+#           (filepath.griddata/DATANIGHT)
+#           
 #
 #History:
-#	Zach Vanderbosch -- Created script
+#	Zach Vanderbosch -- Created script (translated from secondbatchv2.py)
 #
 #-----------------------------------------------------------------------------#
 
@@ -65,6 +104,11 @@ COLORS = {
 def clear_memory(objectList):
     '''
     Function for clearing variables from memory
+
+    Parameters:
+    -----------
+    objectList: list
+        List of objects to delete from memory
     '''
     for obj in objectList:
         if obj:
@@ -74,13 +118,36 @@ def clear_memory(objectList):
 def nl_to_mlux(raster):
     '''
     Unit conversion from nano-Lamberts to milli-Lux
+
+    Parameters:
+    -----------
+    raster: arcpy.sa.Raster
+        Raster object to operate on
     '''
     return (0.000000761544 * raster) / 314.159
 
 
 def calc_sky_luminance(mosaicDict, zoneRaster, gridPath, results):
     '''
-    Function for calculating sky luminance metrics
+    Function for calculating observed sky luminance for each mosaic
+    provided in mosaicDict down to the terrain mask defined by 
+    zoneRaster.
+
+    Parameters:
+    -----------
+    mosaicDict: dict
+        Dict containing arcpy Raster mosaics to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Set mosaic processing order
@@ -112,6 +179,22 @@ def calc_sky_luminance(mosaicDict, zoneRaster, gridPath, results):
 def calc_zonal_sky_luminance(mosaic, zoneRaster, gridPath, results):
     '''
     Function for calculating mean sky luminance by zone
+
+    Parameters:
+    -----------
+    mosaic: arcpy.sa.Raster
+        Raster mosaic to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Calculate zonal stats
@@ -134,6 +217,22 @@ def calc_zonal_sky_luminance(mosaic, zoneRaster, gridPath, results):
 def calc_luminouos_emittance(mosaicDict, zoneRaster, gridPath, results):
     '''
     Function for calculating luminous emittance metrics
+
+    Parameters:
+    -----------
+    mosaicDict: dict
+        Dict containing arcpy Raster mosaics to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Convert from nL to mlux units
@@ -164,6 +263,22 @@ def calc_luminouos_emittance(mosaicDict, zoneRaster, gridPath, results):
 def calc_horizontal_illuminance(mosaicDict, zoneRaster, gridPath, results):
     '''
     Function for calculating horizontal illuminance metrics
+
+    Parameters:
+    -----------
+    mosaicDict: dict
+        Dict containing arcpy Raster mosaics to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Load in horizontal illuminance factor grid
@@ -201,6 +316,22 @@ def calc_horizontal_illuminance(mosaicDict, zoneRaster, gridPath, results):
 def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
     '''
     Function for calculating vertical illuminance metrics
+
+    Parameters:
+    -----------
+    mosaicDict: dict
+        Dict containing arcpy Raster mosaics to operate on
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    results: dict
+        Dict to store statistical results in
+
+    Returns:
+    --------
+    results: dict
+        The updated results dict
     '''
 
     # Convert skyglow from nL to mlux units
@@ -266,6 +397,17 @@ def calc_vertical_illuminance(mosaicDict, zoneRaster, gridPath, results):
 def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
     '''
     Function to calculate Sky Quality Index (SQI) histograms
+
+    Parameters:
+    -----------
+    zoneRaster: arcpy.sa.Raster
+        Raster used to define the zonal area (i.e. mask)
+    gridPath: str
+        Path of griddata directory for given data night
+    clipFile80: str
+        Path to 80zamaskf.shp shapefile for masking down to ZA80
+    clipFile70:
+        Path to 70zamaskf.shp shapefile for masking down to ZA70
     '''
 
     # Clip skyglow magnitudes mosaic to 80 and 70 Zenith Angle limits
@@ -328,6 +470,17 @@ def calc_sqi_histograms(zoneRaster, gridPath, clipFile80, clipFile70):
 def save_illuminance_data(metrics, dnight, sets, filter):
     '''
     Function to save vertical & horizontal illuminance data to vert.xlsx
+
+    Parameters:
+    -----------
+    metrics: DataFrame
+        DataFrame containing all the metrics to be saved
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
     '''
 
     # Print status update
@@ -508,6 +661,20 @@ def calculate_statistics(dnight,sets,filter):
     '''
     Main program for computing sky luminance and illuminance
     statistics from only anthropogenic sources. 
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
+
+    Returns:
+    --------
+    skyglowOutput: DataFrame
+        Dataframe storing results of metric calculations
     '''
 
     # Filter paths
