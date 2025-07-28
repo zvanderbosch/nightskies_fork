@@ -516,7 +516,7 @@ def mosaic(dnight, sets, filter):
         os.makedirs(maskDir)
     if not os.path.isfile(maskFile):
         arcpy.management.CopyRaster(
-            gridsetp+'skybright',
+            f"{gridsetp}skybright",
             maskFile,
             "DEFAULTS",
             "0","0","","",
