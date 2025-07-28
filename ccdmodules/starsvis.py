@@ -3,26 +3,56 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/06/23
+#Last updated: 2025/07/28
 #
-#This script computes the number and fraction of stars visible.
+#This script computes the number and fraction of stars visible
+#taking atmospheric extinction and background sky brightness 
+#into account.
 #
 #Note: 
 #
 #Input:
-#   (1) extinction_fit_<FILTER>.xlsx - Best-fit extinction parameters
-#   (2) skybrightmags - Observed sky brightness raster
-#   (3) natskymags - Natural sky model raster
-#   (4) maskd.fit - Terrain mask raster
-#   (5) airmassf - Raster providing airmass values across the sky
-#   (6) SAOJ200079.shp - Geo-database of SAO Star Catalog
-#   (7) allskyf.shp - Flat horizon mask raster
+#   (1) extinction_fit_<FILTER>.xlsx
+#           Best-fit extinction parameters
+#           (filepath.calibdata/DATANIGHT)
+#   (2) skybrightmags
+#           Observed sky brightness raster
+#           (filepath.griddata/DATANIGHT/S_0#/median)
+#   (3) natskymags
+#           Natural sky model raster
+#           (filepath.griddata/DATANIGHT/S_0#/nat)
+#   (4) maskd.fit
+#           Terrain mask raster
+#           (filepath.griddata/DATANIGHT/mask)
+#   (5) airmassf
+#           Raster providing airmass values across the sky
+#           (filepath.rasters)
+#   (6) SAOJ200079.shp
+#           Geo-database of SAO Star Catalog
+#           (filepath.rasters/shapefiles)
+#   (7) allskyf.shp
+#           Flat horizon mask shapefile
+#           (filepath.rasters/shapefiles)
+#   (8) ib###.fit
+#           Calibrated images
+#           (filepath.calibdata/DATANIGHT/S_0#)
+#   (9) skystarslp.lyrx, skystarslpn.lyrx
+#           Symbology layer files for visstars.shp and visstarsn.shp
+#           (filepath.rasters)
 #
 #Output:
-#   (1) skystars.shp - Stars from SAOJ200079.shp above observed horizon
-#   (2) extstars.shp - Stars from skystars.shp with extincted magnitudes < 7.5
-#   (3) visstars.shp - Stars from extstars.shp visible in polluted sky
-#   (4) visstarsn.shp - Stars from extstars.shp visible in natural sky
+#   (1) skystars.shp
+#           Stars from SAOJ200079.shp above observed horizon
+#           (filepath.griddata/DATANIGHT/S_0#/nat)
+#   (2) extstars.shp, extstarslyr.lyrx
+#           Stars from skystars.shp with extincted magnitudes < 7.5
+#           (filepath.griddata/DATANIGHT/S_0#/nat)
+#   (3) visstars.shp, visstarslyr.lyrx
+#           Stars from extstars.shp visible in polluted sky
+#           (filepath.griddata/DATANIGHT/S_0#/nat)
+#   (4) visstarsn.shp, visstarsnlyr.lyrx
+#           Stars from extstars.shp visible in natural sky
+#           (filepath.griddata/DATANIGHT/S_0#/nat)
 #
 #History:
 #	Zach Vanderbosch -- Created script (translated from secondbatchv4.py)
@@ -32,8 +62,6 @@
 from astropy.time import Time
 from astropy.io import fits
 
-import os
-import stat
 import arcpy
 import pandas as pd
 import astropy.units as u
@@ -62,6 +90,18 @@ def get_zenith_coords(imageFile):
     '''
     Function to compute zenith RA and Dec coordinates
     at the time and location of a given image.
+
+    Parameters:
+    -----------
+    imageFile: str
+        Path to FITS file
+
+    Returns:
+    --------
+    raZenith: float
+        Right ascension of Zenith (deg)
+    decZenith: float
+        Declination of Zenith (deg)
     '''
 
     # Load image header
@@ -101,6 +141,18 @@ def get_zenith_coords(imageFile):
 def get_coordinate_system(centralMeridian=180.0, latitudeOfOrigin=90.0):
     '''
     Function to define an ArcGIS coordinate system in WKT format
+
+    Parameters:
+    -----------
+    centralMeridian: float
+        Central meridian (deg)
+    latitudeOfOrigin: float
+        Latitude of origin (deg)
+
+    Returns:
+    --------
+    coordinateSystem: str
+        ArcGIS coordinate system in WKT format
     '''
 
     geogcs = (
@@ -133,6 +185,16 @@ def background_equation(varName):
     Function for generating background estimation equations 
     in string format with Python syntax for input to 
     arcpy.management.CalculateField
+
+    Parameters:
+    -----------
+    varName: str
+        Name of variable to operate the equation on
+
+    Returns:
+    --------
+    stringEq: str
+        Python-syntax equation in string format
     '''
 
     stringEq = (
@@ -152,7 +214,21 @@ def background_equation(varName):
 
 def calculate_stars_visible(dnight,sets,filter):
     '''
-    Main program for computing the numnber/fraction of visible stars
+    Main program for computing the number/fraction of visible stars
+
+    Parameters:
+    -----------
+    dnight: str
+        Name of data night to process
+    sets: list
+        List of data sets to process
+    filter: str
+        Name of photometric filter
+
+    Returns:
+    --------
+    numstarsOutput: DataFrame
+        Dataframe storing results of metric calculations
     '''
 
     # Filter paths
