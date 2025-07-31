@@ -51,6 +51,7 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment, Border, Side, Font, NamedStyle
 from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.workbook.defined_name import DefinedName
 
 import numpy as n
 import pandas as pd
@@ -510,7 +511,7 @@ def mlux_to_nl(x):
     return 412529264 * x
 
 
-def create_excel_template(excelFile):
+def create_excel_template(excelFile, numSets):
     '''
     Function that creates the Excel template for storing output tables.
 
@@ -518,6 +519,8 @@ def create_excel_template(excelFile):
     -----------
     excelFile: string
         Path + filename for Excel file
+    numSets: int
+        Number of data sets processed
     '''
 
     # Initial creation and formatting of excel file
@@ -555,7 +558,6 @@ def create_excel_template(excelFile):
                 cell.font = SHEETSTYLES['sheet_titles']['font']
 
                 # Add dropdown menus
-
                 # Create data validation objects
                 dvCamera = DataValidation(
                     type="list", formula1=f'"{",".join(DROPDOWNS["CAMERA"])}"'
@@ -619,6 +621,69 @@ def create_excel_template(excelFile):
                     cell.alignment = SHEETSTYLES['column_headers']['alignment_cb']
                 colLetter = get_column_letter(i)
                 worksheet.column_dimensions[colLetter].width = colwidth
+            
+        # Add named objects that map Excel sheets to Access Database tables
+        workbook.defined_names.add(
+            DefinedName(
+                "NIGHTATTRIBUTES", 
+                attr_text="'NIGHT METADATA'!$A$4:$AG$5"))
+        ### CITYDATA defined-name is added in the 'append_cities' function
+        workbook.defined_names.add(
+            DefinedName(
+                "SETATTRIBUTES",
+                attr_text=f"'SET METADATA'!$A$4:$P${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "CALIBATTRIBUTES",
+                attr_text=f"CALIBRATION!$A$4:$I${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "EXTINATTRIBUTES",
+                attr_text=f"EXTINCTION!$A$4:$K${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "IMAGECOORDS",
+                attr_text=f"'IMG COORDS'!$A$4:$K${4+(numSets*45)}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "V2PHOTOMETRY",
+                attr_text=f"'V2 PHOTOMETRY'!$A$4:$I${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "V4PHOTOMETRY",
+                attr_text=f"'V4 PHOTOMETRY'!$A$4:$V${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "GLAREPHOTOMETRY",
+                attr_text="GLARE!$A$4:$H$4"))
+        workbook.defined_names.add(
+            DefinedName(
+                "NATSKYMODELFIT",
+                attr_text=f"NATSKY!$A$4:$L${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "SKYGLOWALLSKY",
+                attr_text=f"LP!$A$4:$V${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "SKYGLOWZA80",
+                attr_text=f"LP80!$A$4:$S${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "SKYGLOWZA70",
+                attr_text=f"LP70!$A$4:$S${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "SKYGLOWZONES",
+                attr_text=f"ZONES!$A$4:$Q${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "PERCENTILESALL",
+                attr_text=f"'V4 PERCENTILES ALL'!$A$4:$N${4+numSets}"))
+        workbook.defined_names.add(
+            DefinedName(
+                "PERCENTILESSKYGLOW",
+                attr_text=f"'V4 PERCENTILES LP'!$A$4:$M${4+numSets}"))
 
 
 def get_site_info(imageFile):
@@ -654,9 +719,11 @@ def get_site_info(imageFile):
     # Get instrument details from FITS header
     fitsTelescope = H['TELESCOP']
     fitsInstrument = H['INSTRUME']
-    fitsCamera = fitsInstrument.split(",")[0].strip()
+    fitsCamera = fitsInstrument.split(",")[0].strip().replace(' ','')
     fitsLens = fitsInstrument.split(",")[1].strip()
     fitsFilter = H['FILTER'].strip()
+
+    print(fitsTelescope,fitsInstrument,fitsCamera,fitsLens,fitsFilter)
 
     # Map FITS values to standard NIGHT METADATA entries
     if fitsTelescope in METADATA_MAPPINGS['INSTRUMENT'].keys():
@@ -875,11 +942,15 @@ def append_cities(excelFile, dnight):
         worksheet = writer.sheets[sheetName]
 
         # Iterate over each row
+        cityCount = 0
         for i,row in cities.iterrows():
 
             # Break after 100 rows
             if i == 100:
                 break
+
+            # Update city counter
+            cityCount += 1
             
             # Set cell data values
             worksheet.cell(row=i+5, column=1, value=dnight)                       # Data night
@@ -908,6 +979,13 @@ def append_cities(excelFile, dnight):
                 else:
                     cell.font = SHEETSTYLES['data_fields']['font']
                     cell.alignment = SHEETSTYLES['data_fields']['alignment_cb']
+        
+        # Add defined-named that maps CITIES sheet to Access Database CITYDATA table
+        workbook = writer.book
+        workbook.defined_names.add(
+            DefinedName(
+                "CITYDATA",
+                attr_text=f"CITIES!$A$4:$H${4+cityCount}"))
 
 
 def append_set_metadata(excelFile, dnight, sets):
@@ -2154,6 +2232,9 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
     # Set the output Excel file name
     excelFile = f"{filepath.tables}{dnight}.xlsx"
 
+    # Get number of data sets
+    numSets = len(sets)
+
     # Convert central azimuth of panoramas to string
     centralAZ = int(n.floor(centralAZ))
     centralAzString = f"{centralAZ:03d}"
@@ -2175,15 +2256,15 @@ def generate_tables(dnight,sets,processor,centralAZ,unitName,metrics):
 
     # Create the excel template
     print(f'{PREFIX}Creating empty Excel template...')
-    create_excel_template(excelFile)
+    create_excel_template(excelFile, numSets)
 
     # Append data to NIGHT METADATA sheet
     print(f'{PREFIX}Appending Night Metadata...')
-    append_night_metadata(excelFile,siteInfo)
+    append_night_metadata(excelFile, siteInfo)
 
     # Append data to CITIES sheet
     print(f'{PREFIX}Appending top 100 cities ranked by Walkers Law...')
-    append_cities(excelFile,dnight)
+    append_cities(excelFile, dnight)
 
     # Append data to SET METADATA sheet
     print(f'{PREFIX}Appending Dataset Metadata...')
