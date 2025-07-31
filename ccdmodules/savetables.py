@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/24
+#Last updated: 2025/07/31
 #
 #This script generates the final output tables consolidating
 #data night attributes, calibration, and light pollution 
