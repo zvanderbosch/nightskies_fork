@@ -52,7 +52,6 @@ import warnings
 import openpyxl
 import numpy as n
 import pandas as pd
-import astropy.units as u
 import matplotlib.pyplot as plt
 
 from astropy.io import fits
