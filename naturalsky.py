@@ -554,6 +554,17 @@ class Airglow(_AirglowModelBase):
             )
             worksheet[f'A{self.set+1}'].fill = fillColor
             worksheet[f'A{self.set+1}'].border = thinBorder
+
+            # Set some cell number formats
+            worksheet.cell(row=self.set+1, column=2 ).number_format = '#'     # Emitting layer height [km]
+            worksheet.cell(row=self.set+1, column=3 ).number_format = '#'     # Site elevation [m]
+            worksheet.cell(row=self.set+1, column=4 ).number_format = '0.000' # Extinction coeff [mag/airmass]
+            worksheet.cell(row=self.set+1, column=5 ).number_format = '#'     # Zenith Airglow [nL]
+            worksheet.cell(row=self.set+1, column=6 ).number_format = '0.00'  # Airglow Ext
+            worksheet.cell(row=self.set+1, column=7 ).number_format = '0.00'  # A.D.L. factor
+            worksheet.cell(row=self.set+1, column=8 ).number_format = '0.00'  # Zodiacal Ext
+            worksheet.cell(row=self.set+1, column=9 ).number_format = '0.00'  # Galactic Ext
+            worksheet.cell(row=self.set+1, column=10).number_format = '#'     # QUality flag
       
     def compute_airglow_brightness(self,a,h):
         """
