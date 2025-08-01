@@ -23,6 +23,8 @@
 #
 # Optional Arguments
 # ------------------
+#   --elevation     : Site elevation [m] (Default = FITS header value)
+#   --extcoeff      : Extinction coefficient [mag/airmass] (Default = Best-fit value)
 #   --airglowzenith : Zenight Airglow [nL] (Default = 20)
 #   --airglowheight : Height of emitting airglow layer [km] (Default = 90)
 #   --airglowext    : Airglow extinction factor (Default = 0.6)
@@ -307,6 +309,8 @@ class Model(object):
         self.downscale = kwargs.get('downscale', 25)             #downscale factor
         self.za_min = kwargs.get('za_min', 0.)                   #min zenith angle [deg]
         self.za_max = kwargs.get('za_max', 90.)                  #max zenith angle [deg]
+        self.elevation = kwargs.get('elevation', None)           #Site elevation [m]
+        self.extinction = kwargs.get('ext_coeff', None)          #Extinction coefficient [mag/airmass]
         self.airglow_zenith = kwargs.get('airglow_zenith', 20.)  #zenight airglow [nL]
         self.airglow_height = kwargs.get('airglow_height', 90.)  #height of airglow emitting layer [km]
         self.airglow_ext = kwargs.get('airglow_ext', 0.6)        #airglow extinction factor
@@ -320,13 +324,15 @@ class Model(object):
         
     def get_extinction_coefficient(self,):
         """
-        This function reads in the extinction coefficient associated with the 
-        data set. 
+        If an extinction coefficient value was not provided as a command-line 
+        input, this function reads in the best-fit extinction coefficient associated 
+        with the data set.
         """
-        d,s,f = self.dnight, self.set, self.filter
-        extinctionFile = f"{filepath.calibdata}{d}/extinction_fit_{f}.xlsx"
-        extinctionData = pd.read_excel(extinctionFile)
-        self.extinction = abs(extinctionData['extinction_fixedZ'].iloc[s-1])
+        if self.extinction is None:
+            d,s,f = self.dnight, self.set, self.filter
+            extinctionFile = f"{filepath.calibdata}{d}/extinction_fit_{f}.xlsx"
+            extinctionData = pd.read_excel(extinctionFile)
+            self.extinction = abs(extinctionData['extinction_fixedZ'].iloc[s-1])
         
     def get_1d_za(self,):
         """
@@ -422,12 +428,18 @@ class Airglow(_AirglowModelBase):
         
     def get_site_elevation(self,):
         """
-        This function reads in the elevation of the observing site from the first image in the data set.
+        If a site elevation value was not provided as a command-line input,
+        this function reads in the elevation of the observing site from the
+        first image in the data set.
         """
-        d,s,f = self.dnight, self.set, self.filter
-        F = {'V':'/','B':'/B/'}
-        headerfile = f"{filepath.calibdata}{d}/S_0{s}{F[f]}ib001.fit"
-        self.elevation = fits.open(headerfile)[0].header['ELEVATIO']/1000. #[km]
+        if self.elevation is None:
+            d,s,f = self.dnight, self.set, self.filter
+            F = {'V':'/','B':'/B/'}
+            headerfile = f"{filepath.calibdata}{d}/S_0{s}{F[f]}ib001.fit"
+            self.elevation = fits.open(headerfile)[0].header['ELEVATIO']/1000. #[km]
+        else: # Convert from m to km
+            self.elevation = self.elevation / 1000
+
 
     def save_model_params(self,):
         """
@@ -1677,6 +1689,10 @@ def main():
                         help="Filter name (e.g. V or B)")
     
     # Optional arguments with default values
+    parser.add_argument('-v','--elevation', type=float, default=None, 
+                        help='Site elevation [m] (Default = FITS Header Value)')
+    parser.add_argument('-c','--extcoeff', type=float, default=None, 
+                        help='Extinction coefficient [mag/airmass] (Default = Best-fit value)')
     parser.add_argument('-a','--airglowzenith', type=float, default=20.0, 
                         help='Zenight Airglow [nL] (Default = 20)')
     parser.add_argument('-t','--airglowheight', type=float, default=90.0, 
@@ -1727,6 +1743,8 @@ def main():
         'downscale':25, 
         'za_min':0., 
         'za_max':90.,
+        'elevation':args.elevation,
+        'ext_coeff':args.extcoeff,
         'airglow_zenith':args.airglowzenith,
         'airglow_height':args.airglowheight,
         'airglow_ext':args.airglowext,
@@ -1773,6 +1791,10 @@ def main():
 
     # Clear out scratch directory
     clear_scratch(Paths['scratch'])
+
+    # Open Excel file and summary figure for viewing
+    os.startfile(f"{filepath.calibdata}{dnight}/natsky_model_params.xlsx")
+    os.startfile(f"{gridsetp}/S_0{set}/natsky_model_fit.png")
 
 
 # Run main during script execution
