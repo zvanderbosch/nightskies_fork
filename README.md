@@ -443,7 +443,19 @@ To add the component models into a combined natural sky model.
 `naturalsky.py` > `AggregateModel()`
 
 #### Methods: 
-This class uses `arcpy` (ArcGIS) to add together the component natural sky models ([Airglow](#2-build-airglow-model), [A.D.L](#3-build-atmospheric-diffuse-light-adl-model), [Galactic](#4-build-galactic-model), and [Zodiacal](#5-build-zodiacal-light-model)) into a combined natural sky model, project the resulting model into the fisheye equal-area coordinate system, and apply the finished terrain mask. This prepares the natural sky model subtracto be subtracted from the observed sky brightness mosaic. The combined natural sky model is saved to the Griddata directory.
+This class uses `arcpy` (ArcGIS) to add together the component natural sky models ([Airglow](#2-build-airglow-model), [A.D.L](#3-build-atmospheric-diffuse-light-adl-model), [Galactic](#4-build-galactic-model), and [Zodiacal](#5-build-zodiacal-light-model)) into a combined natural sky model, project the resulting model into the fisheye equal-area coordinate system, and apply the finished terrain mask. This prepares the natural sky model to be subtracted from the observed sky brightness mosaic. The combined natural sky model is saved to the Griddata directory.
+
+
+### 8. Anthropogenic Light Mosaic
+
+#### Purpose: 
+To add the component models into a combined natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `SkyglowModel()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to subtract the combined natural sky model from the observed sky-brightness mosaic. The resulting mosaic contains only light inferred to come from anthropogenic sources and is saved to the Griddata directory.
 
 
 ### Public domain
