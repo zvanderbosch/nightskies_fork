@@ -229,7 +229,7 @@ This script performs basic image reduction, including corrections for bias, dark
 #### Methods
 In the beginning of data collection, for each data set, 5 dark (**D**) images showing the thermal noise and 5 bias (**B**) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark (**D<sub>c</sub>**) image:
 
-$$\LARGE D_c=L(D-B) $$
+$$\huge D_c=L(D-B) $$
 
 <img src="https://github.com/liweihung/nightskies/blob/master/static/D_c.png" width="320">
 
