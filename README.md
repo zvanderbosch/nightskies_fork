@@ -227,17 +227,13 @@ This script performs basic image reduction, including corrections for bias, dark
 `process_images.py` > `reduce_images()` > `reduce.py` > `reducev()` and `reduceb()`  
 
 #### Methods
-In the beginning of data collection, for each data set, 5 dark ($\large \left(D\right)$) images showing the thermal noise and 5 bias ($\large B$) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark ($\large D_c$) image:
+In the beginning of data collection, for each data set, 5 dark ($\large D$) images showing the thermal noise and 5 bias ($\large B$) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark ($\large D_c$) image:
 
 $$\huge D_c=L(D-B) $$
-
-<!-- <img src="https://github.com/liweihung/nightskies/blob/master/static/D_c.png" width="320"> -->
 
 where $\large L$ is the linearity curve for correcting the detector response. Then, the script creates the master dark image $\large D_m$ through averaging the 5 calibrated darks and the master bias image $\large B_m$ through averaging the 5 biases. While collecting scientific images, an additional 50 x 50 pixels small bias image was taken immediately after each scientific image. We use these small bias images to track the bias drift over the course of the observation. We compute the bias drift $\large B_d$ by subtracting the average value of the central 50 x 50 pixels of the master bias from the average pixel value of each one of the small bias images. This measured bias drift information is saved in _biasdrift.txt_ and _biasdrift.png_ in the calibdata folder. To obtain calibrated scientific images $\large S_c$, we use the following equation:
 
 $$\huge S_c=\frac{(S-B_M-B_D)(L-D_m)}{F} $$
-
-<!-- <img src="https://github.com/liweihung/nightskies/blob/master/static/S_c.png" width="350"> -->
  
 where $\large S$ is the raw scientific image and $\large F$ is the flat image taken and processed in the lab. All of the terms in the above equation are 2D image arrays except for $\large B_d$ and $\large L$ which are single-value scale factors. This script outputs calibrated science images in both _fits_ and _tiff_ formats. 
 
@@ -339,9 +335,7 @@ This script reads in the full resolution _tiff_ files and the pointing error fil
 
 $$\huge M_c=Z-2.5\log_{10}\left(\frac{M_r}{tP^2}\right) $$
 
-<!-- <img src="https://github.com/liweihung/nightskies/blob/master/static/M_cZ.png" width="400"> -->
-
-where **M<sub>c</sub>** is the mosaic in calibrated unit of magnitudes per square arc second, **Z** is the instrumental zeropoint magnitude, Mr  is the mosaic in raw unit of **DN**, **t** is the exposure time, and **P** is the plate scale in arcsecond per pixel. The photometrically calibrated raster and layer files are stored in the Griddata folder.
+where $\large M_c$ is the mosaic in calibrated unit of magnitudes per square arc second, $\large Z$ is the instrumental zeropoint magnitude, $\large M_r$ is the mosaic in raw unit of **DN**, $\large t$ is the exposure time, and $\large P$ is the plate scale in arcsecond per pixel. The photometrically calibrated raster and layer files are stored in the Griddata folder.
 
 
 ### 10. Median-filtered Mosaic
