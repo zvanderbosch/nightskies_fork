@@ -383,7 +383,19 @@ This class uses `arcpy` (ArcGIS) to generate the airglow brightness model accord
 
 $$\large I_z = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
 
-where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius, and $\large h$ is the elevation of the observing site.
+where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius plus the elevation of the observing site, and $\large h$ is the height of the airglow emitting layer minus the elevation of the observing site.
+
+
+### 3. Build Atmospheric Diffuse Light (ADL) Model
+
+#### Purpose: 
+To generate the atmospheric diffuse light component of the natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `ADL()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to load in a pre-generated all-sky model of atmospheric diffuse light for Mauna Kea, Hawaii (see [Kwon et al. 2004](https://ui.adsabs.harvard.edu/abs/2004NewA...10...91K/abstract) and [Duriscoe et al. 2013](https://ui.adsabs.harvard.edu/abs/2013PASP..125.1370D/abstract)) and applies a linear scaling factor.
 
 
 ### Public domain
