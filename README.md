@@ -227,13 +227,13 @@ This script performs basic image reduction, including corrections for bias, dark
 `process_images.py` > `reduce_images()` > `reduce.py` > `reducev()` and `reduceb()`  
 
 #### Methods
-In the beginning of data collection, for each data set, 5 dark ($D$) images showing the thermal noise and 5 bias ($B$) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark ($D_c$) image:
+In the beginning of data collection, for each data set, 5 dark ($\large D$) images showing the thermal noise and 5 bias ($\large B$) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark ($\large D_c$) image:
 
 $$\huge D_c=L(D-B) $$
 
 <!-- <img src="https://github.com/liweihung/nightskies/blob/master/static/D_c.png" width="320"> -->
 
-where $L$ is the linearity curve for correcting the detector response. Then, the script creates the master dark image $D_m$ through averaging the 5 calibrated darks and the master bias image $B_m$ through averaging the 5 biases. While collecting scientific images, an additional 50 x 50 pixels small bias image was taken immediately after each scientific image. We use these small bias images to track the bias drift over the course of the observation. We compute the bias drift $B_d$ by subtracting the average value of the central 50 x 50 pixels of the master bias from the average pixel value of each one of the small bias images. This measured bias drift information is saved in _biasdrift.txt_ and _biasdrift.png_ in the calibdata folder. To obtain calibrated scientific images $S_c$, we use the following equation:
+where $\large L$ is the linearity curve for correcting the detector response. Then, the script creates the master dark image $\large D_m$ through averaging the 5 calibrated darks and the master bias image $\large B_m$ through averaging the 5 biases. While collecting scientific images, an additional 50 x 50 pixels small bias image was taken immediately after each scientific image. We use these small bias images to track the bias drift over the course of the observation. We compute the bias drift $\large B_d$ by subtracting the average value of the central 50 x 50 pixels of the master bias from the average pixel value of each one of the small bias images. This measured bias drift information is saved in _biasdrift.txt_ and _biasdrift.png_ in the calibdata folder. To obtain calibrated scientific images $\large S_c$, we use the following equation:
 
 $$\huge S_c=\frac{(S-B_M-B_D)(L-D_m)}{F} $$
 
