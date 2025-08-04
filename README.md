@@ -379,7 +379,7 @@ To generate the airglow component of the natural sky model.
 `naturalsky.py` > `Airglow()`
 
 #### Methods: 
-This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The van Rhijn equation is written as:
+This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The extincted model is saved to the Griddata directory. This module also saves all natural sky model input parameters to the excel sheet `natsky_model_params.xlsx` in the Calibdata directory. The van Rhijn equation is written as:
 
 $$\large I_z = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
 
@@ -396,6 +396,30 @@ To generate the atmospheric diffuse light component of the natural sky model.
 
 #### Methods: 
 This class uses `arcpy` (ArcGIS) to load in a pre-generated all-sky model of atmospheric diffuse light for Mauna Kea, Hawaii (see [Kwon et al. 2004](https://ui.adsabs.harvard.edu/abs/2004NewA...10...91K/abstract) and [Duriscoe et al. 2013](https://ui.adsabs.harvard.edu/abs/2013PASP..125.1370D/abstract)) and applies a linear scaling factor.
+
+
+### 4. Build Galactic Model
+
+#### Purpose: 
+To generate the galactic component of the natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `Galactic()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to load in the Galactic mosaic generated in the ([previous step](#9-galactic-mosaic)) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
+
+
+### 5. Build Zodiacal Light Model
+
+#### Purpose: 
+To generate the zodiacal light component of the natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `Zodiacal()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to load in the Zodiacal light mosaic generated in the ([previous step](#10-zodiacal-mosaic)) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
 
 
 ### Public domain
