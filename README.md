@@ -200,6 +200,8 @@ Assuming you are working from a command line interface, such as Windows Terminal
 The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
 
 ```python
+--elevation     # (Site elevation [m], Default = FITS header value)
+--extcoeff      # (Extinction coefficient [mag/airmass], Default = Best-fit value)
 --airglowzenith # (Zenight Airglow [nL], Default = 20)
 --airglowheight # (Height of emitting airglow layer [km], Default = 90)
 --airglowext    # (Airglow extinction factor, Default = 0.6)
