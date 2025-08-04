@@ -381,7 +381,7 @@ To generate the airglow component of the natural sky model.
 #### Methods: 
 This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The van Rhijn equation:
 
-$$ I(z) = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
+$$\large I(z) = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
 
 
 
