@@ -200,7 +200,11 @@ def nl_to_mag(x):
 def mag_to_nl_dan(m):
     """
     Converting brightness from magnitude to nL according to Dan's script
-    Note: this is inconsistent to nL_to_mag()
+    which uses an equation from Garstang 1986 and Garstang 1989.
+    Note: this is slightly inconsistent with nL_to_mag(). Converting this
+    equation to a base-10 formula gives x = 10**((26.3313-m)/2.5). This
+    results in only 0.03-0.04% differences for magnitudes in range 10--25
+    when compared to the mag_to_nl_liwei equation.
     """
     x = 34.08 * arcpy.sa.Exp(20.7233 - 0.92104 * m)
     return x
