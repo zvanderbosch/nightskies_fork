@@ -379,11 +379,11 @@ To generate the airglow component of the natural sky model.
 `naturalsky.py` > `Airglow()`
 
 #### Methods: 
-This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The van Rhijn equation:
+This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The van Rhijn equation is written as:
 
-$$\large I(z) = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
+$$\large I_z = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
 
-
+where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius, and $\large h$ is the elevation of the observing site.
 
 
 ### Public domain
