@@ -239,7 +239,7 @@ $$\huge S_c=\frac{(S-B_M-B_D)(L-D_m)}{F} $$
 
 <!-- <img src="https://github.com/liweihung/nightskies/blob/master/static/S_c.png" width="350"> -->
  
-where $S$ is the raw scientific image and $F$ is the flat image taken and processed in the lab. All of the terms in the above equation are 2D image arrays except for $B_d$ and $L$ which are single-value scale factors. This script outputs calibrated science images in both _fits_ and _tiff_ formats. 
+where $\large S$ is the raw scientific image and $\large F$ is the flat image taken and processed in the lab. All of the terms in the above equation are 2D image arrays except for $\large B_d$ and $\large L$ which are single-value scale factors. This script outputs calibrated science images in both _fits_ and _tiff_ formats. 
 
 
 ### 2. Registration
