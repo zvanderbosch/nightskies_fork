@@ -233,7 +233,7 @@ In the beginning of data collection, for each data set, 5 dark (**D**) images sh
 
 where **L** is the linearity curve for correcting the detector response. Then, the script creates the master dark image **D<sub>m</sub>** through averaging the 5 calibrated darks and the master bias image **B<sub>m</sub>** through averaging the 5 biases. While collecting scientific images, an additional 50 x 50 pixels small bias image was taken immediately after each scientific image. We use these small bias images to track the bias drift over the course of the observation. We compute the bias drift **B<sub>d</sub>** by subtracting the average value of the central 50 x 50 pixels of the master bias from the average pixel value of each one of the small bias images. This measured bias drift information is saved in _biasdrift.txt_ and _biasdrift.png_ in the calibdata folder. To obtain calibrated scientific images **S<sub>c</sub>**, we use the following equation:
 
-$$ D_c=L(D-B) $$
+$$\Large D_c=L(D-B) $$
 
 <img src="https://github.com/liweihung/nightskies/blob/master/static/S_c.png" width="350">
  
