@@ -211,7 +211,7 @@ The `naturalsky.py` script is the only script that has both required and optiona
 ```
 
 
-## Module Documentation
+## Image Processing Module Documentation
 
 <p align="center">
   <img src="./static/ProcessImagesChart.png" alt="Process_Images_Flow_Chart" width="65%"/>
@@ -348,6 +348,8 @@ This script makes the whole sky mosaic of the zodiacal model according to the ti
 #### Methods: 
 This script reads in some premade raster templates from the raster folder.  Then it reads in the zodiacal coordinates and the pointing error from the input files. We use `arcpy` (ArcGIS) to manipulate the images with rotation, projection, clipping, and mosaic. The output raster and layer files are stored in the Griddata folder.
 
+
+## Natural Sky Modeling Module Documentation
 
 <p align="center">
   <img src="./static/NaturalskyChart.png" alt="Naturalsky_Flow_Chart" width="65%"/>
