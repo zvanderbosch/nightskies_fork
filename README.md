@@ -300,34 +300,10 @@ This script calculates ecliptic and galactic coordinates and rotation angles of 
 The script reads in the longitude and latitude from the image header. It also reads in the registered image coordinates in azimuth and altitude from the input file. Then, it uses ACP to calculate the corresponding galactic and zodiacal coordinates. The output coordinates are saved in a text file for the future use of making the mosaic images of galactic and zodiacal model.
 
 
-### 7. Galactic Mosaic
+### 7. Full-resolution Mosaic
 
 #### Purpose: 
-This script makes the whole sky mosaic of the galactic model according to the time and location of the observed sky.
-
-#### Source code: 
-`process_images.py` > `mosaic_galactic()` > `galactic.py` > `mosaic()`
-
-#### Methods: 
-This script reads in some premade raster templates from the raster folder.  Then it reads in the galactic coordinates and the pointing error from the input files. We use `arcpy` (ArcGIS) to manipulate the images with rotation, projection, clipping, and mosaic. The output raster and layer files are stored in the Griddata folder.
-
-
-### 8. Zodiacal Mosaic
-
-#### Purpose: 
-This script makes the whole sky mosaic of the zodiacal model according to the time and location of the observed sky.
-
-#### Source code: 
-`process_images.py` > `mosaic_zodiacal()` > `zodiacal.py` > `mosaic()`
-
-#### Methods: 
-This script reads in some premade raster templates from the raster folder.  Then it reads in the zodiacal coordinates and the pointing error from the input files. We use `arcpy` (ArcGIS) to manipulate the images with rotation, projection, clipping, and mosaic. The output raster and layer files are stored in the Griddata folder.
-
-
-### 9. Full-resolution Mosaic
-
-#### Purpose: 
-This script makes the whole sky mosaic from the full resolution images according to the location of observed sky.
+This script makes the whole sky mosaic from the full resolution images according to the location of observed sky. This script also generates ArcGIS shapefiles used to define the spatial extent of each image. The Median, Galactic, and Zodiacal mosaic steps use these shapefiles as inputs to perform image clipping and match exactly the per-image extent of the full-resolution mosaic.
 
 #### Source code: 
 `process_images.py` > `mosaic_full()` > `fullmosaic.py` > `mosaic()`
@@ -340,7 +316,7 @@ $$\huge M_c=Z-2.5\log_{10}\left(\frac{M_r}{tP^2}\right) $$
 where $\large M_c$ is the mosaic in calibrated unit of magnitudes per square arc second, $\large Z$ is the instrumental zeropoint magnitude, $\large M_r$ is the mosaic in raw unit of **DN**, $\large t$ is the exposure time, and $\large P$ is the plate scale in arcsecond per pixel. The photometrically calibrated raster and layer files are stored in the Griddata folder.
 
 
-### 10. Median-filtered Mosaic
+### 8. Median-filtered Mosaic
 
 #### Purpose: 
 This script makes the whole sky mosaic from the median filtered images according to the location of observed sky.
@@ -350,6 +326,30 @@ This script makes the whole sky mosaic from the median filtered images according
 
 #### Methods: 
 Same as the method section under [_“full-resolution mosaic”_](### Full-resolution Mosaic)  with the exception of using median filtered images as the input. This module also creates the initial `mask.tif` file, used for generating the terrain mask.
+
+
+### 9. Galactic Mosaic
+
+#### Purpose: 
+This script makes the whole sky mosaic of the galactic model according to the time and location of the observed sky.
+
+#### Source code: 
+`process_images.py` > `mosaic_galactic()` > `galactic.py` > `mosaic()`
+
+#### Methods: 
+This script reads in some premade raster templates from the raster folder.  Then it reads in the galactic coordinates and the pointing error from the input files. We use `arcpy` (ArcGIS) to manipulate the images with rotation, projection, clipping, and mosaic. The output raster and layer files are stored in the Griddata folder.
+
+
+### 10. Zodiacal Mosaic
+
+#### Purpose: 
+This script makes the whole sky mosaic of the zodiacal model according to the time and location of the observed sky.
+
+#### Source code: 
+`process_images.py` > `mosaic_zodiacal()` > `zodiacal.py` > `mosaic()`
+
+#### Methods: 
+This script reads in some premade raster templates from the raster folder.  Then it reads in the zodiacal coordinates and the pointing error from the input files. We use `arcpy` (ArcGIS) to manipulate the images with rotation, projection, clipping, and mosaic. The output raster and layer files are stored in the Griddata folder.
 
 
 ### Public domain
