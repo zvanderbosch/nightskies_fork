@@ -407,7 +407,7 @@ To generate the galactic component of the natural sky model.
 `naturalsky.py` > `Galactic()`
 
 #### Methods: 
-This class uses `arcpy` (ArcGIS) to load in the Galactic mosaic generated in the ([previous step](#9-galactic-mosaic)) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
+This class uses `arcpy` (ArcGIS) to load in the Galactic mosaic generated in a [previous step](#9-galactic-mosaic) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
 
 
 ### 5. Build Zodiacal Light Model
@@ -419,7 +419,31 @@ To generate the zodiacal light component of the natural sky model.
 `naturalsky.py` > `Zodiacal()`
 
 #### Methods: 
-This class uses `arcpy` (ArcGIS) to load in the Zodiacal light mosaic generated in the ([previous step](#10-zodiacal-mosaic)) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
+This class uses `arcpy` (ArcGIS) to load in the Zodiacal light mosaic generated in a [previous step](#10-zodiacal-mosaic) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
+
+
+### 6. Load Observed Sky Brightness Mosaic
+
+#### Purpose: 
+To load in the observed sky brightness mosaic and prepare it for subtraction of the natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `Skybright()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to load in the observed median-filtered sky brightness mosaic, convert pixel values from mag/arcsec$^2$, project the mosaic into the fisheye equal-area coordinate system, and apply the finished terrain mask. This prepares the observed sky brightness mosaic to have the natural sky model subtracted. The masked mosaic is saved to the Griddata directory.
+
+
+### 7. Combined Natural Sky Model
+
+#### Purpose: 
+To add the component models into a combined natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `AggregateModel()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to add together the component natural sky models ([Airglow](#2-build-airglow-model), [A.D.L](#3-build-atmospheric-diffuse-light-adl-model), [Galactic](#4-build-galactic-model), and [Zodiacal](#5-build-zodiacal-light-model)) into a combined natural sky model, project the resulting model into the fisheye equal-area coordinate system, and apply the finished terrain mask. This prepares the natural sky model subtracto be subtracted from the observed sky brightness mosaic. The combined natural sky model is saved to the Griddata directory.
 
 
 ### Public domain
