@@ -214,7 +214,9 @@ The `naturalsky.py` script is the only script that has both required and optiona
 
 ## Processing Flow Chart
 
-![processing flow chart](./static/ProcessImagesChart.png)
+<!-- ![processing flow chart](./static/ProcessImagesChart.png) -->
+
+<img src="./static/ProcessImagesChart.png" alt="Process_Images_Flow_Chart" width="200"/>
 
 ## Module Documentation
 
