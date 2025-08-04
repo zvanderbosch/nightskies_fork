@@ -211,18 +211,11 @@ The `naturalsky.py` script is the only script that has both required and optiona
 ```
 
 
-
-## Processing Flow Charts
+## Module Documentation
 
 <p align="center">
   <img src="./static/ProcessImagesChart.png" alt="Process_Images_Flow_Chart" width="65%"/>
 </p>
-
-<p align="center">
-  <img src="./static/NaturalskyChart.png" alt="Naturalsky_Flow_Chart" width="65%"/>
-</p>
-
-## Module Documentation
 
 ### 1. Reduction
 
@@ -354,6 +347,24 @@ This script makes the whole sky mosaic of the zodiacal model according to the ti
 
 #### Methods: 
 This script reads in some premade raster templates from the raster folder.  Then it reads in the zodiacal coordinates and the pointing error from the input files. We use `arcpy` (ArcGIS) to manipulate the images with rotation, projection, clipping, and mosaic. The output raster and layer files are stored in the Griddata folder.
+
+
+<p align="center">
+  <img src="./static/NaturalskyChart.png" alt="Naturalsky_Flow_Chart" width="65%"/>
+</p>
+
+The `naturalsky.py` script is somewhat unique compared to the `process_images.py` and `process_metrics.py` routines in that all of the sub-routines are internal to the `naturalsky.py` script as class objects rather than broken out into individual python scripts.
+
+### 11. Finalize Terrain Mask
+
+#### Purpose: 
+This class finalizes the terrain mask so it can be used for clipping/masking procedures in later steps.
+
+#### Source code: 
+`naturalsky.py` > `Mask()`
+
+#### Methods: 
+This class reads in the `mask.tif` file after it has been edited with Adobe Photoshop. We use `arcpy` (ArcGIS) to project the mask into the fisheye equal area coordinate system and set values below the horizon to `NoData` and values above the horizon to zero. The final mask raster, `maskd.tif`, is stored in the Griddata folder.
 
 
 ### Public domain
