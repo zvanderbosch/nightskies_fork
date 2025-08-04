@@ -357,7 +357,8 @@ This script reads in some premade raster templates from the raster folder.  Then
 
 The `naturalsky.py` script is somewhat unique compared to the `process_images.py` and `process_metrics.py` routines in that all of the sub-routines are internal to the `naturalsky.py` script as class objects rather than broken out into individual python scripts.
 
-### 11. Finalize Terrain Mask
+
+### 1. Finalize Terrain Mask
 
 #### Purpose: 
 This class finalizes the terrain mask so it can be used for clipping/masking procedures in later steps.
@@ -367,6 +368,22 @@ This class finalizes the terrain mask so it can be used for clipping/masking pro
 
 #### Methods: 
 This class reads in the `mask.tif` file after it has been edited with Adobe Photoshop. We use `arcpy` (ArcGIS) to project the mask into the fisheye equal area coordinate system and set values below the horizon to `NoData` and values above the horizon to zero. The final mask raster, `maskd.tif`, is stored in the Griddata folder.
+
+
+### 2. Build Airglow Model
+
+#### Purpose: 
+To generate the airglow component of the natural sky model.
+
+#### Source code: 
+`naturalsky.py` > `Airglow()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The van Rhijn equation:
+
+$$ I(z) = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
+
+
 
 
 ### Public domain
