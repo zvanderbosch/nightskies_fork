@@ -449,7 +449,7 @@ This class uses `arcpy` (ArcGIS) to add together the component natural sky model
 ### 8. Anthropogenic Light Mosaic
 
 #### Purpose: 
-To add the component models into a combined natural sky model.
+To produce the anthropogenic light mosaic.
 
 #### Source code: 
 `naturalsky.py` > `SkyglowModel()`
