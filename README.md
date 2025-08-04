@@ -227,7 +227,7 @@ This script performs basic image reduction, including corrections for bias, dark
 `process_images.py` > `reduce_images()` > `reduce.py` > `reducev()` and `reduceb()`  
 
 #### Methods
-In the beginning of data collection, for each data set, 5 dark ($\large (D)$) images showing the thermal noise and 5 bias ($\large B$) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark ($\large D_c$) image:
+In the beginning of data collection, for each data set, 5 dark ($\large \left(D\right)$) images showing the thermal noise and 5 bias ($\large B$) images showing the read noise were taken alternately for calibration purposes. Each dark image is then processed here as following to obtain the calibrated dark ($\large D_c$) image:
 
 $$\huge D_c=L(D-B) $$
 
