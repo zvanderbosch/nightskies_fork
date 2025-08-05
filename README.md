@@ -480,6 +480,12 @@ To provided statistical assessments of the observed and anthropogenic light mosa
 This class uses `arcpy` (ArcGIS) and `numpy` to calculate various statistics on the pixel values of both the observed sky brightness and anthropogenic light mosaics. These stats are saved within the `natsky_model_params.xlsx` excel sheet in the night's Calibdata directory. This class also uses `matplotlib` to generate a summary figure (`natsky_model_fit.png`) saved in both the Griddata and Graphics directories that can be used to visually assess the quality of the natural sky model fit.
 
 
+## Sky Brightness Metrics Module Documentation
+
+<p align="center">
+  <img src="./static/ProcessMetricsChart" alt="Metrics_Flow_Chart" width="65%"/>
+</p>
+
 ### Public domain
 
 This project is in the worldwide [public domain](LICENSE.md). As stated in [CONTRIBUTING](CONTRIBUTING.md):
