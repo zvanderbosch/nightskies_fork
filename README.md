@@ -35,6 +35,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
   - [7. Combined Natural Sky Model](#7-combined-natural-sky-model)
   - [8. Anthropogenic Light Mosaic](#8-anthropogenic-light-mosaic)
   - [9. Mosaic Analysis](#9-mosaic-analysis) -->
+- [Sky Brightness Metrics Module Documentation](#sky-brightness-metrics-module-documentation)
 
 <!-- /MarkdownTOC -->
 
@@ -224,7 +225,7 @@ The `naturalsky.py` script is the only script that has both required and optiona
 ## Image Processing Module Documentation
 
 <p align="center">
-  <img src="./static/ProcessImagesChart.png" alt="Process_Images_Flow_Chart" width="65%"/>
+  <img src="./static/ProcessImagesChart.png" alt="Process_Images_Flow_Chart" width="75%"/>
 </p>
 
 ### 1. Reduction
@@ -483,7 +484,7 @@ This class uses `arcpy` (ArcGIS) and `numpy` to calculate various statistics on 
 ## Sky Brightness Metrics Module Documentation
 
 <p align="center">
-  <img src="./static/ProcessMetricsChart.png" alt="Metrics_Flow_Chart" width="65%"/>
+  <img src="./static/ProcessMetricsChart.png" alt="Metrics_Flow_Chart" width="75%"/>
 </p>
 
 ### Public domain
