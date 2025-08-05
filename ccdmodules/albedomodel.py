@@ -5,7 +5,9 @@
 #
 #Last updated: 2025/07/24
 #
-#This script computes an albedo model
+#This script extracts the site-specific albedo value for an observing
+#location from a pre-generated geo-referenced albedo model of the
+#continental U.S.
 #
 #Note: 
 #
@@ -71,7 +73,7 @@ def clear_memory(objectList):
 
 def calculate_albedo_model(dnight):
     '''
-    Main program for computing the site albedo model
+    Main program for determining the site-specific albedo value
 
     Parameters:
     -----------
