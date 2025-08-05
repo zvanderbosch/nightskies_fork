@@ -483,7 +483,7 @@ This class uses `arcpy` (ArcGIS) and `numpy` to calculate various statistics on 
 ## Sky Brightness Metrics Module Documentation
 
 <p align="center">
-  <img src="./static/ProcessMetricsChart" alt="Metrics_Flow_Chart" width="65%"/>
+  <img src="./static/ProcessMetricsChart.png" alt="Metrics_Flow_Chart" width="65%"/>
 </p>
 
 ### Public domain
