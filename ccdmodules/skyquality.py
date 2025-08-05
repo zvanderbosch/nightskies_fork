@@ -6,7 +6,7 @@
 #Last updated: 2025/07/25
 #
 #This script computes sky quality index (SQI) and synthetic
-#sky quality meter (SQM) values, alogn with a few photometric
+#sky quality meter (SQM) values, along with a few photometric
 #indicators using simple sky brightness aperture photometry
 #measurements.
 #
