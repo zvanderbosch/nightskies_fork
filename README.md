@@ -567,13 +567,13 @@ where $\large W$ is the Walker's Law value for a given population center, $\larg
 ### 7. Sky Quality Metrics
 
 #### Purpose: 
-This script computes sky quality index (SQI) and synthetic sky quality meter (SQM) values, along with a few photometric indicators using simple sky brightness aperture photometry measurements.
+This script computes sky quality index (SQI) and synthetic sky quality meter (SQM) values, along with a few photometric indicators using simple aperture photometry measurements.
 
 #### Source code: 
 `process_metrics.py` > `process_skyquality()` > `skyquality.py` > `calculate_sky_quality()`
 
 #### Methods: 
-The script ...
+The script loads in the pixel histogram tables generated during the [Skyglow](#2-anthropogenic-light-metrics) step in order to calculate Sky Quality Index (SQI) values for a variety of horizon and Zenith angle limits. This script also computes simple aperture photometry on the calibrated FITS images in order to derive synthetic Sky Quality Meter (SQM) values for the observing site, taking into account the sky background brightness along with light from bright stars and planets. Simple aperture photometry is also used to calculate some Zenith luminance metrics.
 
 
 
