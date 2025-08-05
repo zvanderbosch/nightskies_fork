@@ -14,27 +14,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
 - [Running the Pipeline](#running-the-pipeline)
 - [Processing Flow Chart](#processing-flow-chart)
 - [Image Processing Module Documentation](#image-processing-module-documentation)
-  <!-- - [1. Reduction](#1-reduction)
-  - [2. Registration](#2-registration)
-  - [3. Pointing Error](#3-pointing-error)
-  - [4. Zeropoint and Extinction](#4-zeropoint-and-extinction)
-  - [5. Median Filter](#5-median-filter)
-  - [6. Galactic and Zodiacal Coordinates](#6-galactic-and-zodiacal-coordinates)
-  - [7. Galactic Mosaic](#7-galactic-mosaic)
-  - [8. Zodiacal Mosaic](#8-galactic-and-zodiacal-coordinates)
-  - [9. Full-resolution Mosaic](#9-galactic-and-zodiacal-coordinates)
-  - [10. Median-filtered Mosaic](#10-galactic-and-zodiacal-coordinates)
-  - [Public domain](#public-domain) -->
 - [Natural Sky Modeling Module Documentation](#natural-sky-modeling-module-documentation)
-  <!-- - [1. Finalize Terrain Mask](#1-finalize-terrain-mask)
-  - [2. Airglow Model](#2-airglow-model)
-  - [3. A.D.L. Model](#3-atmospheric-diffuse-light-adl-model)
-  - [4. Galactic Model](#4-galactic-model)
-  - [5. Zodiacal Light Model](#5-zodiacal-light-model)
-  - [6. Observed Sky Brigtness](#6-load-observed-sky-brightness-mosaic)
-  - [7. Combined Natural Sky Model](#7-combined-natural-sky-model)
-  - [8. Anthropogenic Light Mosaic](#8-anthropogenic-light-mosaic)
-  - [9. Mosaic Analysis](#9-mosaic-analysis) -->
 - [Sky Brightness Metrics Module Documentation](#sky-brightness-metrics-module-documentation)
 
 <!-- /MarkdownTOC -->
@@ -228,6 +208,18 @@ The `naturalsky.py` script is the only script that has both required and optiona
   <img src="./static/ProcessImagesChart.png" alt="Process_Images_Flow_Chart" width="75%"/>
 </p>
 
+- [1. Reduction](#1-reduction)
+- [2. Registration](#2-registration)
+- [3. Pointing Error](#3-pointing-error)
+- [4. Zeropoint and Extinction](#4-zeropoint-and-extinction)
+- [5. Median Filter](#5-median-filter)
+- [6. Galactic and Zodiacal Coordinates](#6-galactic-and-zodiacal-coordinates)
+- [7. Galactic Mosaic](#7-galactic-mosaic)
+- [8. Zodiacal Mosaic](#8-galactic-and-zodiacal-coordinates)
+- [9. Full-resolution Mosaic](#9-galactic-and-zodiacal-coordinates)
+- [10. Median-filtered Mosaic](#10-galactic-and-zodiacal-coordinates)
+- [Public domain](#public-domain)
+
 ### 1. Reduction
 
 #### Purpose: 
@@ -367,6 +359,16 @@ This script reads in some premade raster templates from the raster folder.  Then
 </p>
 
 The `naturalsky.py` script is somewhat unique compared to the `process_images.py` and `process_metrics.py` routines in that all of the sub-routines are internal to the `naturalsky.py` script as class objects rather than broken out into individual python scripts.
+
+- [1. Finalize Terrain Mask](#1-finalize-terrain-mask)
+- [2. Airglow Model](#2-airglow-model)
+- [3. A.D.L. Model](#3-atmospheric-diffuse-light-adl-model)
+- [4. Galactic Model](#4-galactic-model)
+- [5. Zodiacal Light Model](#5-zodiacal-light-model)
+- [6. Observed Sky Brigtness](#6-load-observed-sky-brightness-mosaic)
+- [7. Combined Natural Sky Model](#7-combined-natural-sky-model)
+- [8. Anthropogenic Light Mosaic](#8-anthropogenic-light-mosaic)
+- [9. Mosaic Analysis](#9-mosaic-analysis)
 
 
 ### 1. Finalize Terrain Mask
