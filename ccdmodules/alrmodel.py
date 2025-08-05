@@ -5,13 +5,17 @@
 #
 #Last updated: 2025/07/24
 #
-#This script computes All-sky Light pollution Ratio (ALR) model
+#This script extracts the site-specific All-sky Light-pollution Ratio (ALR)
+#model value from a pre-generated geo-referenced ALR model based on 2014 VIIRS 
+#satellite imagery.
 #
 #Note: 
+#   See Duriscoe et al. 2018 (https://doi.org/10.1016/j.jqsrt.2018.04.028)
+#   for modeling details.
 #
 #Input:
 #   (1) alrmodel
-#           Raster dataset providing base ALR model
+#           Raster dataset containing the ALR model
 #           (filepath.rasters)
 #
 #Output:
@@ -68,7 +72,7 @@ def clear_memory(objectList):
 
 def calculate_alr_model(dnight):
     '''
-    Main program for computing the numnber/fraction of visible stars
+    Main program for determining the site-specific ALR value
 
     Parameters:
     -----------
@@ -92,7 +96,7 @@ def calculate_alr_model(dnight):
     arcpy.env.workspace = scratchsetp
     arcpy.env.scratchWorkspace = scratchsetp
 
-    # Load in the ALR raster
+    # Load in the ALR model raster
     alrRaster = arcpy.sa.Raster(f"{filepath.rasters}alrmodel")
 
     # Get site longitude and latitude
