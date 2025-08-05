@@ -393,7 +393,7 @@ This class uses `arcpy` (ArcGIS) to generate the airglow brightness model accord
 
 $$\large I_z = \frac{I_0}{\sqrt{1-\left[(R+\ell)/(R+h)\right]^2\sin^2z}} $$
 
-where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius plus the elevation of the observing site, and $\large h$ is the height of the airglow emitting layer minus the elevation of the observing site.
+where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius, $\large \ell$ is the elevation of the observing site, and $\large h$ is the height of the airglow emitting layer.
 
 
 ### 3. Atmospheric Diffuse Light (ADL) Model
