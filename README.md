@@ -391,7 +391,7 @@ To generate the airglow component of the natural sky model.
 #### Methods: 
 This class uses `arcpy` (ArcGIS) to generate the airglow brightness model according to the van Rhijn equation ([Leinert et al. 1998](https://ui.adsabs.harvard.edu/abs/1998A%26AS..127....1L/abstract)) and applying atmospheric extinction. The extincted model is saved to the Griddata directory. This module also saves all natural sky model input parameters to the excel sheet `natsky_model_params.xlsx` in the Calibdata directory. The van Rhijn equation is written as:
 
-$$\large I_z = \frac{I_0}{\sqrt{1-[(R+\ell)/(R+h)]^2\sin^2z}} $$
+$$\large I_z = \frac{I_0}{\sqrt{1-[\frac{(R+\ell)}{(R+h)}]^2\sin^2z}} $$
 
 where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius plus the elevation of the observing site, and $\large h$ is the height of the airglow emitting layer minus the elevation of the observing site.
 
