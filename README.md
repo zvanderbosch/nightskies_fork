@@ -557,7 +557,7 @@ This script computes distances and Walker's law values to nearby places using 20
 `process_metrics.py` > `process_places()` > `places.py` > `calculate_places()`
 
 #### Methods: 
-The script loads in 2010 Census population data (`Places21k.xlsx`) and uses the longitude and latitude of the observing site to calculate great-circle distances to each census place. The script uses the distance and population to calculate Walker's Law values for each place within 450 km of the observing site. Walker's Law is a simple numerical metric that assesses the impact of a population center on light pollution in a given area and is defined as:
+The script loads in 2010 Census population data (`Places21k.xlsx`) and uses the longitude and latitude of the observing site to calculate great-circle distances to each census place. The script uses the distance and population to calculate Walker's Law values ([Walker 1977](https://doi.org/10.1086%2F130142)) for each place within 450 km of the observing site. Walker's Law is a simple numerical metric that assesses the impact of a population center on light pollution in a given area and is defined as:
 
 $$\huge W = \frac{0.1P}{d^{2.5}} $$
 
