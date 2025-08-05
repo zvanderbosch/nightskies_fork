@@ -1043,9 +1043,8 @@ class Mask(_MaskBase):
 _AggregateModelBase = Model
 class AggregateModel(_AggregateModelBase):
     """
-    This class is for combining the input models 
-    - "fix_param" will keep parameters fixed during the fitting process. It
-      takes the form {model:[fixed params]}
+    This class is for combining the input models into 
+    the full natural sky model
     """
 
     def __init__(self, model_list, paths, *args, **kwargs):
