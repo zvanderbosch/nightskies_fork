@@ -231,10 +231,12 @@ def solve(fn):
         '--apikey', f'{filepath.apikey}',
         '--upload', f'{fn}',
         '--parity', '1',
+        '--scale-units', 'arcsecperpix',
         '--scale-est', '96.0',
-        '--ra', f'{fc.ra.deg:.6f}',
-        '--dec', f'{fc.dec.deg:.6f}',
-        '--radius', '12.0',
+        '--scale-err', '10.0', # percent
+        # '--ra', f'{fc.ra.deg:.6f}',
+        # '--dec', f'{fc.dec.deg:.6f}',
+        # '--radius', '12.0',
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
@@ -261,10 +263,12 @@ def solve(fn):
             '--apikey', f'{filepath.apikey}',
             '--upload', f'{fn}',
             '--parity', '1',
+            '--scale-units', 'arcsecperpix',
             '--scale-est', '96.0',
-            '--ra', f'{fc.ra.deg:.6f}',
-            '--dec', f'{fc.dec.deg:.6f}',
-            '--radius', '12.0',
+            '--scale-err', '10.0', # percent
+            # '--ra', f'{fc.ra.deg:.6f}',
+            # '--dec', f'{fc.dec.deg:.6f}',
+            # '--radius', '12.0',
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
@@ -319,7 +323,7 @@ def matchstars(dnight, sets, filter):
     
     # Set number of parallel processes that can be
     # sent in to Astrometry.net
-    threads = 10
+    threads = 5
 
     #looping through all the sets in that night
     t0 = time.time()
