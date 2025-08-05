@@ -14,7 +14,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
 - [Running the Pipeline](#running-the-pipeline)
 - [Processing Flow Chart](#processing-flow-chart)
 - [Image Processing Module Documentation](#image-processing-module-documentation)
-  - [1. Reduction](#1-reduction)
+  <!-- - [1. Reduction](#1-reduction)
   - [2. Registration](#2-registration)
   - [3. Pointing Error](#3-pointing-error)
   - [4. Zeropoint and Extinction](#4-zeropoint-and-extinction)
@@ -24,9 +24,9 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
   - [8. Zodiacal Mosaic](#8-galactic-and-zodiacal-coordinates)
   - [9. Full-resolution Mosaic](#9-galactic-and-zodiacal-coordinates)
   - [10. Median-filtered Mosaic](#10-galactic-and-zodiacal-coordinates)
-  - [Public domain](#public-domain)
+  - [Public domain](#public-domain) -->
 - [Natural Sky Modeling Module Documentation](#natural-sky-modeling-module-documentation)
-  - [1. Finalize Terrain Mask](#1-finalize-terrain-mask)
+  <!-- - [1. Finalize Terrain Mask](#1-finalize-terrain-mask)
   - [2. Airglow Model](#2-airglow-model)
   - [3. A.D.L. Model](#3-atmospheric-diffuse-light-adl-model)
   - [4. Galactic Model](#4-galactic-model)
@@ -34,7 +34,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
   - [6. Observed Sky Brigtness](#6-load-observed-sky-brightness-mosaic)
   - [7. Combined Natural Sky Model](#7-combined-natural-sky-model)
   - [8. Anthropogenic Light Mosaic](#8-anthropogenic-light-mosaic)
-  - [9. Mosaic Analysis](#9-mosaic-analysis)
+  - [9. Mosaic Analysis](#9-mosaic-analysis) -->
 
 <!-- /MarkdownTOC -->
 
