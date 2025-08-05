@@ -13,7 +13,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
 - [Preparing Data For Processing](#preparing-data-for-processing)
 - [Running the Pipeline](#running-the-pipeline)
 - [Processing Flow Chart](#processing-flow-chart)
-- [Module Documentation](#module-documentation)
+- [Image Processing Module Documentation](#image-processing-module-documentation)
   - [1. Reduction](#1-reduction)
   - [2. Registration](#2-registration)
   - [3. Pointing Error](#3-pointing-error)
@@ -25,6 +25,16 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
   - [9. Full-resolution Mosaic](#9-galactic-and-zodiacal-coordinates)
   - [10. Median-filtered Mosaic](#10-galactic-and-zodiacal-coordinates)
   - [Public domain](#public-domain)
+- [Natural Sky Modeling Module Documentation](#natural-sky-modeling-module-documentation)
+  - [1. Finalize Terrain Mask](#1-finalize-terrain-mask)
+  - [2. Airglow Model](#2-airglow-model)
+  - [3. A.D.L. Model](#3-atmospheric-diffuse-light-adl-model)
+  - [4. Galactic Model](#4-galactic-model)
+  - [5. Zodiacal Light Model](#5-zodiacal-light-model)
+  - [6. Observed Sky Brigtness](#6-load-observed-sky-brightness-mosaic)
+  - [7. Combined Natural Sky Model](#7-combined-natural-sky-model)
+  - [8. Anthropogenic Light Mosaic](#8-anthropogenic-light-mosaic)
+  - [9. Mosaic Analysis](#9-mosaic-analysis)
 
 <!-- /MarkdownTOC -->
 
@@ -370,7 +380,7 @@ This class finalizes the terrain mask so it can be used for clipping/masking pro
 This class reads in the `mask.tif` file after it has been edited with Adobe Photoshop. We use `arcpy` (ArcGIS) to project the mask into the fisheye equal area coordinate system and set values below the horizon to `NoData` and values above the horizon to zero. The final mask raster, `maskd.tif`, is stored in the Griddata folder.
 
 
-### 2. Build Airglow Model
+### 2. Airglow Model
 
 #### Purpose: 
 To generate the airglow component of the natural sky model.
@@ -386,7 +396,7 @@ $$\large I_z = \frac{I_0}{\sqrt{1-[R/(R+h)]^2\sin^2z}} $$
 where $\large I_z$ is the airglow brightness as a function of zenith angle, $\large z$, $\large I_0$ is the airglow brightness directly overhead at zenith, $\large R$ is the Earth's radius plus the elevation of the observing site, and $\large h$ is the height of the airglow emitting layer minus the elevation of the observing site.
 
 
-### 3. Build Atmospheric Diffuse Light (ADL) Model
+### 3. Atmospheric Diffuse Light (ADL) Model
 
 #### Purpose: 
 To generate the atmospheric diffuse light component of the natural sky model.
@@ -398,7 +408,7 @@ To generate the atmospheric diffuse light component of the natural sky model.
 This class uses `arcpy` (ArcGIS) to load in a pre-generated all-sky model of atmospheric diffuse light for Mauna Kea, Hawaii (see [Kwon et al. 2004](https://ui.adsabs.harvard.edu/abs/2004NewA...10...91K/abstract) and [Duriscoe et al. 2013](https://ui.adsabs.harvard.edu/abs/2013PASP..125.1370D/abstract)) and applies a linear scaling factor.
 
 
-### 4. Build Galactic Model
+### 4. Galactic Model
 
 #### Purpose: 
 To generate the galactic component of the natural sky model.
@@ -410,7 +420,7 @@ To generate the galactic component of the natural sky model.
 This class uses `arcpy` (ArcGIS) to load in the Galactic mosaic generated in a [previous step](#9-galactic-mosaic) and apply atmospheric extinction scaled by a linear constant. The extincted model is saved to the Griddata directory.
 
 
-### 5. Build Zodiacal Light Model
+### 5. Zodiacal Light Model
 
 #### Purpose: 
 To generate the zodiacal light component of the natural sky model.
@@ -456,6 +466,18 @@ To produce the anthropogenic light mosaic.
 
 #### Methods: 
 This class uses `arcpy` (ArcGIS) to subtract the combined natural sky model from the observed sky-brightness mosaic. The resulting mosaic contains only light inferred to come from anthropogenic sources and is saved to the Griddata directory.
+
+
+### 9. Mosaic Analysis
+
+#### Purpose: 
+To provided statistical assessments of the observed and anthropogenic light mosaics along with a summary figure used to assess the quality of the model fit.
+
+#### Source code: 
+`naturalsky.py` > `MosaicAnalysis()`
+
+#### Methods: 
+This class uses `arcpy` (ArcGIS) and `numpy` to calculate various statistics on the pixel values of both the observed sky brightness and anthropogenic light mosaics. These stats are saved within the `natsky_model_params.xlsx` excel sheet in the night's Calibdata directory. This class also uses `matplotlib` to generate a summary figure (`natsky_model_fit.png`) saved in both the Griddata and Graphics directories that can be used to visually assess the quality of the natural sky model fit.
 
 
 ### Public domain
