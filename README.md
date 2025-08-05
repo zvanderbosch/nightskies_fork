@@ -576,6 +576,30 @@ This script computes sky quality index (SQI) and synthetic sky quality meter (SQ
 The script loads in the pixel histogram tables generated during the [Skyglow](#2-anthropogenic-light-metrics) step in order to calculate Sky Quality Index (SQI) values for a variety of horizon and Zenith angle limits. This script also computes simple aperture photometry on the calibrated FITS images in order to derive synthetic Sky Quality Meter (SQM) values for the observing site, taking into account the sky background brightness along with light from bright stars and planets. Simple aperture photometry is also used to calculate some Zenith luminance metrics.
 
 
+### 8. Panorama and Illumination Graphics
+
+#### Purpose: 
+This script generates the final panoramic all-sky images and vertical illumination graphics.
+
+#### Source code: 
+`process_metrics.py` > `process_drawgraphics()` > `drawgraphics.py` > `generate_graphics()`
+
+#### Methods: 
+The script uses `arcpy` (ArcGIS) to load the full-resolution, median filtered, natural sky model, and anthropogenic light mosaics, place each mosaic into a map template designed to display panoramic images, and then export each map to a JPEG image in the Graphics folder. This script also loads in the vertical illumination data from the [Illumall](#1-all-light-source-metrics) and [Skyglow](#2-anthropogenic-light-metrics) steps to generate a figure comparing the vertical illumination trends from all light sources and from artificial light only, also placed in the Graphics folder. Graphics are produced for each individual data set.
+
+
+### 9. Summary Table
+
+#### Purpose: 
+To collect and summarize all of the sky brightness metrics within a single Excel file, while properly formatting the data for import into an Access database.
+
+#### Source code: 
+`process_metrics.py` > `process_tables()` > `savetables.py` > `generate_tables()`
+
+#### Methods: 
+The script takes all of the sky brightness metrics calculated in previous steps, along with additional site metadata and clibration info, and places them within a single Excel workbook, with multiple spreadsheets, saved into the Tables directory. This Excel workbook is formatted so that it can be properly imported into the Access database used to keep track of all NSNSD CCD data processing results.
+
+
 
 ### Public domain
 
