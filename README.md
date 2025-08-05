@@ -521,7 +521,7 @@ This script computes the number of stars visible to the naked eye given the obse
 `process_metrics.py` > `process_starsvis()` > `starsvis.py` > `calculate_stars_visible()`
 
 #### Methods: 
-The script uses `arcpy` (ArcGIS) to read in a catalog of bright stars (`SAOJ200079.shp`) containing information about their on-sky positions and calibrated brightness in magnitude units. The stars' magnitudes are corrected for atmospheric extinction and then compared to the limiting magnitude of both the observed sky and the natural sky model. Stars with extincted magnitudes $<7.5$ and with magnitudes brighter than the limiting magnitude are considered visible to the average dark-adapted human eye. The ratio of stars visible in the observed sky to stars visible in the natural sky is used to determine the total fraction of stars visible at the data collection site.
+The script uses `arcpy` (ArcGIS) to read in a catalog of bright stars (`SAOJ200079.shp`) containing information about the on-sky positions and calibrated brightness in magnitude units of each star. The stars' magnitudes are corrected for atmospheric extinction and then compared to the limiting magnitude of both the observed sky and the natural sky model. Stars with extincted magnitudes $<7.5$ and with magnitudes brighter than the limiting magnitude are considered visible to the average dark-adapted human eye. The ratio of stars visible in the observed sky to stars visible in the natural sky is used to determine the total fraction of stars visible at the data collection site.
 
 
 ### 4. All-sky Light-pollution Ratio (ALR) Model
