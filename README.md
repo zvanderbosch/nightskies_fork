@@ -559,25 +559,22 @@ This script computes distances and Walker's law values to nearby places using 20
 #### Methods: 
 The script loads in 2010 Census population data (`Places21k.xlsx`) and uses the longitude and latitude of the observing site to calculate great-circle distances to each census place. The script uses the distance and population to calculate Walker's Law values ([Walker 1977](https://doi.org/10.1086%2F130142)) for each place within 450 km of the observing site. Walker's Law is a simple numerical metric that assesses the impact of a population center on light pollution in a given area and is defined as:
 
-$$\huge W = \frac{0.1P}{d^{2.5}} $$
+$$\huge W = 0.1Pd^{-2.5} $$
 
 where $\large W$ is the Walker's Law value for a given population center, $\large P$ is the population size, and $\large d$ is the great-circle distance between the population center and the observing site. Population centers with higher Walker's Law values would contribute more to the light pollution at a given observign site. We save of table of places (`cities.xlsx`) within 450 km and with $\large W>0.001$ to the Calibdata directory. The table is sorted in order of descending Walker's Law values.
 
 
-### 6. Nearby Places
+### 7. Sky Quality Metrics
 
 #### Purpose: 
-This script computes distances and Walker's law values to nearby places using 2010 Census Data.
+This script computes sky quality index (SQI) and synthetic sky quality meter (SQM) values, along with a few photometric indicators using simple sky brightness aperture photometry measurements.
 
 #### Source code: 
-`process_metrics.py` > `process_places()` > `places.py` > `calculate_places()`
+`process_metrics.py` > `process_skyquality()` > `skyquality.py` > `calculate_sky_quality()`
 
 #### Methods: 
-The script loads in 2010 Census population data (`Places21k.xlsx`) and uses the longitude and latitude of the observing site to calculate great-circle distances to each census place. The script uses the distance and population to calculate Walker's Law values ([Walker 1977](https://doi.org/10.1086%2F130142)) for each place within 450 km of the observing site. Walker's Law is a simple numerical metric that assesses the impact of a population center on light pollution in a given area and is defined as:
+The script ...
 
-<!-- $$\huge W = 0.1Pd^{-2.5} $$ -->
-
-where $\large W$ is the Walker's Law value for a given population center, $\large P$ is the population size, and $\large d$ is the great-circle distance between the population center and the observing site. Population centers with higher Walker's Law values would contribute more to the light pollution at a given observing site. We save of table of places (`cities.xlsx`) within 450 km and with $\large W>0.001$ to the Calibdata directory. The table is sorted in order of descending Walker's Law values.
 
 
 ### Public domain
