@@ -489,6 +489,16 @@ This class uses `arcpy` (ArcGIS) and `numpy` to calculate various statistics on 
   <img src="./static/ProcessMetricsChart.png" alt="Metrics_Flow_Chart" width="75%"/>
 </p>
 
+- [1. All Light Source Metrics](#1-all-light-source-metrics)
+- [2. Anthropogenic Light Metrics](#2-anthropogenic-light-metrics)
+- [3. Number of Visible Stars](#3-number-of-visible-stars)
+- [4. ALR Model](#4-all-sky-light-pollution-ratio-alr-model)
+- [5. Albedo Model](#5-albedo-model)
+- [6. Nearby Places](#6-nearby-places)
+- [7. Sky Quality Metrics](#7-sky-quality-metrics)
+- [8. Panorama and Illumination Graphics](#8-panorama-and-illumination-graphics)
+- [9. Summary Tables](#9-summary-tables)
+
 
 ### 1. All Light Source Metrics
 
@@ -590,7 +600,7 @@ This script generates the final panoramic all-sky images and vertical illuminati
 The script uses `arcpy` (ArcGIS) to load the full-resolution, median filtered, natural sky model, and anthropogenic light mosaics, place each mosaic into a map template designed to display panoramic images, and then export each map to a JPEG image in the Graphics folder. This script also loads in the vertical illumination data from the [Illumall](#1-all-light-source-metrics) and [Skyglow](#2-anthropogenic-light-metrics) steps to generate a figure comparing the vertical illumination trends from all light sources and from artificial light only, also placed in the Graphics folder. Graphics are produced for each individual data set.
 
 
-### 9. Summary Table
+### 9. Summary Tables
 
 #### Purpose: 
 To collect and summarize all of the sky brightness metrics within a single Excel file, while properly formatting the data for import into an Access database.
