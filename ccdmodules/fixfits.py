@@ -11,11 +11,35 @@
 #
 #Note: 
 #
+#Usage:
+#
+# python fixfits.py KEY VALUE [--directory, --filename]
+#
+# Required Arguments
+# ------------------
+#   KEY   : FITS header keyword to modify
+#   VALUE : New value for the given FITS keyword
+#
+# Optional Arguments
+# ------------------
+#   --directory (-d)  : Directory containing FITS files 
+#                       (Default = Current directory)
+#   --filename  (-f)  : FITS filename including path 
+#                       (Default = Find all FITS files in --directory)
+#
+# Example Usage to modify all FITS files in a directory:   
+#
+#       python fixfits.py LONGITUD -104.51142 -d G:\CCD\Data\calibdata\ROMO241004\S_01\
+#
+# Example Usage to modify a single FITS file:   
+#
+#       python fixfits.py LONGITUD -104.51142 -f G:\CCD\Data\calibdata\ROMO241004\S_01\ib001.fit
+#
 #Input:
-#   (1) 
+#   None
 #
 #Output:
-#   (1) 
+#   None
 #
 #History:
 #	Zach Vanderbosch -- Created script
