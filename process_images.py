@@ -563,7 +563,7 @@ if __name__ == '__main__':
         q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
         
         # Run processes
-        reduce_images(*K0)                            #image reduction   
+        reduce_images(*K0)                            #image reduction  
         register_coord(*K2)                           #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
