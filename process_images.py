@@ -360,7 +360,7 @@ def generate_calibreport(*args):
     tnow = Dtime.now()
     datenow = tnow.strftime("%m/%d/%Y").lstrip("0")
 
-    # Load in bestfit extinctino params
+    # Load in bestfit extinction params
     extFile = f"{filepath.calibdata}{args[0]}/extinction_fit_V.xlsx"
     extData = pd.read_excel(extFile)
 
@@ -408,7 +408,7 @@ def generate_calibreport(*args):
             if i == 0:
 
                 # Get names of calibration images
-                flatFile = f'{filepath.flats}{args[2]}'
+                flatFile = f'{filepath.calimages}{args[2]}'
                 curveFile = f'{filepath.lincurve}{args[3]}.txt'
                 biasFile = f'{filepath.calibdata}{args[0]}/S_{setnum:02d}/combias.fit'
                 thermalFile = f'{filepath.calibdata}{args[0]}/S_{setnum:02d}/corthermal.fit'
@@ -531,9 +531,9 @@ if __name__ == '__main__':
     #Check the calibration files exist    
     for i in range(len(filelist)):
         if V_band[i] == 'Yes':
-            open(filepath.flats+Flat_V[i])
+            open(filepath.calimages+Flat_V[i])
         if B_band[i] == 'Yes':
-            open(filepath.flats+Flat_B[i])
+            open(filepath.calimages+Flat_B[i])
         open(filepath.lincurve+Curve[i]+'.txt')
     
     #Determine the number of data sets collected in each night 
@@ -661,8 +661,15 @@ if __name__ == '__main__':
             p9.join() ; update_progressbar(9,i,q9.get())
 
 
-        # Generate the calibreport file
-        generate_calibreport(*report_args)
+        # Generate the calibreport file if all necessary inputs exist
+        calsetp = f"{filepath.calibdata}{Dataset[i]}/"
+        extFile = f"{calsetp}extinction_fit_V.xlsx"
+        pterrFiles = [f"{calsetp}pointerr_{s[0]}.txt" for s in sets]
+        imgFile = f"{calsetp}S_0{sets[0][0]}/data.jpg"
+        if os.path.isfile(extFile):
+            if all([os.path.isfile(fp) for fp in pterrFiles]):
+                if os.path.isfile(imgFile):
+                    generate_calibreport(*report_args)
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]

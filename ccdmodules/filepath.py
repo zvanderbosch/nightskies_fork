@@ -34,7 +34,7 @@ processlist = f"{base}/Data/"
 lincurve = f"{base}/Images/Linearity Curves/"
 
 # Directory for Flat-field calibration files
-flats = f"{base}/Images/Master/"
+calimages = f"{base}/Images/Master/"
 
 # Directory for raw images
 rawdata = f"{base}/Data/fielddata/"

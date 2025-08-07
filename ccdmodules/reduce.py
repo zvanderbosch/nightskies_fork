@@ -20,7 +20,7 @@
 #           (filepath.fielddata/DATANIGHT)
 #   (2) Master Flat FITS file
 #           Master flat-field calibration file 
-#           (filepath.flats)
+#           (filepath.calimages)
 #   (3) Linearity curve TXT file
 #           Linearity curve calibration file 
 #           (filepath.lincurve)
@@ -77,7 +77,7 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
-def reducev(dnight, sets, flatname, curve):
+def reducev(dnight, sets, flatname, curve, standards):
     '''
     This module is for calibrating the V-band data.
 
@@ -91,12 +91,25 @@ def reducev(dnight, sets, flatname, curve):
         Name of master flat field FITS file
     curve: string
         Name of linearity curve TXT file
+    standards: bool
+        Whether to use standard dark/bias frames located
+        in Images/Master (TRUE) or use the dark/bias 
+        frames taken during data collection (FALSE).
     '''
-    #read in the linearity curve (ADU, multiplying factor)
-    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
+
+    # Get filenames for standard calibration files
+    curveFile = f"{filepath.lincurve}{curve}.txt"
+    flatFile = f"{filepath.calimages}{flatname}"
+    biasFile = f"{filepath.calimages}{curve}bias.fit"
+    darksecFile = f"{filepath.calimages}{curve}thermal_1sec.fit"
+
+    # Read in the linearity curve (ADU, multiplying factor)
+    xp, fp = n.loadtxt(curveFile, unpack=True, delimiter=",")
     
-    #read in the flat
-    flat = fits.open(filepath.flats+flatname,unit=False)[0].data
+    # Read in the standard flat, dark, and bias frames
+    flat = fits.getdata(flatFile,ext=0,unit=False)
+    bias = fits.open(flatFile,ext=0,unit=False)
+    darksecStandard = fits.open(darksecFile,ext=0,unit=False)
     
     #looping through all the sets in that night
     for s in sets:
@@ -216,7 +229,7 @@ def reduceb(dnight, sets, flatname, curve):
     xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
     
     #read in the flat
-    flat = fits.open(filepath.flats+flatname,unit=False)[0].data
+    flat = fits.open(filepath.calimages+flatname,unit=False)[0].data
 
     #looping through all the sets in that night
     for s in sets:

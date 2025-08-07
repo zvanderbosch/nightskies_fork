@@ -1076,7 +1076,7 @@ def append_calibration(excelFile, dnight, sets):
 
     # Set the flat and curve filenames and paths
     flatFile = FlatV[Dataset == dnight][0]
-    flatPath = f"{filepath.flats}{flatFile}"
+    flatPath = f"{filepath.calimages}{flatFile}"
     curveName = Curve[Dataset == dnight][0]
 
     # Add to CALIBRATION sheet
