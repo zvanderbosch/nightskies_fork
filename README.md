@@ -188,8 +188,27 @@ Assuming you are working from a command line interface, such as Windows Terminal
 > └─── CALIB_NOTES      -Calibration quality notes
 > ```
 
-The `naturalsky.py` script is the only script that has both required and optional command line arguments. Required arguments are the data Night (ROMO241004), data Set (1) and filter Name (V) in that order. The optional arguments available are related to input parameters for the natural sky model and are listed below along with their default values:
+The `process_images.py` and `naturalsky.py` scripts both have command line arguments available, summarized below:
 
+#### process_metrics.py Command Line Arguments
+**Optional**
+```python
+--reduce-only [-r]              # Only execute the image reduction step (reduce)
+--register-only [-p]            # Only execute the image plate solving step (register).
+--skip-reduce [-s]              # Skip the reduce step and execute all other steps.
+--use-existing-astrometry [-a]  # Use existing astrometric solutions if available.
+--coord-steps [-c]              # Only execute steps that affect image coordinates (register, pointing, coordinates).
+--mosaics-only [-m]             # Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).
+```
+
+#### naturalsky.py Command Line Arguments
+**Required**
+```python
+DATANIGHT   # (Name of the night to process, e.g. ROMO241004)
+DATASET     # (Data set number to process, e.g. 1, 2, 3, etc.)
+FILTER      # (Filter to process, V or B, though only V currently works)
+```
+**Optional**
 ```python
 --elevation     # (Site elevation [m], Default = FITS header value)
 --extcoeff      # (Extinction coefficient [mag/airmass], Default = Best-fit value)
