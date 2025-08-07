@@ -48,6 +48,7 @@ import os
 import sys
 import time
 import shutil
+import argparse
 import warnings
 import openpyxl
 import numpy as n
@@ -178,7 +179,7 @@ def register_coord(*args):
     m = ['Images are normally registered using full frames.','',]
     import ccdmodules.register as RE
     for filter in args[2]:
-        cropped_fn, failed_fn = RE.matchstars(args[0],args[1],filter)
+        cropped_fn, failed_fn = RE.matchstars(args[0],args[1],filter,args[3])
         logm(m,'These %s images were registered using central 200 pix:'%filter)
         logm(m,cropped_fn)
         logm(m,'')
@@ -462,6 +463,15 @@ if __name__ == '__main__':
     )
     
     warnings.filterwarnings("ignore",".*GUI is implemented.*")
+
+    #------------------- Parse the command line arguments ------------------------#
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--use-existing-astrometry', dest='use_astrom', action='store_true',
+        help='Use existing astrometric solutions if available to update the FITS headers.'
+    )
+    args = parser.parse_args()
         
     #------------ Read in the processing list and initialize ---------------------#
 
@@ -552,19 +562,20 @@ if __name__ == '__main__':
             f'{Dataset[i]}{pc.END}{pc.END} dataset'
         )
 
-        # Set up processes for each pipeline step
-        q2=Queue(); Q2=(q2,); p2=Process(target=pointing_error,args=K3+Q2)
-        q3=Queue(); Q3=(q3,); p3=Process(target=fit_zeropoint,args=K1+Q3)
-        q4=Queue(); Q4=(q4,); p4=Process(target=apply_filter,args=K2+Q4)
-        q5=Queue(); Q5=(q5,); p5=Process(target=compute_coord,args=K3+Q5) 
-        q6=Queue(); Q6=(q6,); p6=Process(target=mosaic_full,args=K2+Q6)
-        q7=Queue(); Q7=(q7,); p7=Process(target=mosaic_galactic,args=K3+Q7)
-        q8=Queue(); Q8=(q8,); p8=Process(target=mosaic_zodiacal,args=K3+Q8)
-        q9=Queue(); Q9=(q9,); p9=Process(target=mosaic_median,args=K2+Q9)
+        # Set up queues and processes for each pipeline step
+        q2=Queue(); p2=Process(target=pointing_error,args=K3+(q2,))
+        q3=Queue(); p3=Process(target=fit_zeropoint,args=K1+(q3,))
+        q4=Queue(); p4=Process(target=apply_filter,args=K2+(q4,))
+        q5=Queue(); p5=Process(target=compute_coord,args=K3+(q5,)) 
+        q6=Queue(); p6=Process(target=mosaic_full,args=K2+(q6,))
+        q7=Queue(); p7=Process(target=mosaic_galactic,args=K3+(q7,))
+        q8=Queue(); p8=Process(target=mosaic_zodiacal,args=K3+(q8,))
+        q9=Queue(); p9=Process(target=mosaic_median,args=K2+(q9,))
         
         # Run processes
+        
         reduce_images(*K0)                            #image reduction  
-        register_coord(*K2)                           #pointing 
+        register_coord(*K2+(args.use_astrom,))        #pointing 
         p2.start(); update_progressbar(2,i)           #pointing error
         p3.start(); update_progressbar(3,i)           #zeropoint & extinction
         p4.start(); update_progressbar(4,i)           #median filter

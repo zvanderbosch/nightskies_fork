@@ -41,6 +41,7 @@
 from astropy.io import fits
 from glob import glob
 from multiprocessing import Pool
+from os.path import isfile
 
 import os
 import time
@@ -288,11 +289,86 @@ def solve(fn):
     return message
 
 
+def check_existing(fitsFile):
+    '''
+    Function that uses existing astrometric solutions
+    when available to update FITS headers
+    '''
+
+    # Get astrometry path
+    astsetp = "%s/astrometry/"%(fitsFile.split("\\")[0])
+
+    # Copy original filename
+    fn = fitsFile
+
+    # Get image number and update first-row filenames
+    m = int(fn[-7:-4])
+    if m < 16:
+        fn = fn[:-4]+'c.fit'
+
+    # Look for astrometry files
+    baseName = os.path.basename(fn).split(".")[0]
+    calibFile = f"{astsetp}{baseName}_calib.txt"
+    corrFile = f"{astsetp}{baseName}_corr.fit"
+    wcsFile = f"{astsetp}{baseName}_wcs.fit"
+
+    if isfile(calibFile) and isfile(corrFile) and isfile(wcsFile):
+        # Create cropped first-row FITS file if it doesn't exist
+        if not isfile(fn):
+            with fits.open(fitsFile,uint=False) as hdul:
+                f = hdul[0]
+                f.data[630:] = 0.
+                f.writeto(fn, overwrite=True)
+        
+        # Update FITS headers
+        message = ['normal', fitsFile]
+        update_fits(fn, message)
+    
+    # Check for cropped image solutions
+    else:
+        # Update the file name
+        fns = fn[:-4]+'s.fit'
+
+        # Look for astrometry files
+        baseName = os.path.basename(fns).split(".")[0]
+        calibFile = f"{astsetp}{baseName}_calib.txt"
+        corrFile = f"{astsetp}{baseName}_corr.fit"
+        wcsFile = f"{astsetp}{baseName}_wcs.fit"
+
+        if isfile(calibFile) and isfile(corrFile) and isfile(wcsFile):
+
+            # Create cropped first-row FITS file if it doesn't exist
+            if m < 16:
+                if not isfile(fn):
+                    with fits.open(fitsFile,uint=False) as hdul:
+                        f = hdul[0]
+                        f.data[630:] = 0.
+                        f.writeto(fn, overwrite=True)
+
+            # Create cropped 200x200 pix FITS file(s) if it doesn't exist
+            if not isfile(fns):
+                with fits.open(fn,uint=False) as hdul:
+                    f = hdul[0]
+                    l = int(len(f.data)/2)
+                    f.data = f.data[l-100:l+100,l-100:l+100]
+                    f.writeto(fns, overwrite=True)
+
+            # Update FITS headers
+            message = ['cropped', fitsFile]
+            update_fits(fns, message)
+        
+        # Set message for files without existing astrometric solutions
+        else:
+            message = ['missing', fitsFile]
+
+    return message
+
+
 #------------------------------------------------------------------------------#
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def matchstars(dnight, sets, filter):
+def matchstars(dnight, sets, filter, use_existing):
     '''
     Function that iterates over all calibrated images,
     sends them to Astrometry.net to be solved, and then
@@ -307,6 +383,10 @@ def matchstars(dnight, sets, filter):
         List of data sets to process
     filter: str
         Name of photometric filter
+    use_existing: bool
+        Whether to use existing astrometric solutions 
+        if available (TRUE) or re-do image solving (FALSE)
+        
 
     Returns:
     --------
@@ -343,20 +423,51 @@ def matchstars(dnight, sets, filter):
         if not os.path.exists(astsetp):
             os.mkdir(astsetp)
         
-        #both V and B bands
+        # Both V and B bands
         if filter == 'V':
             files = glob(calsetp+'ib???.fit')
         elif filter == 'B':
             files = glob(calsetp+'B/ib???.fit')
-        
-        # Start solving images w/ multiprocessing
-        with Pool(processes=threads) as pool:
-            result = pool.imap_unordered(solve,files)
-            for res in result:
-                if res[0] == 'cropped':
-                    cropped_fn.append(res[1])
-                elif res[0] == 'failed':
-                    failed_fn.append(res[1])
+
+        # If use_existing = True, try updating FITS files 
+        # using existing astrometric solutions
+        if use_existing:
+
+            # List to store FITS files that still need to be solved
+            files_to_solve = []
+            for fn in files:
+                
+                # Update FITS if solution already exists
+                status,fitsFile = check_existing(fn)
+
+                # Update file lists
+                if status == 'normal':
+                    print(f"{PREFIX}Used existing solution for {os.path.basename(fn)}")
+                if status == 'cropped':
+                    print(f"{PREFIX}Used existing solution for {os.path.basename(fn)}")
+                    cropped_fn.append(fitsFile)
+                if status == 'missing':
+                    files_to_solve.append(fitsFile)
+
+                # Solve images without existing solutions
+                if len(files_to_solve) > 0:
+                    with Pool(processes=threads) as pool:
+                        result = pool.imap_unordered(solve,files_to_solve)
+                        for res in result:
+                            if res[0] == 'cropped':
+                                cropped_fn.append(res[1])
+                            elif res[0] == 'failed':
+                                failed_fn.append(res[1])
+
+        # Solve all images from scratch
+        else:
+            with Pool(processes=threads) as pool:
+                result = pool.imap_unordered(solve,files)
+                for res in result:
+                    if res[0] == 'cropped':
+                        cropped_fn.append(res[1])
+                    elif res[0] == 'failed':
+                        failed_fn.append(res[1])
 
         # Sort file lists
         cropped_fn = sorted(cropped_fn)
