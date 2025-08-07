@@ -204,9 +204,9 @@ The `process_images.py` and `naturalsky.py` scripts both have command line argum
 ### naturalsky.py Command Line Arguments
 *Required*
 ```shell
-DATANIGHT   # (Name of the night to process, e.g. ROMO241004)
-DATASET     # (Data set number to process, e.g. 1, 2, 3, etc.)
-FILTER      # (Filter to process, V or B, though only V currently works)
+DATANIGHT       # (Name of the night to process, e.g. ROMO241004)
+DATASET         # (Data set number to process, e.g. 1, 2, 3, etc.)
+FILTER          # (Filter to process, V or B, though only V currently works)
 ```
 *Optional*
 ```shell
