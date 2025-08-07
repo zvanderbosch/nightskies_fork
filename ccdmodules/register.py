@@ -38,10 +38,11 @@
 #
 #-----------------------------------------------------------------------------#
 
-from astropy.io import fits
 from glob import glob
-from multiprocessing import Pool
 from os.path import isfile
+from astropy.io import fits
+from astropy.time import Time
+from multiprocessing import Pool
 
 import os
 import time
@@ -211,11 +212,27 @@ def solve(fn):
 
     # Get header and image coordinates
     fhdr = fits.getheader(fn,ext=0)
-    fc = coord.SkyCoord(
-        ra = fhdr['RA'],
-        dec = fhdr['DEC'],
-        unit = (u.hourangle, u.deg)
+    # fc = coord.SkyCoord(
+    #     ra = fhdr['RA'],
+    #     dec = fhdr['DEC'],
+    #     unit = (u.hourangle, u.deg)
+    # )
+
+    # Use observation time, site location, and Alt/Az to predict RA/Dec
+    obstime = Time(fhdr['JD'], format='jd', scale='utc')
+    site = coord.EarthLocation.from_geodetic(
+        lon = fhdr['LONGITUD']*u.deg,
+        lat = fhdr['LATITUDE']*u.deg,
+        height = fhdr['ELEVATIO']*u.m
     )
+    imgTopoCoord = coord.SkyCoord(
+        az = fhdr['AZ']*u.deg,
+        alt = fhdr['ALT']*u.deg,
+        obstime = obstime,
+        location = site,
+        frame='altaz'
+    )
+    fc = imgTopoCoord.transform_to(coord.ICRS())
 
     # Masking the area near the horizon in image 0-15
     if m < 16: 
@@ -235,9 +252,9 @@ def solve(fn):
         '--scale-units', 'arcsecperpix',
         '--scale-est', '96.0',
         '--scale-err', '10.0', # percent
-        # '--ra', f'{fc.ra.deg:.6f}',
-        # '--dec', f'{fc.dec.deg:.6f}',
-        # '--radius', '12.0',
+        '--ra', f'{fc.ra.deg:.6f}',
+        '--dec', f'{fc.dec.deg:.6f}',
+        '--radius', '12.0',
         '--corr', f'{astsetp}{fn_base}_corr.fit',
         '--calibrate', f'{astsetp}{fn_base}_calib.txt',
         '--wcs', f'{astsetp}{fn_base}_wcs.fit',
@@ -267,9 +284,9 @@ def solve(fn):
             '--scale-units', 'arcsecperpix',
             '--scale-est', '96.0',
             '--scale-err', '10.0', # percent
-            # '--ra', f'{fc.ra.deg:.6f}',
-            # '--dec', f'{fc.dec.deg:.6f}',
-            # '--radius', '12.0',
+            '--ra', f'{fc.ra.deg:.6f}',
+            '--dec', f'{fc.dec.deg:.6f}',
+            '--radius', '12.0',
             '--corr', f'{astsetp}{fn_base}_corr.fit',
             '--calibrate', f'{astsetp}{fn_base}_calib.txt',
             '--wcs', f'{astsetp}{fn_base}_wcs.fit',
