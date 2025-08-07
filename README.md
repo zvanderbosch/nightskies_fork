@@ -192,7 +192,7 @@ The `process_images.py` and `naturalsky.py` scripts both have command line argum
 
 ### process_metrics.py Command Line Arguments
 *Optional*
-```python
+```shell
 --reduce-only [-r]              # Only execute the image reduction step (reduce)
 --register-only [-p]            # Only execute the image plate solving step (register).
 --skip-reduce [-s]              # Skip the reduce step and execute all other steps.
@@ -203,13 +203,13 @@ The `process_images.py` and `naturalsky.py` scripts both have command line argum
 
 ### naturalsky.py Command Line Arguments
 *Required*
-```python
+```shell
 DATANIGHT   # (Name of the night to process, e.g. ROMO241004)
 DATASET     # (Data set number to process, e.g. 1, 2, 3, etc.)
 FILTER      # (Filter to process, V or B, though only V currently works)
 ```
 *Optional*
-```python
+```shell
 --elevation     # (Site elevation [m], Default = FITS header value)
 --extcoeff      # (Extinction coefficient [mag/airmass], Default = Best-fit value)
 --airglowzenith # (Zenight Airglow [nL], Default = 20)
