@@ -21,6 +21,24 @@
 #   namespace conflicts. Here, arcpy is imported through importing a local 
 #   mosaic source file. 
 #
+#Usage:
+#
+# python process_images.py [--reduce-only, --register-only, --skip-reduce, 
+#                           --use-existing-astrometry, --coord-steps, --mosaics-only]
+#
+# Optional Arguments
+# ------------------
+#   --reduce-only             [-r] :  Only execute the image reduction step (reduce)
+#   --register-only           [-p] :  Only execute the image plate solving step (register).
+#   --skip-reduce             [-s] :  Skip the reduce step and execute all other steps.
+#   --use-existing-astrometry [-a] :  Use existing astrometric solutions if available.
+#   --coord-steps             [-c] :  Only execute steps that affect image coordinates 
+#                                     (register, pointing, coordinates).
+#   --mosaics-only            [-m] :  Only execute mosaic generation steps 
+#                                     (fullmosaic, medianmosaic, galactic, zodiacal).
+#
+# Example Usage:   python naturalsky.py ROMO241004 1 V --airglowzenith=45
+#
 #
 #Input:
 #   (1) filelist.xlsx
