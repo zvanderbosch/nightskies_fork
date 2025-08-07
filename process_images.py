@@ -37,7 +37,7 @@
 #   --mosaics-only            [-m] :  Only execute mosaic generation steps 
 #                                     (fullmosaic, medianmosaic, galactic, zodiacal).
 #
-# Example Usage:   python naturalsky.py ROMO241004 1 V --airglowzenith=45
+# Example Usage:   python process_images.py --register-only --use-existing-astrometry
 #
 #
 #Input:
