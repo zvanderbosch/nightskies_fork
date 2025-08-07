@@ -190,8 +190,8 @@ Assuming you are working from a command line interface, such as Windows Terminal
 
 The `process_images.py` and `naturalsky.py` scripts both have command line arguments available, summarized below:
 
-#### process_metrics.py Command Line Arguments
-**Optional**
+### process_metrics.py Command Line Arguments
+*Optional*
 ```python
 --reduce-only [-r]              # Only execute the image reduction step (reduce)
 --register-only [-p]            # Only execute the image plate solving step (register).
@@ -201,14 +201,14 @@ The `process_images.py` and `naturalsky.py` scripts both have command line argum
 --mosaics-only [-m]             # Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).
 ```
 
-#### naturalsky.py Command Line Arguments
-**Required**
+### naturalsky.py Command Line Arguments
+*Required*
 ```python
 DATANIGHT   # (Name of the night to process, e.g. ROMO241004)
 DATASET     # (Data set number to process, e.g. 1, 2, 3, etc.)
 FILTER      # (Filter to process, V or B, though only V currently works)
 ```
-**Optional**
+*Optional*
 ```python
 --elevation     # (Site elevation [m], Default = FITS header value)
 --extcoeff      # (Extinction coefficient [mag/airmass], Default = Best-fit value)
