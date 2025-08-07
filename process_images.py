@@ -593,7 +593,7 @@ if __name__ == '__main__':
             reduce_images(*K0)                            #image reduction
 
         # Only run image plate solving step
-        elif args.pointing_only:
+        elif args.register_only:
             register_coord(*K2+(args.use_astrom,))        #pointing 
         
         # Only run mosaic processes

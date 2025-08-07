@@ -212,11 +212,6 @@ def solve(fn):
 
     # Get header and image coordinates
     fhdr = fits.getheader(fn,ext=0)
-    # fc = coord.SkyCoord(
-    #     ra = fhdr['RA'],
-    #     dec = fhdr['DEC'],
-    #     unit = (u.hourangle, u.deg)
-    # )
 
     # Use observation time, site location, and Alt/Az to predict RA/Dec
     obstime = Time(fhdr['JD'], format='jd', scale='utc')
@@ -466,15 +461,15 @@ def matchstars(dnight, sets, filter, use_existing):
                 if status == 'missing':
                     files_to_solve.append(fitsFile)
 
-                # Solve images without existing solutions
-                if len(files_to_solve) > 0:
-                    with Pool(processes=threads) as pool:
-                        result = pool.imap_unordered(solve,files_to_solve)
-                        for res in result:
-                            if res[0] == 'cropped':
-                                cropped_fn.append(res[1])
-                            elif res[0] == 'failed':
-                                failed_fn.append(res[1])
+            # Solve images without existing solutions
+            if len(files_to_solve) > 0:
+                with Pool(processes=threads) as pool:
+                    result = pool.imap_unordered(solve,files_to_solve)
+                    for res in result:
+                        if res[0] == 'cropped':
+                            cropped_fn.append(res[1])
+                        elif res[0] == 'failed':
+                            failed_fn.append(res[1])
 
         # Solve all images from scratch
         else:
