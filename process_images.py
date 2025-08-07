@@ -477,11 +477,15 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-s', '--skip-reduce', dest='skip_reduce', action='store_true',
-        help='Execute all steps from register onward, skipping only the reduce step.'
+        help='Skip the reduce step and execute all other steps.'
     )
     parser.add_argument(
         '-a', '--use-existing-astrometry', dest='use_astrom', action='store_true',
         help='Use existing astrometric solutions if available to update the FITS headers.'
+    )
+    parser.add_argument(
+        '-c', '--coord-steps', dest='coord_steps', action='store_true',
+        help='Only execute steps that affect image coordinates (register, pointing, coordinates)'
     )
     parser.add_argument(
         '-m', '--mosaics-only', dest='mosaics_only', action='store_true',
@@ -595,6 +599,14 @@ if __name__ == '__main__':
         # Only run image plate solving step
         elif args.register_only:
             register_coord(*K2+(args.use_astrom,))        #pointing 
+
+        # Only run steps involving image astrometry/coordinates
+        elif args.coord_steps:
+            register_coord(*K2+(args.use_astrom,))        #pointing
+            p2.start(); update_progressbar(2,i)           #pointing error
+            p2.join() ; update_progressbar(2,i,q2.get())
+            p5.start(); update_progressbar(5,i)           #galactic & ecliptic coord
+            p5.join() ; update_progressbar(5,i,q5.get())
         
         # Only run mosaic processes
         elif args.mosaics_only:
