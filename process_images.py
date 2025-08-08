@@ -31,6 +31,8 @@
 #   --reduce-only             [-r] :  Only execute the image reduction step (reduce)
 #   --register-only           [-p] :  Only execute the image plate solving step (register).
 #   --skip-reduce             [-s] :  Skip the reduce step and execute all other steps.
+#   --use-standards           [-u] :  Use standard dark/bias frames in Images/Master for 
+#                                     image reduction.
 #   --use-existing-astrometry [-a] :  Use existing astrometric solutions if available.
 #   --coord-steps             [-c] :  Only execute steps that affect image coordinates 
 #                                     (register, pointing, coordinates).
@@ -183,9 +185,9 @@ def reduce_images(*args):
     t1 = time.time()
     import ccdmodules.reduce as R
     if 'V' in args[2]:
-        R.reducev(args[0],args[1],args[2]['V'],args[3])
+        R.reducev(args[0],args[1],args[2]['V'],args[3],args[4])
     if 'B' in args[2]:
-        R.reduceb(args[0],args[1],args[2]['B'],args[3])
+        R.reduceb(args[0],args[1],args[2]['B'],args[3],args[4])
     t2 = time.time()
     update_progressbar(0,i,t2-t1)
 
@@ -498,6 +500,10 @@ if __name__ == '__main__':
         help='Skip the reduce step and execute all other steps.'
     )
     parser.add_argument(
+        '-u', '--use-standards', dest='use_standards', action='store_true',
+        help='Use standard dark/bias frames in Images/Master for image reduction.'
+    )
+    parser.add_argument(
         '-a', '--use-existing-astrometry', dest='use_astrom', action='store_true',
         help='Use existing astrometric solutions if available to update the FITS headers.'
     )
@@ -612,7 +618,7 @@ if __name__ == '__main__':
 
         # Only run image reduction step
         if args.reduce_only:
-            reduce_images(*K0)                            #image reduction
+            reduce_images(*K0+(args.use_standards,))      #image reduction
 
         # Only run image plate solving step
         elif args.register_only:
@@ -641,7 +647,7 @@ if __name__ == '__main__':
         else:
             # Skip over reduction step if skip_reduce = True
             if not args.skip_reduce:
-                reduce_images(*K0)                        #image reduction  
+                reduce_images(*K0+(args.use_standards,))  #image reduction  
             register_coord(*K2+(args.use_astrom,))        #pointing 
             p2.start(); update_progressbar(2,i)           #pointing error
             p3.start(); update_progressbar(3,i)           #zeropoint & extinction
