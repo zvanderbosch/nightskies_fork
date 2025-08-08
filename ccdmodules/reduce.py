@@ -107,74 +107,116 @@ def reducev(dnight, sets, flatname, curve, standards):
     xp, fp = n.loadtxt(curveFile, unpack=True, delimiter=",")
     
     # Read in the standard flat, dark, and bias frames
-    flat = fits.getdata(flatFile,ext=0,unit=False)
-    bias = fits.open(flatFile,ext=0,unit=False)
-    darksecStandard = fits.open(darksecFile,ext=0,unit=False)
+    flat = fits.getdata(flatFile, ext=0, unit=False)
+    biasStd = fits.getdata(biasFile, ext=0, unit=False)
+    darksecStd = fits.getdata(darksecFile, ext=0, unit=False)
     
-    #looping through all the sets in that night
+    # Loop through all sets in the given night
     for s in sets:
-        rawsetp = filepath.rawdata + dnight + '/' + s + '/'
-        calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/'
+        
+        # Status update
         print(f'{PREFIX}Reducing {dnight} V-band Set {s[0]}...')
+
+        # Define raw and calibrated data directories
+        rawsetp = f"{filepath.rawdata}{dnight}/{s}/"
+        calsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/"
+
+        # Get filenames for science images
+        scienceFiles = n.hstack(
+            (
+                rawsetp+'zenith1.fit',
+                sorted(glob(rawsetp+'ib???.fit')),
+                rawsetp+'zenith2.fit'
+            )
+        )
+        Nf = len(scienceFiles)
+        
+        # Check that calibdata directory exists
         if os.path.isdir(calsetp):
             print(f'{PREFIX}Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
-    
-        #correct the darks for bias and linearity response; crop the biases
-        dark = []
-        bias = []
-        for i in range(1,6):
-            darkraw = fits.open(rawsetp+'dark%i.fit'%i,uint=False)[0]
-            biasraw = fits.open(rawsetp+'mbias%i.fit'%i,uint=False)[0]
-            biasrawd = biasraw.data
-            darkp = (darkraw.data - biasrawd).clip(0) #replace negatives with 0
-            darki = darkp * n.interp(darkp,xp,fp) #correct linearity response
-            biascrop = biasrawd[486:536,486:536]
-            dark.append(darki)
-            bias.append(biasrawd)
-            fits.writeto(calsetp+'thermal%i.fit'%i, darki, overwrite=True)
-            fits.writeto(rawsetp+'biasc%i.fit'%i, biascrop, overwrite=True,
-                         header=biasraw.header)
+
+        # Use standard dark/bias calibration frames
+        if standards:
+
+            # Get exposure time
+            with fits.open(f"{rawsetp}zenith1.fit") as hdul:
+                hdr = hdul[0].header
+                exptime = hdr['EXPTIME']
+
+            # Scale 1-second dark exposure to exposure time
+            darkStd = (darksecStd * exptime).clip(0)
+
+            # Perform linearity correction
+            darkStdCorr = darkStd * n.interp(darkStd,xp,fp)
+
+            # Define the master thermal, bias, and cropped bias images
+            corthermal = darkStdCorr
+            combias = biasStd
+            biascrop = combias[486:536,486:536]
+
+        # Use dark/bias frames from data collection night
+        else:
+
+            # Load dark/bias frames and correct the darks 
+            # for bias and linearity response
+            dark = []
+            bias = []
+            for i in range(5):
+                darkraw = fits.getdata(f"{rawsetp}dark{i+1}.fit", ext=0, uint=False)
+                biasraw = fits.getdata(f"{rawsetp}mbias{i+1}.fit", ext=0, uint=False)
+                darkp = (darkraw - biasraw).clip(0) #replace negatives with 0
+                darki = darkp * n.interp(darkp,xp,fp) #correct linearity response
+                dark.append(darki)
+                bias.append(biasraw)
+            
+            # Average combine to generate master thermal, bias, and cropped bias images
+            corthermal = n.average(dark,axis=0)
+            combias = n.average(bias,axis=0)
+            biascrop = combias[486:536,486:536]
+
+
+        # Save master thermal, bias, and cropped bias to files
+        fits.writeto(f"{calsetp}corthermal.fit", corthermal, overwrite=True)
+        fits.writeto(f"{calsetp}combias.fit", combias, overwrite=True)
+        fits.writeto(f"{calsetp}combiasc.fit", biascrop, overwrite=True)
         
-        #average combine to generate the master thermal and bias
-        corthermal = n.average(dark,axis=0)
-        combias = n.average(bias,axis=0)
-        fits.writeto(calsetp+'corthermal.fit', corthermal, overwrite=True)
-        fits.writeto(calsetp+'combias.fit', combias, overwrite=True)
+        # Measure the bias drift for each frame
+        baseline = n.average(biascrop)
+        biasc = n.empty([Nf,50,50])
+        for i in range(Nf):
+            biasc[i] = fits.getdata(
+                f"{rawsetp}biasc{i+6}.fit", ext=0, uint=False
+            )
+        biasdrift = n.average(biasc,axis=(1,2)) - baseline
+
+        # Save bias drift data to text file
+        n.savetxt(
+            f"{filepath.calibdata}{dnight}/biasdrift_{s[0]}.txt",
+            biasdrift, fmt='%5.3f', header='delta_bias[ADU]'
+        )
         
-        #measure the bias drift for each frames
-        nb = len(glob(rawsetp+'biasc*.fit'))
-        biasc = n.empty([nb,50,50])
-        Temp = n.empty([nb,1])                    # CCD temperature [C]
-        for i in range(1,nb+1):
-            biasci = fits.open(rawsetp+'biasc%i.fit'%i,uint=False)[0]
-            biasc[i-1] = biasci.data
-            Temp[i-1] = biasci.header['CCD-TEMP']
-        baseline = n.average(biasc[:6])
-        biasdrift_full = n.average(biasc,axis=(1,2)) - baseline
-        biasdrift = biasdrift_full[5:]
-        n.savetxt(filepath.calibdata+dnight+'/biasdrift_%s.txt'%s[0],
-                  biasdrift,fmt='%5.3f',header='delta_bias[ADU]')
+        # Create bias drift figure
         fig = plt.figure('bias')
-        plt.plot(n.arange(len(biasc)), n.zeros(len(biasc)), 'k--')
-        plt.plot(n.arange(len(biasc)), biasdrift_full, 'o')
-        plt.ylim(-5,5)
-        plt.title('Bias Drift Compared to the Average of the First 5 Files')
-        plt.xlabel('Bias File number')
-        plt.ylabel('Delta_Bias [ADU] (bias - %i)'%baseline)
-        plt.savefig(filepath.calibdata+dnight+'/biasdrift_%s.png'%s[0])   
+        ax = fig.add_subplot(111)
+        ax.plot(n.arange(Nf), n.zeros(len(biasc)), 'k--')
+        ax.plot(n.arange(Nf), biasdrift, 'o')
+        ax.set_ylim(-5,5)
+        ax.set_title('Bias Drift Compared to the Average of the First 5 Files')
+        ax.set_xlabel('Bias File number')
+        ax.set_ylabel('Delta_Bias [ADU] (bias - %i)'%baseline)
+        plt.savefig(f"{filepath.calibdata}{dnight}/biasdrift_{s[0]}.png")   
         plt.close('bias')
         
-        #calibrate the science images
-        file = n.hstack((rawsetp+'zenith1.fit',
-                         glob(rawsetp+'ib???.fit'),
-                         rawsetp+'zenith2.fit'))
-            
-        for i in range(len(file)):
+        # Perform image bias/dark/flat calibration  
+        for i,fn in enumerate(scienceFiles):
 
-            with fits.open(file[i],uint=False) as hdu:
+            # Get base filename
+            fnBase = os.path.basename(fn)
+
+            with fits.open(fn,uint=False) as hdu:
                 f = hdu[0]                            # science image 
                 f.data -= combias+biasdrift[i]        # subtract drift-corrected bias
                 f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
@@ -184,7 +226,7 @@ def reducev(dnight, sets, flatname, curve, standards):
                 f.data = f.data.clip(max=65535.)      # Set maximum value to saturation limit
                 f.data = f.data.astype(n.uint16)      # Convert to uint16 values
                 f.header['IMAGETYP'] = 'CALIB_M'      # Update header
-                f.writeto(calsetp+file[i][len(rawsetp):], overwrite=True)
+                f.writeto(f"{calsetp}{fnBase}", overwrite=True)
 
             # Save as TIFF file. TIFF Tag IDs found here:
             # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
@@ -201,12 +243,13 @@ def reducev(dnight, sets, flatname, curve, standards):
             }
             tiff_output = Image.fromarray(tiff_data, mode="I;16")
             tiff_output.save(
-                calsetp+'tiff/'+file[i][len(rawsetp):-4]+'.tif',
+                f"{calsetp}tiff/{fnBase[:-4]}.tif",
                 tiffinfo = tiff_info
             )
         
-        for f in iglob(filepath.tiff+'*.tfw'):
-            shutil.copy2(f,calsetp+'tiff/')
+        # Copy TIFF world files (.tfw) to calibdata tiff directory
+        for f in iglob(f"{filepath.tiff}*.tfw"):
+            shutil.copy2(f,f"{calsetp}tiff/")
                     
 
 def reduceb(dnight, sets, flatname, curve):
@@ -280,6 +323,7 @@ def reduceb(dnight, sets, flatname, curve):
                 tiffinfo = tiff_info
             )
         
+        # Copy TIFF world files (.tfw) to calibdata tiff directory
         for f in iglob(filepath.tiff+'*.tfw'):
             shutil.copy2(f,calsetp+'tiff/')
                         
