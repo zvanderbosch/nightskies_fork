@@ -199,14 +199,24 @@ def reducev(dnight, sets, flatname, curve, standards):
         )
         
         # Create bias drift figure
+        meanbd = n.average(biasdrift)
         fig = plt.figure('bias')
         ax = fig.add_subplot(111)
-        ax.plot(n.arange(Nf), n.zeros(len(biasc)), 'k--')
+        ax.axhline(meanbd, ls='--', c='k')
         ax.plot(n.arange(Nf), biasdrift, 'o')
-        ax.set_ylim(-5,5)
-        ax.set_title('Bias Drift Compared to the Average of the First 5 Files')
+        ax.set_ylim(meanbd-5,meanbd+5)
+        if standards:
+            ax.set_title('Bias Drift Compared to the Standard Bias Frame')
+        else:
+            ax.set_title('Bias Drift Compared to the Average of the First 5 Files')
+        ax.text(
+            0.02,0.90,f'Mean Bias Drift = {meanbd:.1f}', transform=ax.transAxes,
+            fontsize=12, fontweight='heavy'
+        )
         ax.set_xlabel('Bias File number')
-        ax.set_ylabel('Delta_Bias [ADU] (bias - %i)'%baseline)
+        ax.set_ylabel(f'Bias Drift [ADU] (bias - {baseline:.1f})')
+        ax.set_axisbelow(True)
+        ax.grid(ls=':', c='silver', lw=0.75)
         plt.savefig(f"{filepath.calibdata}{dnight}/biasdrift_{s[0]}.png")   
         plt.close('bias')
         
@@ -286,7 +296,7 @@ def reduceb(dnight, sets, flatname, curve):
 
         # Get filenames for science images
         scienceFiles = sorted(glob(rawsetp+'ib???b.fit'))
-        
+
         # Check whether calsetp directory exists, create if needed
         if os.path.isdir(calsetp):
             print(f'{PREFIX}Replacing old calibrated files...')
