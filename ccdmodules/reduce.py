@@ -3,7 +3,7 @@
 #
 #NPS Night Skies Program
 #
-#Last updated: 2025/07/24
+#Last updated: 2025/08/08
 #
 #This script performs basic image reduction on the image data collected by the 
 #NPS Night Skies Program. The script corrects images for:
@@ -131,7 +131,7 @@ def reducev(dnight, sets, flatname, curve, standards):
         )
         Nf = len(scienceFiles)
         
-        # Check that calibdata directory exists
+        # Check whether calsetp directory exists, create if needed
         if os.path.isdir(calsetp):
             print(f'{PREFIX}Replacing old calibrated files...')
         else:
@@ -228,24 +228,24 @@ def reducev(dnight, sets, flatname, curve, standards):
                 f.header['IMAGETYP'] = 'CALIB_M'      # Update header
                 f.writeto(f"{calsetp}{fnBase}", overwrite=True)
 
-            # Save as TIFF file. TIFF Tag IDs found here:
-            # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
-            tiff_data = f.data.astype(n.uint16)
-            software_info = f'pillow (PIL) version {PIL.__version__}'
-            tiff_info = {
-                270: f.header['OBJECT'],   # Description
-                305: software_info,        # Software
-                259: 1,                    # Compression (1 = None)
-                282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
-                283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
-                296: 2,                    # Resolution unit (2 = dpi)
-                271: f.header['INSTRUME']  # Camera Maker
-            }
-            tiff_output = Image.fromarray(tiff_data, mode="I;16")
-            tiff_output.save(
-                f"{calsetp}tiff/{fnBase[:-4]}.tif",
-                tiffinfo = tiff_info
-            )
+                # Save as TIFF file. TIFF Tag IDs found here:
+                # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
+                tiff_data = f.data.astype(n.uint16)
+                software_info = f'pillow (PIL) version {PIL.__version__}'
+                tiff_info = {
+                    270: f.header['OBJECT'],   # Description
+                    305: software_info,        # Software
+                    259: 1,                    # Compression (1 = None)
+                    282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
+                    283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
+                    296: 2,                    # Resolution unit (2 = dpi)
+                    271: f.header['INSTRUME']  # Camera Maker
+                }
+                tiff_output = Image.fromarray(tiff_data, mode="I;16")
+                tiff_output.save(
+                    f"{calsetp}tiff/{fnBase[:-4]}.tif",
+                    tiffinfo = tiff_info
+                )
         
         # Copy TIFF world files (.tfw) to calibdata tiff directory
         for f in iglob(f"{filepath.tiff}*.tfw"):
@@ -276,54 +276,69 @@ def reduceb(dnight, sets, flatname, curve):
 
     #looping through all the sets in that night
     for s in sets:
-        rawsetp = filepath.rawdata + dnight + '/' + s + '/'
-        calsetp = filepath.calibdata + dnight + '/S_0' + s[0] + '/B/'
+
+        # Status update
         print(f'{PREFIX}Reducing {dnight} B-band Set {s[0]}...')
+
+        # Define raw and calibrated data directories
+        rawsetp = f"{filepath.rawdata}{dnight}/{s}/"
+        calsetp = f"{filepath.calibdata}{dnight}/S_0{s[0]}/B/"
+
+        # Get filenames for science images
+        scienceFiles = sorted(glob(rawsetp+'ib???b.fit'))
+        
+        # Check whether calsetp directory exists, create if needed
         if os.path.isdir(calsetp):
             print(f'{PREFIX}Replacing old calibrated files...')
         else:
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
     
-        #read in the thermal, bias, and bias drift from the V band directory
-        corthermal = fits.open(calsetp[:-2]+'corthermal.fit')[0].data * 1.5
-        combias = fits.open(calsetp[:-2]+'combias.fit')[0].data
-        biasdrift = n.loadtxt(filepath.calibdata+dnight+'/biasdrift_%s.txt'%s[0], unpack=True)[1:-1]
+        # Read in the thermal, bias, and bias drift from the V-band directory
+        corthermal = fits.getdata(f"{calsetp[:-2]}corthermal.fit", ext=0) * 1.5
+        combias = fits.getdata(f"{calsetp[:-2]}combias.fit", ext=0)
+        biasdrift = n.loadtxt(
+            f"{filepath.calibdata}{dnight}/biasdrift_{s[0]}.txt", unpack=True
+        )[1:-1]
         
-        #calibrate the science images
-        file = glob(rawsetp+'ib???b.fit')
-        
-        for i in range(len(file)):
-            f = fits.open(file[i],uint=False)[0]  # science image
-            f.data -= combias+biasdrift[i]        # subtract drift-corrected bias
-            f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
-            f.data -= corthermal                  # subtract dark
-            f.data /= flat                        # divide by flat
-            f.data = f.data.clip(min=1.0)         # Set minimum value to 1
-            f.data = f.data.astype(n.uint16)      # Convert to uint16 values
-            f.header['IMAGETYP'] = 'CALIB_M'
-            f.writeto(calsetp+file[i][len(rawsetp):-5]+'.fit', overwrite=True)
+        # Calibrate the science images
+        for i,fn in enumerate(scienceFiles):
 
-            # Save as TIFF file. TIFF Tag IDs found here:
-            # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
-            tiff_data = f.data.astype(n.uint16)
-            software_info = f'pillow (PIL) version {PIL.__version__}'
-            tiff_info = {
-                270: f.header['OBJECT'],   # Description
-                305: software_info,        # Software
-                259: 1,                    # Compression (1 = None)
-                282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
-                283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
-                296: 2,                    # Resolution unit (2 = dpi)
-                271: f.header['INSTRUME']  # Camera Maker
-            }
-            tiff_output = Image.fromarray(tiff_data, mode="I;16")
-            tiff_output.save(
-                calsetp+'tiff/'+file[i][len(rawsetp):-5]+'.tif',
-                tiffinfo = tiff_info
-            )
+            # Get base filename and remove the "b"
+            fnBase = os.path.basename(fn)
+            fnBase = f"{fnBase[-5:]}.fit"
+
+            with fits.open(fn,uint=False) as hdu:
+                f = hdu[0]
+                f.data -= combias+biasdrift[i]        # subtract drift-corrected bias
+                f.data *= n.interp(f.data,xp,fp)      # correct for linearity response
+                f.data -= corthermal                  # subtract dark
+                f.data /= flat                        # divide by flat
+                f.data = f.data.clip(min=1.0)         # Set minimum value to 1
+                f.data = f.data.astype(n.uint16)      # Convert to uint16 values
+                f.header['IMAGETYP'] = 'CALIB_M'
+                f.writeto(f"{calsetp}{fnBase}", overwrite=True)
+
+                # Save as TIFF file. TIFF Tag IDs found here:
+                # https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
+                tiff_data = f.data.astype(n.uint16)
+                software_info = f'pillow (PIL) version {PIL.__version__}'
+                tiff_info = {
+                    270: f.header['OBJECT'],   # Description
+                    305: software_info,        # Software
+                    259: 1,                    # Compression (1 = None)
+                    282: 1058,                 # X Resolution (set to match MaximDL TIFFs)
+                    283: 1058,                 # Y Resolution (set to match MaximDL TIFFs)
+                    296: 2,                    # Resolution unit (2 = dpi)
+                    271: f.header['INSTRUME']  # Camera Maker
+                }
+                tiff_output = Image.fromarray(tiff_data, mode="I;16")
+                tiff_output.save(
+                    f"{calsetp}tiff/{fnBase[:-4]}.tif",
+                    tiffinfo = tiff_info
+                )
         
         # Copy TIFF world files (.tfw) to calibdata tiff directory
-        for f in iglob(filepath.tiff+'*.tfw'):
-            shutil.copy2(f,calsetp+'tiff/')
+        for f in iglob(f"{filepath.tiff}*.tfw"):
+            shutil.copy2(f,f"{calsetp}tiff/")
                         
