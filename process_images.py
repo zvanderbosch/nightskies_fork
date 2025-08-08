@@ -350,6 +350,7 @@ def generate_calibreport(*args):
     args[3] = Linearity Curve file
     args[4] = Processor name (e.g. J Doe)
     args[5] = Location name (e.g. Rocky Mountain NP)
+    args[6] = Whether Standard or Data Night bias/darks were used
     '''
 
     # Copy calibreport template to calibdata folder
@@ -415,6 +416,14 @@ def generate_calibreport(*args):
                 biasFile = f'{filepath.calibdata}{args[0]}/S_{setnum:02d}/combias.fit'
                 thermalFile = f'{filepath.calibdata}{args[0]}/S_{setnum:02d}/corthermal.fit'
 
+                # Add notes regarding bias and thermal clibration files
+                if args[6]:
+                    biasNotes = f"(Copy of {filepath.calimages}{args[3]}bias.fit)"
+                    thermalNotes = f"(Copy of {filepath.calimages}{args[3]}thermal_1sec.fit, scaled to exposure time)"
+                else:
+                    biasNotes = "(Average-combined from first five bias images)"
+                    thermalNotes = "(Average-combined from first five dark images)"
+
                 # Add general data-night values to worksheet
                 worksheet.cell(row=3 , column=2, value=datenow) # Processing Date
                 worksheet.cell(row=3 , column=4, value=args[4]) # Processor Name
@@ -436,9 +445,8 @@ def generate_calibreport(*args):
                 worksheet.cell(row=10, column=8, value=firstHeader['EXPTIME'])
                 worksheet.cell(row=15, column=3, value=flatFile)
                 worksheet.cell(row=16, column=3, value=curveFile)
-                worksheet.cell(row=17, column=3, value=biasFile)
-                worksheet.cell(row=18, column=3, value=thermalFile)
-                worksheet.cell(row=15, column=3, value=flatFile)
+                worksheet.cell(row=17, column=3, value=f"{biasFile} {biasNotes}")
+                worksheet.cell(row=18, column=3, value=f"{thermalFile} {thermalNotes}")
 
                 # Remove existing data.jpg image if present
                 imagesKeep = []
@@ -565,7 +573,7 @@ if __name__ == '__main__':
         barfig.canvas.manager.window.move(2755,0)  
     else:
         print('You have 5 seconds to adjust the position of the progress bar window')
-        plt.pause(5) #users have 5 seconds to adjust the figure position
+        plt.pause(0.5) #users have 5 seconds to adjust the figure position
     
     #Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -595,7 +603,10 @@ if __name__ == '__main__':
         K1 = (Dataset[i],sets,Filter,zeropoint[i])
         K2 = (Dataset[i],sets,Filter) 
         K3 = (Dataset[i],sets)
-        report_args = (Dataset[i],sets,Flat_V[i],Curve[i],Processor[i],location[i])
+        report_args = (
+            Dataset[i],sets,Flat_V[i],Curve[i],
+            Processor[i],location[i],args.use_standards
+        )
 
         # Check provided zeropoint against known defaults
         check_zeropoint(zeropoint[i], Dataset[i], sets[0])
