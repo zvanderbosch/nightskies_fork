@@ -187,7 +187,7 @@ def reduce_images(*args):
     if 'V' in args[2]:
         R.reducev(args[0],args[1],args[2]['V'],args[3],args[4])
     if 'B' in args[2]:
-        R.reduceb(args[0],args[1],args[2]['B'],args[3],args[4])
+        R.reduceb(args[0],args[1],args[2]['B'],args[3])
     t2 = time.time()
     update_progressbar(0,i,t2-t1)
 
