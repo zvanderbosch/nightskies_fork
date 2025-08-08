@@ -171,12 +171,9 @@ def check_zeropoint(zp,dnight,dset):
     # Compare provided and default zeropoints
     if camera in zpDefaults.keys():
         zpDefault = zpDefaults[camera]
-        if not n.isclose(zp, zpDefault, atol=1e-03):
-            print(f'{PREFIX}{pc.RED}WARNING{pc.END}! - Provided zeropoint ({zp:.3f}) and default zeropoint ')
-            print(f'{PREFIX}for the {camera} Camera ({zpDefault:.3f}) differ by more than 0.001 mag.')
-            zpcheck = input(f'{PREFIX}Continue with data processing using the provided zeropoint? (Y/N): ')
-            if zpcheck.strip() not in ['Y','y']:
-                sys.exit(1)
+        if not n.isclose(zp, zpDefault, atol=1e-02):
+            print(f'{PREFIX}{pc.RED}WARNING{pc.END}! - Provided zeropoint ({zp:.2f}) and default zeropoint ')
+            print(f'{PREFIX}for the {camera} Camera ({zpDefault:.2f}) differ by more than 0.01 mag.')
 
 
 def reduce_images(*args):
@@ -478,12 +475,11 @@ def generate_calibreport(*args):
             worksheet.cell(row=21+i*2, column=10, value=pterrAvg)
 
 
-
-
-
+#-----------------------------------------------------------------------------#  
+#                       Main Program
+#-----------------------------------------------------------------------------#  
 if __name__ == '__main__':
-    t1 = time.time()
-    #-----------------------------------------------------------------------------#    
+    t1 = time.time() 
     print(
         '\n--------------------------------------------------------------\n\n'
         '        NPS NIGHT SKIES PROGRAM RAW IMAGE PROCESSING                '
@@ -492,7 +488,7 @@ if __name__ == '__main__':
     
     warnings.filterwarnings("ignore",".*GUI is implemented.*")
 
-    #------------------- Parse the command line arguments ------------------------#
+    #----------------- Parse the command line arguments ------------------#
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -525,7 +521,7 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
         
-    #------------ Read in the processing list and initialize ---------------------#
+    #------------ Read in the processing list and initialize --------------#
 
     # Read in processing dataset list and skip rows where Process = No
     filelist = pd.read_excel(f"{filepath.processlist}filelist.xlsx")
@@ -573,7 +569,7 @@ if __name__ == '__main__':
         barfig.canvas.manager.window.move(2755,0)  
     else:
         print('You have 5 seconds to adjust the position of the progress bar window')
-        plt.pause(0.5) #users have 5 seconds to adjust the figure position
+        plt.pause(5) #users have 5 seconds to adjust the figure position
     
     #Progress bar array (to be filled with processing time)
     Z = n.empty((5+len(filelist),14))*n.nan
@@ -679,14 +675,19 @@ if __name__ == '__main__':
 
 
         # Generate the calibreport file if all necessary inputs exist
-        calsetp = f"{filepath.calibdata}{Dataset[i]}/"
-        extFile = f"{calsetp}extinction_fit_V.xlsx"
-        pterrFiles = [f"{calsetp}pointerr_{s[0]}.txt" for s in sets]
-        imgFile = f"{calsetp}S_0{sets[0][0]}/data.jpg"
+        extFile = f"{filepath.calibdata}{Dataset[i]}/extinction_fit_V.xlsx"
+        pterrFiles = [f"{filepath.calibdata}{Dataset[i]}/pointerr_{s[0]}.txt" for s in sets]
+        imgFile = f"{filepath.griddata}{Dataset[i]}/S_0{sets[0][0]}/data.jpg"
         if os.path.isfile(extFile):
             if all([os.path.isfile(fp) for fp in pterrFiles]):
                 if os.path.isfile(imgFile):
                     generate_calibreport(*report_args)
+                else:
+                    print(f"{PREFIX} Calibreport SKIPPED - Missing fisheye image (data.jpg)")
+            else:
+                print(f"{PREFIX} Calibreport SKIPPED - Missing pointing error files (pointerr_SET.txt)")
+        else:
+            print(f"{PREFIX} Calibreport SKIPPED - Missing extinction file (extinction_fit_V.xlsx)")
         
         #log the processing history
         q_all = [q2,q3,q4,q5,q6,q7,q8,q9]
