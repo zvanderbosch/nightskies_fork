@@ -278,11 +278,16 @@ def reduceb(dnight, sets, flatname, curve):
     curve: string
         Name of linearity curve TXT file
     '''
+
+    # Get filenames for standard calibration files
+    curveFile = f"{filepath.lincurve}{curve}.txt"
+    flatFile = f"{filepath.calimages}{flatname}"
+
     #read in the linearity curve (ADU, multiplying factor)
-    xp, fp = n.loadtxt(filepath.lincurve+curve+'.txt', unpack=True, delimiter=",")
+    xp, fp = n.loadtxt(curveFile, unpack=True, delimiter=",")
     
     #read in the flat
-    flat = fits.open(filepath.calimages+flatname,unit=False)[0].data
+    flat = fits.open(flatFile,unit=False)[0].data
 
     #looping through all the sets in that night
     for s in sets:
@@ -316,7 +321,7 @@ def reduceb(dnight, sets, flatname, curve):
 
             # Get base filename and remove the "b"
             fnBase = os.path.basename(fn)
-            fnBase = f"{fnBase[-5:]}.fit"
+            fnBase = f"{fnBase[:-5]}.fit"
 
             with fits.open(fn,uint=False) as hdu:
                 f = hdu[0]
