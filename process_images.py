@@ -31,8 +31,8 @@
 #   --reduce-only             [-r] :  Only execute the image reduction step (reduce)
 #   --register-only           [-p] :  Only execute the image plate solving step (register).
 #   --skip-reduce             [-s] :  Skip the reduce step and execute all other steps.
-#   --use-standards           [-u] :  Use standard dark/bias frames in Images/Master for 
-#                                     image reduction.
+#   --use-night-cals          [-n] :  Use dark/bias frames from data night's fieldata folder
+#                                     to generate master dark/bias calibration images.
 #   --use-existing-astrometry [-a] :  Use existing astrometric solutions if available.
 #   --coord-steps             [-c] :  Only execute steps that affect image coordinates 
 #                                     (register, pointing, coordinates).
@@ -415,11 +415,11 @@ def generate_calibreport(*args):
 
                 # Add notes regarding bias and thermal clibration files
                 if args[6]:
-                    biasNotes = f"(Copy of {filepath.calimages}{args[3]}bias.fit)"
-                    thermalNotes = f"(Copy of {filepath.calimages}{args[3]}thermal_1sec.fit, scaled to exposure time)"
-                else:
                     biasNotes = "(Average-combined from first five bias images)"
                     thermalNotes = "(Average-combined from first five dark images)"
+                else:
+                    biasNotes = f"(Copy of {filepath.calimages}{args[3]}bias.fit)"
+                    thermalNotes = f"(Copy of {filepath.calimages}{args[3]}thermal_1sec.fit, scaled to exposure time)"
 
                 # Add general data-night values to worksheet
                 worksheet.cell(row=3 , column=2, value=datenow) # Processing Date
@@ -504,8 +504,8 @@ if __name__ == '__main__':
         help='Skip the reduce step and execute all other steps.'
     )
     parser.add_argument(
-        '-u', '--use-standards', dest='use_standards', action='store_true',
-        help='Use standard dark/bias frames in Images/Master for image reduction.'
+        '-u', '--use-night-cals', dest='use_night_cals', action='store_true',
+        help='Use dark/bias frames from night data collection for image reduction.'
     )
     parser.add_argument(
         '-a', '--use-existing-astrometry', dest='use_astrom', action='store_true',
@@ -629,7 +629,7 @@ if __name__ == '__main__':
 
         # Only run image reduction step
         if args.reduce_only:
-            reduce_images(*K0+(args.use_standards,))      #image reduction
+            reduce_images(*K0+(args.use_night_cals,))     #image reduction
 
         # Only run image plate solving step
         elif args.register_only:
@@ -658,7 +658,7 @@ if __name__ == '__main__':
         else:
             # Skip over reduction step if skip_reduce = True
             if not args.skip_reduce:
-                reduce_images(*K0+(args.use_standards,))  #image reduction  
+                reduce_images(*K0+(args.use_night_cals,)) #image reduction  
             register_coord(*K2+(args.use_astrom,))        #pointing 
             p2.start(); update_progressbar(2,i)           #pointing error
             p3.start(); update_progressbar(3,i)           #zeropoint & extinction

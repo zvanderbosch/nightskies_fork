@@ -77,7 +77,7 @@ PREFIX = f'{pc.GREEN}{scriptName:19s}{pc.END}: '
 #-------------------            Define Functions            -------------------#
 #------------------------------------------------------------------------------#
 
-def reducev(dnight, sets, flatname, curve, standards):
+def reducev(dnight, sets, flatname, curve, nightcals):
     '''
     This module is for calibrating the V-band data.
 
@@ -91,25 +91,22 @@ def reducev(dnight, sets, flatname, curve, standards):
         Name of master flat field FITS file
     curve: string
         Name of linearity curve TXT file
-    standards: bool
-        Whether to use standard dark/bias frames located
-        in Images/Master (TRUE) or use the dark/bias 
-        frames taken during data collection (FALSE).
+    nightcals: bool
+        Whether to use use the dark/bias frames taken 
+        during night data collection (TRUE) or use the
+        standard dark/bias frames located in 
+        Images/Master (TRUE).
     '''
 
-    # Get filenames for standard calibration files
+    # Get filenames for flat-field and linearity curve
     curveFile = f"{filepath.lincurve}{curve}.txt"
     flatFile = f"{filepath.calimages}{flatname}"
-    biasFile = f"{filepath.calimages}{curve}bias.fit"
-    darksecFile = f"{filepath.calimages}{curve}thermal_1sec.fit"
 
     # Read in the linearity curve (ADU, multiplying factor)
     xp, fp = n.loadtxt(curveFile, unpack=True, delimiter=",")
     
-    # Read in the standard flat, dark, and bias frames
+    # Read in the flat-field calibration image
     flat = fits.getdata(flatFile, ext=0, unit=False)
-    biasStd = fits.getdata(biasFile, ext=0, unit=False)
-    darksecStd = fits.getdata(darksecFile, ext=0, unit=False)
     
     # Loop through all sets in the given night
     for s in sets:
@@ -138,27 +135,8 @@ def reducev(dnight, sets, flatname, curve, standards):
             os.makedirs(calsetp)
             os.makedirs(calsetp+'tiff/')
 
-        # Use standard dark/bias calibration frames
-        if standards:
-
-            # Get exposure time
-            with fits.open(f"{rawsetp}zenith1.fit") as hdul:
-                hdr = hdul[0].header
-                exptime = hdr['EXPTIME']
-
-            # Scale 1-second dark exposure to exposure time
-            darkStd = (darksecStd * exptime).clip(0)
-
-            # Perform linearity correction
-            darkStdCorr = darkStd * n.interp(darkStd,xp,fp)
-
-            # Define the master thermal, bias, and cropped bias images
-            corthermal = darkStdCorr
-            combias = biasStd
-            biascrop = combias[486:536,486:536]
-
         # Use dark/bias frames from data collection night
-        else:
+        if nightcals:
 
             # Load dark/bias frames and correct the darks 
             # for bias and linearity response
@@ -175,6 +153,31 @@ def reducev(dnight, sets, flatname, curve, standards):
             # Average combine to generate master thermal, bias, and cropped bias images
             corthermal = n.average(dark,axis=0)
             combias = n.average(bias,axis=0)
+            biascrop = combias[486:536,486:536]
+
+        # Use standard dark/bias calibration frames
+        else:
+            
+            # Load dark/bias images
+            biasFile = f"{filepath.calimages}{curve}bias.fit"
+            darksecFile = f"{filepath.calimages}{curve}thermal_1sec.fit"
+            biasStd = fits.getdata(biasFile, ext=0, unit=False)
+            darksecStd = fits.getdata(darksecFile, ext=0, unit=False)
+
+            # Get exposure time
+            with fits.open(f"{rawsetp}zenith1.fit") as hdul:
+                hdr = hdul[0].header
+                exptime = hdr['EXPTIME']
+
+            # Scale 1-second dark exposure to exposure time
+            darkStd = (darksecStd * exptime).clip(0)
+
+            # Perform linearity correction
+            darkStdCorr = darkStd * n.interp(darkStd,xp,fp)
+
+            # Define the master thermal, bias, and cropped bias images
+            corthermal = darkStdCorr
+            combias = biasStd
             biascrop = combias[486:536,486:536]
 
 
@@ -205,10 +208,10 @@ def reducev(dnight, sets, flatname, curve, standards):
         ax.axhline(meanbd, ls='--', c='k')
         ax.plot(n.arange(Nf), biasdrift, 'o')
         ax.set_ylim(meanbd-5,meanbd+5)
-        if standards:
-            ax.set_title('Bias Drift Compared to the Standard Bias Frame')
-        else:
+        if nightcals:
             ax.set_title('Bias Drift Compared to the Average of the First 5 Files')
+        else:
+            ax.set_title('Bias Drift Compared to the Standard Bias Frame')
         ax.text(
             0.02,0.90,f'Mean Bias Drift = {meanbd:.1f}', transform=ax.transAxes,
             fontsize=12, fontweight='heavy'
