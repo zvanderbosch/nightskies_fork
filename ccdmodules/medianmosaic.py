@@ -273,7 +273,7 @@ def check_file(filename):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def mosaic(dnight, sets, filter):
+def mosaic(dnight, sets, filter, clipFlag):
     '''
     This module creates the mosaic of median filtered images for each data set.
 
@@ -285,6 +285,9 @@ def mosaic(dnight, sets, filter):
         List of data sets to process
     filter: str
         Name of photometric filter
+    clipFlag: bool
+        Whether to use domain clipping (TRUE) or
+        rectangle clipping (FALSE) techniques.
     '''
     #set arcpy environment variables part 2/2
     arcpy.CheckOutExtension("Spatial")
@@ -382,25 +385,32 @@ def mosaic(dnight, sets, filter):
             )
             set_null_values(f'fwib{v:03d}.tif')
                                        
-            # Clip to image boundary
-            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            # arcpy.management.Clip(f"fwib{v:03d}.tif", rectangle, f"fcib{v:03d}")
+            # Clip the image
+            if clipFlag:
+                # Perform domain clipping (clip to true image boundary)
 
-            # Check that clipFile exists first
-            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
-            while True:
-                if check_file(f"{clipFile}.shp"): break
-                else: time.sleep(1); continue
+                # Check that clipFile exists first
+                clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+                while True:
+                    if check_file(f"{clipFile}.shp"): break
+                    else: time.sleep(1); continue
 
-            arcpy.management.Clip(
-                f"fwib{v:03d}.tif", 
-                "", 
-                f"fcib{v:03d}", 
-                clipFile,
-                "",
-                "ClippingGeometry",
-                "NO_MAINTAIN_EXTENT"
-            )
+                arcpy.management.Clip(
+                    f"fwib{v:03d}.tif", 
+                    "", 
+                    f"fcib{v:03d}", 
+                    clipFile,
+                    "",
+                    "ClippingGeometry",
+                    "NO_MAINTAIN_EXTENT"
+                )
+            else:
+                # Perform Rectangle clipping
+                rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+                arcpy.management.Clip(
+                    f"fwib{v:03d}.tif", rectangle, f"fcib{v:03d}"
+                )
+
 
             # Status update
             if (v == w+1) & (v % 5 == 0):

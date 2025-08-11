@@ -237,7 +237,7 @@ def clear_dir(dir_path):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def mosaic(dnight, sets, filter):
+def mosaic(dnight, sets, filter, clipFlag):
     '''
     This module creates the mosaic of full-resolution images for each data set.
 
@@ -249,6 +249,9 @@ def mosaic(dnight, sets, filter):
         List of data sets to process
     filter: str
         Name of photometric filter
+    clipFlag: bool
+        Whether to use domain clipping (TRUE) or
+        rectangle clipping (FALSE) techniques.
     '''
     #set arcpy environment variables part 2/2
     arcpy.CheckOutExtension("Spatial")
@@ -348,36 +351,42 @@ def mosaic(dnight, sets, filter):
                 "0.0261"
             )
             set_null_values(f'fwib{v:03d}.tif')
-
-            # Create a raster border for clipping
-            os.makedirs(f'{domainsetp}ib{v:03d}/')
-            arcpy.ddd.RasterDomain(
-                f'fwib{v:03d}.tif',
-                f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
-                'POLYGON'
-            )
-            arcpy.management.EliminatePolygonPart(
-                f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
-                f'{domainsetp}ib{v:03d}/ib{v:03d}_border',
-                "PERCENT",
-                "",
-                "10",
-                "CONTAINED_ONLY"
-            )
                                        
-            # Clip to image boundary
-            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            # arcpy.management.Clip("fwib%03d.tif"%v, rectangle, "fcib%03d"%v)
-            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
-            arcpy.management.Clip(
-                f"fwib{v:03d}.tif", 
-                "", 
-                f"fcib{v:03d}", 
-                clipFile,
-                "0",
-                "ClippingGeometry",
-                "NO_MAINTAIN_EXTENT"
-            )
+            # Clip the image
+            if clipFlag:
+                # Perform domain clipping (clip to true image boundary)
+                clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+
+                # Create a raster border for clipping
+                os.makedirs(f'{domainsetp}ib{v:03d}/')
+                arcpy.ddd.RasterDomain(
+                    f'fwib{v:03d}.tif',
+                    f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
+                    'POLYGON'
+                )
+                arcpy.management.EliminatePolygonPart(
+                    f'{domainsetp}ib{v:03d}/ib{v:03d}_domain',
+                    f'{domainsetp}ib{v:03d}/ib{v:03d}_border',
+                    "PERCENT",
+                    "",
+                    "10",
+                    "CONTAINED_ONLY"
+                )
+                arcpy.management.Clip(
+                    f"fwib{v:03d}.tif", 
+                    "", 
+                    f"fcib{v:03d}", 
+                    clipFile,
+                    "0",
+                    "ClippingGeometry",
+                    "NO_MAINTAIN_EXTENT"
+                )
+            else:
+                # Perform rectangle clipping
+                rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+                arcpy.management.Clip(
+                    "fwib%03d.tif"%v, rectangle, "fcib%03d"%v
+                )
 
             # Status update
             if (v == w+1) & (v % 5 == 0):

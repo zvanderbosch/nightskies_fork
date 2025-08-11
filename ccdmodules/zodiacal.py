@@ -266,7 +266,7 @@ def check_file(filename):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def mosaic(dnight, sets):
+def mosaic(dnight, sets, clipFlag):
     '''
     This module creates the mosaic of the zodiacal model for each data set.
     
@@ -276,6 +276,9 @@ def mosaic(dnight, sets):
         Name of data night to process
     sets: list
         List of data sets to process
+    clipFlag: bool
+        Whether to use domain clipping (TRUE) or
+        rectangle clipping (FALSE) techniques.
     '''
     #set arcpy environment variables part 2/2
     arcpy.CheckOutExtension("Spatial")
@@ -348,25 +351,31 @@ def mosaic(dnight, sets):
                 "0.1"
             )
 
-            #clip to image boundary
-            # rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
-            # arcpy.management.Clip("zod%02d.tif"%v, rectangle, "zodi%02d"%v)
+            # Clip the image
+            if clipFlag:
+                # Perform domain clipping (clip to true image boundary)
+                
+                # Check that clipFile exists
+                clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
+                while True:
+                    if check_file(f"{clipFile}.shp"): break
+                    else: time.sleep(1); continue
 
-            # Check that clipFile exists
-            clipFile = f'{domainsetp}ib{v:03d}/ib{v:03d}_border'
-            while True:
-                if check_file(f"{clipFile}.shp"): break
-                else: time.sleep(1); continue
-
-            arcpy.management.Clip(
-                f"zod{v:02d}.tif", 
-                "", 
-                f"zodi{v:02d}", 
-                clipFile,
-                "0",
-                "ClippingGeometry",
-                "NO_MAINTAIN_EXTENT"
-            )
+                arcpy.management.Clip(
+                    f"zod{v:02d}.tif", 
+                    "", 
+                    f"zodi{v:02d}", 
+                    clipFile,
+                    "0",
+                    "ClippingGeometry",
+                    "NO_MAINTAIN_EXTENT"
+                )
+            else:
+                # Perform rectangle clipping
+                rectangle = clip_envelope(Obs_AZ, Obs_ALT, w)
+                arcpy.management.Clip(
+                    "zod%02d.tif"%v, rectangle, "zodi%02d"%v
+                )
 
             # Status update
             if (v == w+1) & (v % 5 == 0):

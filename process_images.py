@@ -294,7 +294,7 @@ def mosaic_full(*args):
     t1 = time.time()
     import ccdmodules.fullmosaic as FM
     for filter in args[2]:
-        FM.mosaic(args[0],args[1],filter)
+        FM.mosaic(args[0],args[1],filter,args[3])
     t2 = time.time()
     args[-1].put(t2-t1)
 
@@ -304,7 +304,7 @@ def mosaic_median(*args):
     t1 = time.time()
     import ccdmodules.medianmosaic as MM
     for filter in args[2]:
-        MM.mosaic(args[0],args[1],filter)
+        MM.mosaic(args[0],args[1],filter,args[3])
     t2 = time.time()
     args[-1].put(t2-t1)
     
@@ -519,6 +519,10 @@ if __name__ == '__main__':
         '-m', '--mosaics-only', dest='mosaics_only', action='store_true',
         help='Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).'
     )
+    parser.add_argument(
+        '-d', '--domain-clip', dest='domain_clip', action='store_true',
+        help='Use full image extent rather than rectangle clipping for mosaics.'
+    )
     args = parser.parse_args()
         
     #------------ Read in the processing list and initialize --------------#
@@ -618,10 +622,10 @@ if __name__ == '__main__':
         q3=Queue(); p3=Process(target=fit_zeropoint,args=K1+(q3,))
         q4=Queue(); p4=Process(target=apply_filter,args=K2+(q4,))
         q5=Queue(); p5=Process(target=compute_coord,args=K3+(q5,)) 
-        q6=Queue(); p6=Process(target=mosaic_full,args=K2+(q6,))
-        q7=Queue(); p7=Process(target=mosaic_galactic,args=K3+(q7,))
-        q8=Queue(); p8=Process(target=mosaic_zodiacal,args=K3+(q8,))
-        q9=Queue(); p9=Process(target=mosaic_median,args=K2+(q9,))
+        q6=Queue(); p6=Process(target=mosaic_full,args=K2+(args.domain_clip,q6,))
+        q7=Queue(); p7=Process(target=mosaic_galactic,args=K3+(args.domain_clip,q7,))
+        q8=Queue(); p8=Process(target=mosaic_zodiacal,args=K3+(args.domain_clip,q8,))
+        q9=Queue(); p9=Process(target=mosaic_median,args=K2+(args.domain_clip,q9,))
 
         # Only run image reduction step
         if args.reduce_only:
