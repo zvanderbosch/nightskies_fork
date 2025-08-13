@@ -38,6 +38,8 @@
 #                                     (register, pointing, coordinates).
 #   --mosaics-only            [-m] :  Only execute mosaic generation steps 
 #                                     (fullmosaic, medianmosaic, galactic, zodiacal).
+#   --use-domain-clip         [-d] :  Use full image extent rather than rectangle clipping 
+#                                     for mosaics
 #
 # Example Usage:   python process_images.py --register-only --use-existing-astrometry
 #
@@ -504,7 +506,7 @@ if __name__ == '__main__':
         help='Skip the reduce step and execute all other steps.'
     )
     parser.add_argument(
-        '-u', '--use-night-cals', dest='use_night_cals', action='store_true',
+        '-n', '--use-night-cals', dest='use_night_cals', action='store_true',
         help='Use dark/bias frames from night data collection for image reduction.'
     )
     parser.add_argument(
@@ -520,7 +522,7 @@ if __name__ == '__main__':
         help='Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).'
     )
     parser.add_argument(
-        '-d', '--domain-clip', dest='domain_clip', action='store_true',
+        '-d', '--use-domain-clip', dest='domain_clip', action='store_true',
         help='Use full image extent rather than rectangle clipping for mosaics.'
     )
     args = parser.parse_args()
