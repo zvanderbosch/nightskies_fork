@@ -371,24 +371,23 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     # Convert default zeropoint to float
     zeropoint = float(zeropoint)
     
-    #read in the standard star catalog
-    # hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
-    # starn = hips[:,0]                                             #star names
-    # ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
-    # Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
+    # Read in the standard star catalog
+    hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
+    starn = hips[:,0]                                             #star names
+    ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
+    Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
 
-    # # Convert the RA from hours to degress
-    # ras = ras * 360/24
+    # Convert the RA from hours to degress
+    ras = ras * 360/24
 
-    #read inamd parse the standard star catalog
-    # hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards.csv')
-    hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards_6pixAper.csv')
-    starn = hips['hip'].values.astype(str) # Hipparcos IDs
-    ras = hips['ra'].values          # Right Ascension coords [deg]
-    decs = hips['de'].values         # Declination coords [deg]
-    v_mag = hips['vmag'].values      # Hipparcos V-band magnitudes [mag]
-    bv = hips['b_v'].values          # Hipparcos B-V color [mag]
-    Mag = {'V':v_mag, 'B':v_mag+bv}  # V and B magnitudes
+    # Read in and parse the alternate standard star catalog
+    # hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards_6pixAper.csv')
+    # starn = hips['hip'].values.astype(str) # Hipparcos IDs
+    # ras = hips['ra'].values          # Right Ascension coords [deg]
+    # decs = hips['de'].values         # Declination coords [deg]
+    # v_mag = hips['vmag'].values      # Hipparcos V-band magnitudes [mag]
+    # bv = hips['b_v'].values          # Hipparcos B-V color [mag]
+    # Mag = {'V':v_mag, 'B':v_mag+bv}  # V and B magnitudes
     
     #define image xy coordinates
     x = n.arange(0, 1024)
@@ -522,7 +521,8 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                 bg = n.median(data[b])
                 f = data[w].ravel() - bg
 
-                # Skip over objects near to saturation limit
+                # Skip over objects near the saturation limit
+                # or with low signal counts
                 if (max(f + bg) > 55000) | (max(f + bg) < 4000):
                     continue
                 
