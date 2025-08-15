@@ -735,11 +735,11 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         )
         # Perform fit with fixed default zeropoint
         paramFixed, covFixed, _ = poly_sigfit(
-            airmass, mdiff-zeropoint, signum=5, niter=10, fixedZ=True
+            airmass, mdiff-zeropoint, signum=3, niter=10, fixedZ=True
         )
         # Perform fit with zeropoint and color-coefficient as free parameters
         cparam, ccov, _ = poly_sigfit(
-            color, mdiffRaw, signum=5, niter=10, fixedZ=False
+            color, mdiffRaw, signum=3, niter=10, fixedZ=False
         )
 
         # Extract Parameters
