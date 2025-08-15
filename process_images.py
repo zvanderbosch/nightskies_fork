@@ -607,7 +607,7 @@ if __name__ == '__main__':
         K3 = (Dataset[i],sets)
         report_args = (
             Dataset[i],sets,Flat_V[i],Curve[i],
-            Processor[i],location[i],args.use_standards
+            Processor[i],location[i],args.use_night_cals
         )
 
         # Check provided zeropoint against known defaults
