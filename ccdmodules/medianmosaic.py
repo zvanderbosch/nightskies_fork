@@ -524,13 +524,14 @@ def mosaic(dnight, sets, filter, clipFlag):
     maskFile = f"{maskDir}/mask.tif"
     if not os.path.exists(maskDir):
         os.makedirs(maskDir)
-    arcpy.management.CopyRaster(
-        f"{gridsetp}skybright",
-        maskFile,
-        "DEFAULTS",
-        "0","0","","",
-        "16_BIT_UNSIGNED"
-    )
+    if not os.path.isfile(maskFile):
+        arcpy.management.CopyRaster(
+            f"{gridsetp}skybright",
+            maskFile,
+            "DEFAULTS",
+            "0","0","","",
+            "16_BIT_UNSIGNED"
+        )
 
     
 if __name__ == "__main__":
