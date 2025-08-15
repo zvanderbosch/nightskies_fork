@@ -28,18 +28,18 @@
 #
 # Optional Arguments
 # ------------------
-#   --reduce-only             [-r] :  Only execute the image reduction step (reduce)
-#   --register-only           [-p] :  Only execute the image plate solving step (register).
-#   --skip-reduce             [-s] :  Skip the reduce step and execute all other steps.
-#   --use-night-cals          [-n] :  Use dark/bias frames from data night's fieldata folder
-#                                     to generate master dark/bias calibration images.
-#   --use-existing-astrometry [-a] :  Use existing astrometric solutions if available.
-#   --coord-steps             [-c] :  Only execute steps that affect image coordinates 
-#                                     (register, pointing, coordinates).
-#   --mosaics-only            [-m] :  Only execute mosaic generation steps 
-#                                     (fullmosaic, medianmosaic, galactic, zodiacal).
-#   --use-domain-clip         [-d] :  Use full image extent rather than rectangle clipping 
-#                                     for mosaics
+#   --reduce-only            :  Only execute the image reduction step (reduce)
+#   --register-only          :  Only execute the image plate solving step (register).
+#   --skip-reduce            :  Skip the reduce step and execute all other steps.
+#   --coord-steps            :  Only execute steps that affect image coordinates 
+#                               (register, pointing, coordinates).
+#   --mosaics-only           :  Only execute mosaic generation steps 
+#                               (fullmosaic, medianmosaic, galactic, zodiacal).
+#   --use-night-cals         :  Use dark/bias frames from data night's fieldata folder
+#                               to generate master dark/bias calibration images.
+#   --use-existing-astrometry:  Use existing astrometric solutions if available.
+#   --use-domain-clip        :  Use full image extent rather than rectangle clipping 
+#                               for mosaics
 #
 # Example Usage:   python process_images.py --register-only --use-existing-astrometry
 #
@@ -494,35 +494,35 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-r', '--reduce-only', dest='reduce_only', action='store_true',
+        '--reduce-only', dest='reduce_only', action='store_true',
         help='Only execute the image reduction step (reduce).'
     )
     parser.add_argument(
-        '-p', '--register-only', dest='register_only', action='store_true',
+        '--register-only', dest='register_only', action='store_true',
         help='Only execute the image plate solving step (register).'
     )
     parser.add_argument(
-        '-s', '--skip-reduce', dest='skip_reduce', action='store_true',
+        '--skip-reduce', dest='skip_reduce', action='store_true',
         help='Skip the reduce step and execute all other steps.'
     )
     parser.add_argument(
-        '-n', '--use-night-cals', dest='use_night_cals', action='store_true',
-        help='Use dark/bias frames from night data collection for image reduction.'
-    )
-    parser.add_argument(
-        '-a', '--use-existing-astrometry', dest='use_astrom', action='store_true',
-        help='Use existing astrometric solutions if available to update the FITS headers.'
-    )
-    parser.add_argument(
-        '-c', '--coord-steps', dest='coord_steps', action='store_true',
+        '--coord-steps', dest='coord_steps', action='store_true',
         help='Only execute steps that affect image coordinates (register, pointing, coordinates)'
     )
     parser.add_argument(
-        '-m', '--mosaics-only', dest='mosaics_only', action='store_true',
+        '--mosaics-only', dest='mosaics_only', action='store_true',
         help='Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).'
     )
     parser.add_argument(
-        '-d', '--use-domain-clip', dest='domain_clip', action='store_true',
+        '--use-night-cals', dest='use_night_cals', action='store_true',
+        help='Use dark/bias frames from night data collection for image reduction.'
+    )
+    parser.add_argument(
+        '--use-existing-astrometry', dest='use_astrom', action='store_true',
+        help='Use existing astrometric solutions if available to update the FITS headers.'
+    )
+    parser.add_argument(
+        '--use-domain-clip', dest='domain_clip', action='store_true',
         help='Use full image extent rather than rectangle clipping for mosaics.'
     )
     args = parser.parse_args()
