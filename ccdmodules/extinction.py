@@ -370,41 +370,41 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
 
     # Convert default zeropoint to float
     zeropoint = float(zeropoint)
-    
+
     # Read in the standard star catalog
-    hips = n.loadtxt(filepath.standards+'hipparcos_standards.txt',dtype=object)
-    starn = hips[:,0]                                             #star names
-    ras, decs, v_mag, bv = n.array(hips[:,1:],dtype=n.float64).T  #star properties
-    Mag = {'V':v_mag, 'B':v_mag+bv}                    # absolute mag in V and B
+    hips = pd.read_csv(f"{filepath.standards}hipparcos_standards.csv")
+    starn = hips['HIP'].values.astype(str) # star names
+    v_mag = hips['Vmag'].values            # Hipparcos V-band magnitudes [mag]
+    bv = hips['B-V'].values                # Hipparcos B-V color [mag]
+    Mag = {'V':v_mag, 'B':v_mag+bv}        # absolute mag in V and B
 
-    # Convert the RA from hours to degress
-    ras = ras * 360/24
-
-    # Read in and parse the alternate standard star catalog
-    # hips = pd.read_csv(filepath.standards+'hipparcos_gaia_standards_6pixAper.csv')
-    # starn = hips['hip'].values.astype(str) # Hipparcos IDs
-    # ras = hips['ra'].values          # Right Ascension coords [deg]
-    # decs = hips['de'].values         # Declination coords [deg]
-    # v_mag = hips['vmag'].values      # Hipparcos V-band magnitudes [mag]
-    # bv = hips['b_v'].values          # Hipparcos B-V color [mag]
-    # Mag = {'V':v_mag, 'B':v_mag+bv}  # V and B magnitudes
+    # Generate coordinate object for stars
+    hip_coords = coord.SkyCoord(
+        ra=hips['RA'].values*u.deg,
+        dec=hips['Dec'].values*u.deg,
+        pm_ra_cosdec=hips['pmRA'].values*u.mas/u.yr,
+        pm_dec=hips['pmDec'].values*u.mas/u.yr,
+        distance=1./hips['Plx'].values*u.pc,
+        obstime=Time(1991.25, format='jyear', scale='tt'),
+        frame='icrs'
+    )
     
-    #define image xy coordinates
+    # Define image xy coordinates
     x = n.arange(0, 1024)
     y = n.arange(0, 1024)
     x, y = n.meshgrid(x, y)
     
-    #parameters specific to datasets with different filters
+    # Parameters specific to datasets with different filters
     k = {'V':'/', 'B':'/B/'}
     
-    #loop through all the sets in that night
+    # Loop through all the sets in that night
     for s in sets:
         calsetp = filepath.calibdata+dnight+'/S_0%s%s' %(s[0],k[filter])
         bestfit = []
         xscale = []
         yscale = []
 
-        #read in the header to set the site object's parameter
+        # Read in the header to set the site object's parameter
         H = fits.getheader(calsetp+'ib001.fit',ext=0)
         site = coord.EarthLocation.from_geodetic(
             lon = H['LONGITUD']*u.deg,
@@ -422,7 +422,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                 shutil.rmtree(figsetp, onerror=remove_readonly)
             os.makedirs(figsetp)
                 
-        # loop through each file in the set
+        # loop through each image in the set
         print(f'{PREFIX}Processing images for {filter}-band Set {s[0]}...')
         images = sorted(glob(calsetp+'ib???.fit'))
         imagesSolved = 0
@@ -436,7 +436,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
             # Get image observation time
             obstime = Time(H['JD'], format='jd', scale='utc')
             
-            #proceed only if the plate (what plate?) is solved
+            # Proceed only if the image has an astrometric solution
             try:
                 if H['PLTSOLVD']: pass
                 else: continue
@@ -444,6 +444,11 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                 print('Image not solved')
                 continue
             imagesSolved += 1
+
+            # Propagate star coordinates to the image observing time
+            epoch_coords = hip_coords.apply_space_motion(new_obstime=obstime)
+            ras = epoch_coords.ra.deg
+            decs = epoch_coords.dec.deg
 
             # Convert RA/Dec to XY pix coords for stars covering the image
             seps = angular_separation(
@@ -491,7 +496,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
             data = fits.getdata(fn,ext=0)
             popt_plot_list = []
             
-            #fit 2D Gaussians to standard stars in the image
+            # Perform PSF fitting (Gaussian) and Circular Aperture photometry  
             xposImg, yposImg = [], []
             for i in range(len(px)):
 
@@ -506,10 +511,12 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                 if elev < 12.0:
                     continue
 
-                #set the aperture radii
+                # Set the aperture radii
                 apRadius = 6  # Dan's Pipeline uses  6, this pipeline originally used 3
                 annInner = 8  # Dan's Pipeline uses  8, this pipeline originally used 4
                 annOuter = 12 # Dan's Pipeline uses 12, this pipeline originally used 8
+
+                # Get indices for pixels to be used for photometry
                 r = ((x-px[i])**2+(y-py[i])**2)**0.5
                 w = n.where(r<apRadius)
                 b = n.where(
@@ -517,7 +524,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
                     (r<annOuter)
                 )
                 
-                #subtract background from the fitted data
+                # Subtract local background from the pixels
                 bg = n.median(data[b])
                 f = data[w].ravel() - bg
 
@@ -724,7 +731,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         
         # Perform fit with zeropoint and extinction as free parameters
         paramFree, covFree, clipped_index = poly_sigfit(
-            airmass, mdiff, signum=5, niter=10, fixedZ=False
+            airmass, mdiff, signum=3, niter=10, fixedZ=False
         )
         # Perform fit with fixed default zeropoint
         paramFixed, covFixed, _ = poly_sigfit(
