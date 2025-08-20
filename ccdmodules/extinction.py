@@ -22,7 +22,7 @@
 #           (filepath.calibdata/DATANIGHT/S_0#)
 #   (2) hipparcos_gaia_standards_6pixAper.csv
 #           Hipparcos standard star catalog
-#           (filepath.standards)
+#           (filepath.spreadsheets)
 #
 #Output:
 #   (1) extinction_stars_<FILTER>_<DATASET>.txt 
@@ -372,7 +372,7 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     zeropoint = float(zeropoint)
 
     # Read in the standard star catalog
-    hips = pd.read_csv(f"{filepath.standards}hipparcos_standards.csv")
+    hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_standards.csv")
     starn = hips['HIP'].values.astype(str) # star names
     v_mag = hips['Vmag'].values            # Hipparcos V-band magnitudes [mag]
     bv = hips['B-V'].values                # Hipparcos B-V color [mag]

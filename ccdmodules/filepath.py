@@ -48,9 +48,6 @@ griddata = f"{base}/Data/griddata/"
 # Directory containing TIFF world files (.tfw)
 tiff = f"{base}/Data/rasters/tiff_tfws/"
 
-# Directory containing standard star catalogs
-standards = f"{base}/Data/standards/"
-
 # Directory containing galactic/zodiacal model rasters
 rasters = f"{base}/Data/rasters/"
 
@@ -60,7 +57,7 @@ maps = f"{base}/Data/maps/"
 # Directory containing saved graphics
 graphics = f"{base}/Data/graphics/"
 
-# Directory to generic spreadsheets
+# Directory to spreadsheet templates and star catalogs
 spreadsheets = f"{base}/Data/spreadsheets/"
 
 # Directory for output tables
