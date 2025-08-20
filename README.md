@@ -25,7 +25,7 @@ A Python package for National Park Service [Natural Sounds and Night Skies Divis
 ## Required Software and Install Procedures
 
 ### Required Software
-  - ArcGIS Pro 3.3 or later
+  - ArcGIS Pro 3.5 or later
   - Adobe Photoshop
   - conda (recommended to use [Miniforge](https://github.com/conda-forge/miniforge) for new installs)
   - Python packages:
@@ -190,15 +190,17 @@ Assuming you are working from a command line interface, such as Windows Terminal
 
 The `process_images.py` and `naturalsky.py` scripts both have command line arguments available, summarized below:
 
-### process_metrics.py Command Line Arguments
+### process_images.py Command Line Arguments
 *Optional*
 ```shell
---reduce-only [-r]              # Only execute the image reduction step (reduce)
---register-only [-p]            # Only execute the image plate solving step (register).
---skip-reduce [-s]              # Skip the reduce step and execute all other steps.
---use-existing-astrometry [-a]  # Use existing astrometric solutions if available.
---coord-steps [-c]              # Only execute steps that affect image coordinates (register, pointing, coordinates).
---mosaics-only [-m]             # Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).
+--reduce-only              # Only execute the image reduction step (reduce)
+--register-only            # Only execute the image plate solving step (register).
+--skip-reduce              # Skip the reduce step and execute all other steps.
+--coord-steps:             # Only execute steps that affect image coordinates (register, pointing, coordinates)
+--mosaics-only             # Only execute mosaic generation steps (fullmosaic, medianmosaic, galactic, zodiacal).
+--use-night-cals:          # Use dark/bias frames from night data collection for image reduction
+--use-existing-astrometry  # Use existing astrometric solutions if available.
+--use-domain-clip:         # Use full image extent rather than rectangle clipping for mosaics
 ```
 
 ### naturalsky.py Command Line Arguments
