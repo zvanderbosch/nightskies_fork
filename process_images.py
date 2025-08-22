@@ -38,6 +38,8 @@
 #   --use-night-cals         :  Use dark/bias frames from data night's fieldata folder
 #                               to generate master dark/bias calibration images.
 #   --use-existing-astrometry:  Use existing astrometric solutions if available.
+#   --use-new-standards      :  Use new catalog of Hipparcos standard stars for 
+#                               extinction/zeropoint fitting.
 #   --use-domain-clip        :  Use full image extent rather than rectangle clipping 
 #                               for mosaics
 #
