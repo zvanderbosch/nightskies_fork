@@ -357,7 +357,7 @@ def extinction(dnight, sets, filter, zeropoint, new_standards, plot_img=0):
     zeropoint: float or string
         Default zeropoint to use for camera
     new_standards: bool
-        Whether to use the new catalog of Hipparcos 
+        Whether to use the new catalog of 847 Hipparcos 
         standard stars (TRUE) or use the original 
         catalog of 371 Hipparcos stars (FALSE)
     plot_img: int
@@ -378,7 +378,7 @@ def extinction(dnight, sets, filter, zeropoint, new_standards, plot_img=0):
     # Read in the standard star catalog
     if new_standards:
         hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_gaia_standards.csv")
-        starn = hips['HIP'].values.astype(str) # star names
+        starn = hips['hip'].values.astype(str) # star names
         hipRA = hips['ra'].values              # Hipparcos J1991.25 RA coordinates
         hipDec = hips['de'].values             # Hipparcos J1991.25 Dec coordinates
         hipPMra = hips['pmra'].values          # Hipparcos proper motion RA
