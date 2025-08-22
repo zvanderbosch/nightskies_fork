@@ -173,7 +173,7 @@ def update_fits(fn, message):
         H['RA'] = imgCoord.ra.to_string(unit='hour',sep=' ',precision=2)
         H['DEC'] = imgCoord.dec.to_string(unit='deg',sep=' ',precision=1)
         
-        # Add cdelt/crota params
+        # Add cdelt header values
         H.set('CDELT1', pixscale, '[deg/pixel] X-axis plate scale', before='CUNIT1')
         H.set('CDELT2', pixscale, '[deg/pixel] Y-axis plate scale', before='CUNIT1')
 
