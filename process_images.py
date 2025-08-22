@@ -522,6 +522,10 @@ if __name__ == '__main__':
         help='Use existing astrometric solutions if available to update the FITS headers.'
     )
     parser.add_argument(
+        '--use-new-standards', dest='new_standards', action='store_true',
+        help='Use new catalog of Hipparcos standard stars for extinction/zeropoint fitting.'
+    )
+    parser.add_argument(
         '--use-domain-clip', dest='domain_clip', action='store_true',
         help='Use full image extent rather than rectangle clipping for mosaics.'
     )
@@ -621,7 +625,7 @@ if __name__ == '__main__':
 
         # Set up queues and processes for each pipeline step
         q2=Queue(); p2=Process(target=pointing_error,args=K3+(q2,))
-        q3=Queue(); p3=Process(target=fit_zeropoint,args=K1+(q3,))
+        q3=Queue(); p3=Process(target=fit_zeropoint,args=K1+(args.new_standards,q3,))
         q4=Queue(); p4=Process(target=apply_filter,args=K2+(q4,))
         q5=Queue(); p5=Process(target=compute_coord,args=K3+(q5,)) 
         q6=Queue(); p6=Process(target=mosaic_full,args=K2+(args.domain_clip,q6,))

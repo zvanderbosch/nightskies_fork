@@ -339,7 +339,7 @@ def remove_readonly(func, path, excinfo):
 #-------------------              Main Program              -------------------#
 #------------------------------------------------------------------------------#
 
-def extinction(dnight, sets, filter, zeropoint, plot_img=0):
+def extinction(dnight, sets, filter, zeropoint, new_standards, plot_img=0):
     '''
     This module computes the extinction coefficient and the instrumental zero
     point. It returns the number of stars used for the fit and the location of
@@ -356,6 +356,10 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
         Name of photometric filter
     zeropoint: float or string
         Default zeropoint to use for camera
+    new_standards: bool
+        Whether to use the new catalog of Hipparcos 
+        standard stars (TRUE) or use the original 
+        catalog of 371 Hipparcos stars (FALSE)
     plot_img: int
         Which image number to plot
 
@@ -372,19 +376,37 @@ def extinction(dnight, sets, filter, zeropoint, plot_img=0):
     zeropoint = float(zeropoint)
 
     # Read in the standard star catalog
-    hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_standards.csv")
-    starn = hips['HIP'].values.astype(str) # star names
-    v_mag = hips['Vmag'].values            # Hipparcos V-band magnitudes [mag]
-    bv = hips['B-V'].values                # Hipparcos B-V color [mag]
-    Mag = {'V':v_mag, 'B':v_mag+bv}        # absolute mag in V and B
+    if new_standards:
+        hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_gaia_standards.csv")
+        starn = hips['HIP'].values.astype(str) # star names
+        hipRA = hips['ra'].values              # Hipparcos J1991.25 RA coordinates
+        hipDec = hips['de'].values             # Hipparcos J1991.25 Dec coordinates
+        hipPMra = hips['pmra'].values          # Hipparcos proper motion RA
+        hipPMdec = hips['pmde'].values         # Hipparcos proper motion Dec
+        hipPlx = hips['plx'].values            # Hipparcos parallax
+        v_mag = hips['vmag'].values            # Hipparcos V-band magnitudes [mag]
+        bv = hips['b_v'].values                # Hipparcos B-V color [mag]
+    else:
+        hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_standards.csv")
+        starn = hips['HIP'].values.astype(str) # star names
+        hipRA = hips['RA'].values              # Hipparcos J1991.25 RA coordinates
+        hipDec = hips['Dec'].values            # Hipparcos J1991.25 Dec coordinates
+        hipPMra = hips['pmRA'].values          # Hipparcos proper motion RA
+        hipPMdec = hips['pmDec'].values        # Hipparcos proper motion Dec
+        hipPlx = hips['Plx'].values            # Hipparcos parallax
+        v_mag = hips['Vmag'].values            # Hipparcos V-band magnitudes [mag]
+        bv = hips['B-V'].values                # Hipparcos B-V color [mag]
+
+    # Define dictionary with absolute V and B magnitudes
+    Mag = {'V':v_mag, 'B':v_mag+bv}
 
     # Generate coordinate object for stars
     hip_coords = coord.SkyCoord(
-        ra=hips['RA'].values*u.deg,
-        dec=hips['Dec'].values*u.deg,
-        pm_ra_cosdec=hips['pmRA'].values*u.mas/u.yr,
-        pm_dec=hips['pmDec'].values*u.mas/u.yr,
-        distance=1./hips['Plx'].values*u.pc,
+        ra=hipRA*u.deg,
+        dec=hipDec*u.deg,
+        pm_ra_cosdec=hipPMra*u.mas/u.yr,
+        pm_dec=hipPMdec*u.mas/u.yr,
+        distance=1./hipPlx*u.pc,
         obstime=Time(1991.25, format='jyear', scale='tt'),
         frame='icrs'
     )
