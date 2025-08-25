@@ -30,12 +30,6 @@ apikey = 'kdvqtjbqkbkbuyzb'
 # Directory where filelist.xlsx lives
 processlist = f"{base}/Data/"
 
-# Directory for Linearity Curve calibration files
-lincurve = f"{base}/Images/Linearity Curves/"
-
-# Directory for Flat-field calibration files
-calimages = f"{base}/Images/Master/"
-
 # Directory for raw images
 rawdata = f"{base}/Data/fielddata/"
 
@@ -44,6 +38,12 @@ calibdata = f"{base}/Data/calibdata/"
 
 # Directory for mosaicked images
 griddata = f"{base}/Data/griddata/"
+
+# Directory for Linearity Curve calibration files
+lincurve = f"{base}/Images/Linearity Curves/"
+
+# Directory for Flat-field calibration files
+calimages = f"{base}/Images/Master/"
 
 # Directory containing TIFF world files (.tfw)
 tiff = f"{base}/Data/rasters/tiff_tfws/"
@@ -59,6 +59,9 @@ graphics = f"{base}/Data/graphics/"
 
 # Directory to spreadsheet templates and star catalogs
 spreadsheets = f"{base}/Data/spreadsheets/"
+
+# Directory to standard star catalogs for extinction fitting
+standards = f"{base}/Data/standards/"
 
 # Directory for output tables
 tables = f"{base}/Data/tables/"

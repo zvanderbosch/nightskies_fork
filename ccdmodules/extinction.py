@@ -20,8 +20,11 @@
 #   (1) ib###.fit
 #           Calibrated images
 #           (filepath.calibdata/DATANIGHT/S_0#)
-#   (2) hipparcos_gaia_standards_6pixAper.csv
-#           Hipparcos standard star catalog
+#   (2) hipparcos_standards.csv
+#           Hipparcos standard star catalog (original list 371 stars)
+#           (filepath.spreadsheets)
+#   (3) hipparcos_gaia_standards.csv
+#           Hipparcos standard star catalog (new list, 847 stars)
 #           (filepath.spreadsheets)
 #
 #Output:

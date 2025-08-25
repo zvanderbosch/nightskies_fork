@@ -44,7 +44,7 @@ B_V = F.col_values(4) #B-V magnitude
 standards = n.array((star,RA,Dec,Mag,B_V), dtype = object).T
 F = ['%7s','%10.6f','%11.6f','%6.3f','%7.3f']
 H = ' Star     RA[h]     Dec[deg]  V_mag    B-V'
-n.savetxt(filepath.spreadsheets+'hipparcos_standards.txt',
+n.savetxt(filepath.standards+'hipparcos_standards.txt',
           standards,fmt=F,header=H)
 
 
@@ -63,19 +63,19 @@ def plot_standards():
 fig1, ax1 = plt.subplots()
 plt.scatter(RA, Dec, s=50, c=Mag)
 plot_standards()
-plt.savefig(filepath.spreadsheets+'standards_c.png',dpi=200)      
+plt.savefig(filepath.standards+'standards_c.png',dpi=200)      
 
 #black and white figure with white background
 fig2, ax2 = plt.subplots()
 plt.scatter(RA, Dec, s=50,cmap='gist_gray_r', c=Mag)
 plot_standards()
-plt.savefig(filepath.spreadsheets+'standards_w.png',dpi=200)      
+plt.savefig(filepath.standards+'standards_w.png',dpi=200)      
 
 #black and white figure with black background
 fig3, ax3 = plt.subplots()
 plt.scatter(RA, Dec, s=50,cmap='gist_gray_r', c=Mag, edgecolor='gray')
 ax3.patch.set_facecolor('black')
 plot_standards()
-plt.savefig(filepath.spreadsheets+'standards_b.png',dpi=200)      
+plt.savefig(filepath.standards+'standards_b.png',dpi=200)      
 
 plt.show(block=False)
