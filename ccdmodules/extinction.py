@@ -380,7 +380,7 @@ def extinction(dnight, sets, filter, zeropoint, new_standards, plot_img=0):
 
     # Read in the standard star catalog
     if new_standards:
-        hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_gaia_standards.csv")
+        hips = pd.read_csv(f"{filepath.standards}hipparcos_gaia_standards.csv")
         starn = hips['hip'].values.astype(str) # star names
         hipRA = hips['ra'].values              # Hipparcos J1991.25 RA coordinates
         hipDec = hips['de'].values             # Hipparcos J1991.25 Dec coordinates
@@ -390,7 +390,7 @@ def extinction(dnight, sets, filter, zeropoint, new_standards, plot_img=0):
         v_mag = hips['vmag'].values            # Hipparcos V-band magnitudes [mag]
         bv = hips['b_v'].values                # Hipparcos B-V color [mag]
     else:
-        hips = pd.read_csv(f"{filepath.spreadsheets}hipparcos_standards.csv")
+        hips = pd.read_csv(f"{filepath.standards}hipparcos_standards.csv")
         starn = hips['HIP'].values.astype(str) # star names
         hipRA = hips['RA'].values              # Hipparcos J1991.25 RA coordinates
         hipDec = hips['Dec'].values            # Hipparcos J1991.25 Dec coordinates
