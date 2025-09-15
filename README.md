@@ -78,7 +78,8 @@ CCD
 │    │    └─── scratch_metrics     -ArcGIS workspace for claculating skyglow metrics
 │    │    └─── scratch_natsky      -ArcGIS workspace for natural sky mosaics
 │    │    └─── scratch_zodiacal    -ArcGIS workspace for Zodiacal model mosaics
-│    └─── spreadsheets             -Spreadsheet templates and standard star catalogs
+│    └─── spreadsheets             -Spreadsheet templates and some star catalogs
+│    └─── standards                -Standard star catalogs for extinction/zeropoint fitting
 │    └─── tables                   -Summary tables with metadata and light pollution metrics
 │ 
 └─── Images
