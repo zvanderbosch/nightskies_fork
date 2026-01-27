@@ -723,6 +723,12 @@ def get_site_info(imageFile):
     fitsLens = fitsInstrument.split(",")[1].strip()
     fitsFilter = H['FILTER'].strip()
 
+    # Convert fitsFilter to recognized value
+    if fitsFilter in ['V-Band']:
+        fitsFilter = "V"
+    if fitsFilter in ['B-Band']:
+        fitsFilter = "B"
+
     # Map FITS values to standard NIGHT METADATA entries
     if fitsTelescope in METADATA_MAPPINGS['INSTRUMENT'].keys():
         instrument = METADATA_MAPPINGS['INSTRUMENT'][fitsTelescope]
