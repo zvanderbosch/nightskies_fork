@@ -1347,9 +1347,10 @@ class MosaicAnalysis(_MosaicAnalysis):
                 clippedmlux = illumConst * clippedsum
                 illalr = clippedmlux / illref
             else:
-                lumalr = n.nan
-                illalr = n.nan
-                clippedmlux = n.nan
+                # Set dummy values that are replaced by NaNs after concatenating all results
+                lumalr = -999
+                illalr = -999
+                clippedmlux = -999
 
             # Calculate number of square degrees, 0.5 and 1.0 degree pixel size percentiles
             sqdegrees = numcells * 0.05 * 0.05
@@ -1383,10 +1384,13 @@ class MosaicAnalysis(_MosaicAnalysis):
                 '1st Percentile': pctStats[1],
                 'Zenith': skyave
             }, index = [i])
+
+            # Save entry
             stat_entries.append(mosaic_entry)
 
-        # Combine entries into single dataframe
+        # Combine entries into single dataframe and replace dummy values with NaNs
         df_combined = pd.concat(stat_entries)
+        df_combined.replace(-999.0, n.nan, inplace=True)
 
         return df_combined, histArray
     
